@@ -12,7 +12,7 @@
 import { ref, onMounted } from "vue";
 
 // 引入不同角色的首頁元件
-import ConsumerHome from "./Consumer/NewConsumerHome.vue";
+import ConsumerHome from "./Consumer/ConsumerHome.vue";
 import FarmerHome from "./Farmer/FarmerHome.vue";
 
 // 引入角色切換元件（消費者 / 農民）

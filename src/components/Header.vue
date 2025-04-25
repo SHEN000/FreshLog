@@ -16,6 +16,14 @@
       <nav class="nav-links" v-if="!isMobile">
         <RouterLink
           v-if="isConsumer"
+          to="/veggiepage"
+          :class="{ active: isActive('/veggiepage') }"
+          class="nav-item"
+        >
+          蔬菜內頁(暫存)</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
           to="/ai-recommendation"
           :class="{ active: isActive('/ai-recommendation') }"
           class="nav-item"
@@ -38,26 +46,17 @@
           >食安資訊</RouterLink
         >
         <RouterLink
-          v-if="isConsumer"
-          to="/recipes"
-          :class="{ active: isActive('/recipes') }"
-          class="nav-item"
-        >
-          食譜清單</RouterLink
-        >
-        <RouterLink
-          v-if="isConsumer && isLoggedIn"
-          to="/member/follows"
-          :class="{ active: isActive('/member/follows') }"
-          class="nav-item"
-          >我的追蹤</RouterLink
-        >
-        <RouterLink
           v-if="isFarmer"
           to="/farmer/crop-dashboard"
           :class="{ active: isActive('/farmer/crop-dashboard') }"
           class="nav-item"
           >農民儀表板</RouterLink
+        >
+        <RouterLink
+          v-else
+          to="/member/profile"
+          :class="{ active: isActive('/member/profile'), 'nav-item': true }"
+          >會員中心</RouterLink
         >
       </nav>
 
@@ -66,35 +65,37 @@
         <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button"
           >登入</RouterLink
         >
-        <RouterLink
-          v-else
-          to="/member/profile"
-          :class="{ active: isActive('/member/profile'), 'nav-item': true }"
-          >會員中心</RouterLink
-        >
       </div>
 
       <!-- 三條線 menu icon（PC版/手機版通用） -->
       <button
         class="menu-icon"
         @click="toggleMenu"
-        v-if="isMobile || !isMobile"
+        v-if="isMobile"
       >
         ☰
       </button>
     </div>
 
     <!-- PC版三條線展開的額外項目（目前為靜態） -->
-    <div class="pc-dropdown" v-if="showMenu && !isMobile">
+    <!-- <div class="pc-dropdown" v-if="showMenu && !isMobile">
       <a href="#" class="nav-item">項目 1</a>
       <a href="#" class="nav-item">項目 2</a>
       <a href="#" class="nav-item">項目 3</a>
       <a href="#" class="nav-item">項目 4</a>
       <a href="#" class="nav-item">項目 5</a>
-    </div>
+    </div> -->
 
     <!-- 手機版展開選單 -->
     <div class="mobile-dropdown" v-if="showMenu && isMobile">
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggiepage"
+        :class="{ active: isActive('/veggiepage') }"
+        class="nav-item"
+      >
+        蔬菜內頁(暫存)</RouterLink
+      >
       <RouterLink
         v-if="isConsumer"
         to="/ai-recommendation"
@@ -118,25 +119,18 @@
         >食安資訊</RouterLink
       >
       <RouterLink
-        v-if="isConsumer"
-        to="/recipes"
-        :class="{ active: isActive('/recipes') }"
-        class="nav-item"
-        >食譜清單
-      </RouterLink>
-      <RouterLink
-        v-if="isConsumer && isLoggedIn"
-        to="/member/follows"
-        :class="{ active: isActive('/member/follows') }"
-        class="nav-item"
-        >我的追蹤</RouterLink
-      >
-      <RouterLink
         v-if="isFarmer"
         to="/farmer/crop-dashboard"
         :class="{ active: isActive('/farmer/crop-dashboard') }"
         class="nav-item"
         >農民儀表板</RouterLink
+      >
+      <RouterLink
+       v-if="isLoggedIn"
+       to="/member/profile"
+       :class="{ active: isActive('/member/profile') }"
+       class="nav-item"
+      >會員中心</RouterLink
       >
     </div>
   </header>
@@ -338,7 +332,7 @@ watch(userRole, (newRole) => {
 }
 
 /* PC版 dropdown 選單（靜態設計） */
-.pc-dropdown {
+/* .pc-dropdown {
   position: absolute;
   top: 60px;
   right: 10px;
@@ -360,7 +354,7 @@ watch(userRole, (newRole) => {
 
 .pc-dropdown a:hover {
   background-color: #f0f0f0;
-}
+} */
 
 /* 手機版 dropdown 選單 */
 .mobile-dropdown {

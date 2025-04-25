@@ -26,16 +26,16 @@
 
 <script setup>
 // 引入各個組件模塊
-import TopNavbar from "@/components/NewConsumerComps/TopNavbar.vue";
-import AiRecommendSection from "@/components/NewConsumerComps/AiRecommendSection.vue";
-import NutritionInfoSection from "@/components/NewConsumerComps/NutritionInfoSection.vue";
-import ProductComparisonSection from "@/components/NewConsumerComps/ProductComparisonSection.vue";
-import FarmerDirectSection from "@/components/NewConsumerComps/FarmerDirectSection.vue";
-import ProductHeaderSection from "@/components/NewConsumerComps/ProductHeaderSection.vue";
-import PriceTrendSection from "@/components/NewConsumerComps/PriceTrendSection.vue";
-import MultiChannelSection from "@/components/NewConsumerComps/MultiChannelSection.vue";
-import RecipeSection from "@/components/NewConsumerComps/RecipeSection.vue";
-import StorageTipsSection from "@/components/NewConsumerComps/StorageTipsSection.vue";
+import TopNavbar from "@/components/VeggieInfoPage/TopNavbar.vue";
+import AiRecommendSection from "@/components/VeggieInfoPage/AiRecommendSection.vue";
+import NutritionInfoSection from "@/components/VeggieInfoPage/NutritionInfoSection.vue";
+import ProductComparisonSection from "@/components/VeggieInfoPage/ProductComparisonSection.vue";
+import FarmerDirectSection from "@/components/VeggieInfoPage/FarmerDirectSection.vue";
+import ProductHeaderSection from "@/components/VeggieInfoPage/ProductHeaderSection.vue";
+import PriceTrendSection from "@/components/VeggieInfoPage/PriceTrendSection.vue";
+import MultiChannelSection from "@/components/VeggieInfoPage/MultiChannelSection.vue";
+import RecipeSection from "@/components/VeggieInfoPage/RecipeSection.vue";
+import StorageTipsSection from "@/components/VeggieInfoPage/StorageTipsSection.vue";
 </script>
 
 <style scoped>
