@@ -333,10 +333,20 @@ const adviceText = computed(() => {
   }
 
 
+  /* 警示文字 */
   .warning-text {
-    color: #ff5a5a;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 16px;
+  }
+
+  /* 新增：超跌 20% 時的文字顏色 */
+  .warning-fall {
+    color: #8d6eff;
+  }
+
+  /* 新增：超漲 20% 時的文字顏色 */
+  .warning-rise {
+    color: #ff5a5a;
   }
 
   .veggie-image {
