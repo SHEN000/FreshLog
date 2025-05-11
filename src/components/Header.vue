@@ -27,15 +27,6 @@
         <input type="text" placeholder="搜尋蔬果名稱、類別或營養成分..." class="search-input" />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </div>
-      <!-- <div class="region-wrapper">
-        <select class="region-select">
-          <option>全台</option>
-          <option>北部</option>
-          <option>中部</option>
-          <option>南部</option>
-          <option>東部</option>
-        </select>
-      </div> -->
 
       <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button">註冊/登入</RouterLink>
       <RouterLink v-else to="/member/profile" class="profile-button">
@@ -404,31 +395,4 @@ watch(userRole, (newRole) => {
   /* 可以依需要調整寬度 */
 }
 
-.region-select {
-  appearance: none;
-  /* 取消原生select樣式 */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  width: 89px;
-  height: 36px;
-  padding: 0 32px 0 16px;
-  /* 左右內距，留右邊空間放箭頭 */
-
-  border: 1px solid #ccc;
-  border-radius: 9999px;
-  /* 超大圓角 */
-
-  font-size: 16px;
-  color: #555;
-  background: #fff url('@/assets/arrow-down-icon.png') no-repeat right 12px center;
-  background-size: 9px 9px;
-  /* 箭頭大小 */
-
-  cursor: pointer;
-  box-sizing: border-box;
-
-  text-align: center;
-  text-align-last: center;
-}
 </style>
