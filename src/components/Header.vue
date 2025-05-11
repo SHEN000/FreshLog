@@ -1,137 +1,68 @@
 <template>
   <header class="header">
-    <!-- 左側 LOGO + 標題 + 搜尋 -->
-    <div class="left-section">
+    <div class="header-inner">
       <RouterLink to="/" class="logo">
         <img src="/logo.png" alt="logo" />
       </RouterLink>
-      <!-- 只有在非手機裝置顯示標題 -->
-      <h1 class="site-title" v-if="!isMobile">食價登錄</h1>
-      <input type="text" placeholder="搜尋..." class="search-input" />
-    </div>
 
-    <!-- 右側選單 -->
-    <div class="right-section">
-      <!-- PC版主選單：依角色顯示功能連結 -->
-      <nav class="nav-links" v-if="!isMobile">
-        <RouterLink
-          v-if="isConsumer"
-          to="/veggiepage"
-          :class="{ active: isActive('/veggiepage') }"
-          class="nav-item"
-        >
-          蔬菜內頁(暫存)</RouterLink
-        >
-        <RouterLink
-          v-if="isConsumer"
-          to="/ai-recommendation"
-          :class="{ active: isActive('/ai-recommendation') }"
-          class="nav-item"
-        >
-          AI 智慧推薦</RouterLink
-        >
-        <RouterLink
-          v-if="isConsumer"
-          to="/veggie"
-          :class="{ active: isActive('/veggie') }"
-          class="nav-item"
-        >
-          蔬菜資訊</RouterLink
-        >
-        <RouterLink
-          v-if="isConsumer"
-          to="/foodsafety"
-          :class="{ active: isActive('/foodsafety') }"
-          class="nav-item"
-          >食安資訊</RouterLink
-        >
-        <RouterLink
-          v-if="isFarmer"
-          to="/farmer/crop-dashboard"
-          :class="{ active: isActive('/farmer/crop-dashboard') }"
-          class="nav-item"
-          >農民儀表板</RouterLink
-        >
-        <RouterLink
-          v-else
-          to="/member/profile"
-          :class="{ active: isActive('/member/profile'), 'nav-item': true }"
-          >會員中心</RouterLink
-        >
-      </nav>
+      <h1 class="site-title">食價登錄&nbsp;&nbsp;FreshLog</h1>
 
-      <!-- 登入/註冊 或 會員中心 -->
-      <div class="user-section">
-        <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button"
-          >登入</RouterLink
-        >
+      <div v-if="!isMobile" class="nav-links">
+        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
+          蔬菜內頁
+        </RouterLink>
+        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+          class="nav-item">AI 智慧推薦</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
+        </RouterLink>
+        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
+          食安資訊
+        </RouterLink>
+        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
+          class="nav-item">農民儀表板</RouterLink>
       </div>
 
-      <!-- 三條線 menu icon（PC版/手機版通用） -->
-      <button
-        class="menu-icon"
-        @click="toggleMenu"
-        v-if="isMobile"
-      >
-        ☰
-      </button>
-    </div>
+      <div class="search-container">
+        <input type="text" placeholder="搜尋蔬果名稱、類別或營養成分..." class="search-input" />
+        <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
+      </div>
+      <!-- <div class="region-wrapper">
+        <select class="region-select">
+          <option>全台</option>
+          <option>北部</option>
+          <option>中部</option>
+          <option>南部</option>
+          <option>東部</option>
+        </select>
+      </div> -->
 
-    <!-- PC版三條線展開的額外項目（目前為靜態） -->
-    <!-- <div class="pc-dropdown" v-if="showMenu && !isMobile">
-      <a href="#" class="nav-item">項目 1</a>
-      <a href="#" class="nav-item">項目 2</a>
-      <a href="#" class="nav-item">項目 3</a>
-      <a href="#" class="nav-item">項目 4</a>
-      <a href="#" class="nav-item">項目 5</a>
-    </div> -->
+      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button">註冊/登入</RouterLink>
+      <RouterLink v-else to="/member/profile" class="profile-button">
+        <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
+        個人中心
+      </RouterLink>
+
+
+      <!-- 手機版三條線 -->
+      <button class="menu-icon" @click="toggleMenu" v-if="isMobile">☰</button>
+    </div>
 
     <!-- 手機版展開選單 -->
     <div class="mobile-dropdown" v-if="showMenu && isMobile">
-      <RouterLink
-        v-if="isConsumer"
-        to="/veggiepage"
-        :class="{ active: isActive('/veggiepage') }"
-        class="nav-item"
-      >
-        蔬菜內頁(暫存)</RouterLink
-      >
-      <RouterLink
-        v-if="isConsumer"
-        to="/ai-recommendation"
-        :class="{ active: isActive('/ai-recommendation') }"
-        class="nav-item"
-      >
-        AI 智慧推薦</RouterLink
-      >
-      <RouterLink
-        v-if="isConsumer"
-        to="/veggie"
-        :class="{ active: isActive('/veggie') }"
-        class="nav-item"
-        >蔬菜資訊
+      <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
+      <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
+          蔬菜內頁
+        </RouterLink>
+      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+        class="nav-item">
+        AI 智慧推薦</RouterLink>
+      <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
       </RouterLink>
-      <RouterLink
-        v-if="isConsumer"
-        to="/foodsafety"
-        :class="{ active: isActive('/foodsafety') }"
-        class="nav-item"
-        >食安資訊</RouterLink
-      >
-      <RouterLink
-        v-if="isFarmer"
-        to="/farmer/crop-dashboard"
-        :class="{ active: isActive('/farmer/crop-dashboard') }"
-        class="nav-item"
-        >農民儀表板</RouterLink
-      >
-      <RouterLink
-       v-if="isLoggedIn"
-       to="/member/profile"
-       :class="{ active: isActive('/member/profile') }"
-       class="nav-item"
-      >會員中心</RouterLink
-      >
+      <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
+        食安資訊</RouterLink>
+      <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
+        class="nav-item">農民儀表板</RouterLink>
     </div>
   </header>
 </template>
@@ -140,6 +71,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
+import magnifierIcon from '@/assets/magnifier-icon.png'
 
 // 取得使用者狀態
 const userStore = useUserStore();
@@ -161,6 +93,20 @@ const isMobile = ref(window.innerWidth <= 768); // 判斷是否為行動裝置�
 // 控制選單展開
 function toggleMenu() {
   showMenu.value = !showMenu.value;
+}
+
+// 當跳轉頁面後自動關閉選單
+function closeMenu() {
+  showMenu.value = false;
+}
+
+// 控制點擊外部區域關閉選單
+function handleClickOutside(event) {
+  const menu = document.querySelector('.mobile-dropdown')
+  const button = document.querySelector('.menu-icon')
+  if (menu && !menu.contains(event.target) && button && !button.contains(event.target)) {
+    showMenu.value = false;
+  }
 }
 
 // 判斷裝置寬度
@@ -221,7 +167,17 @@ onMounted(() => {
 
   // 監聽視窗縮放
   window.addEventListener("resize", handleResize);
+
+  // 監聽點擊外部關閉選單
+  document.addEventListener('click', handleClickOutside);
+
+  // 每次路徑跳轉後自動關閉選單
+  router.afterEach(() => {
+    closeMenu();
+  });
 });
+
+
 
 // 移除 resize 監聽
 onBeforeUnmount(() => {
@@ -237,58 +193,100 @@ watch(userRole, (newRole) => {
 </script>
 
 <style scoped>
-/* 最外層 header 容器，左右排列並置中對齊，支援多行換行 */
 .header {
-  display: flex;
-  justify-content: space-between; /* 左右兩側分開排列 */
-  align-items: center; /* 垂直置中 */
-  padding: 10px 16px;
-  background-color: #f9f9f1;
-  position: relative; /* 為 dropdown 定位做基礎 */
-  flex-wrap: wrap; /* 小螢幕時允許換行 */
+  width: 100%;
+  background-color: #ffffff;
+  padding: 10px 0;
+
+  position: sticky;
+  /* 固定Header */
+  top: 0;
+  /* 從視窗頂端0px的位置開始黏住 */
+  z-index: 1000;
+  /* 讓它蓋在其他內容上面，不會被擋住 */
 }
 
-/* 左側 LOGO + 標題 + 搜尋欄 */
-.left-section {
+.header-inner {
   display: flex;
-  gap: 12px;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 24px;
+  gap: 20px;
+  /* 每個項目間距都一致 */
+  box-sizing: border-box;
+}
+
+/* 左側 LOGO + 標題 */
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* LOGO 圖片大小固定 */
 .logo img {
-  width: 40px;
+  width: 48px;
   height: 40px;
 }
 
 /* 網站標題樣式 */
 .site-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
-  color: #333;
+  color: #2e7d32;
 }
 
 /* 搜尋框樣式 */
-.search-input {
-  height: 20px;
-  flex-grow: 1; /* 在剩餘空間自動擴展 */
-  max-width: 120px;
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* 右側功能區域（選單 + 登入） */
-.right-section {
+.search-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 9999px;
+  /* 超大圓角 */
+  padding: 4px 12px;
+  width: 100%;
+  max-width: 300px;
+  /* 可以依需求調整 */
+  box-sizing: border-box;
+  position: relative;
 }
+
+.search-input {
+  flex-grow: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 6px 8px;
+  background: transparent;
+}
+
+/* 放大鏡icon設定 */
+.search-icon {
+  width: 16px;
+  /* 圖片大小 */
+  height: 16px;
+  margin-left: 8px;
+  /* 與輸入框之間的距離 */
+}
+
 
 /* PC版主選單連結列 */
 .nav-links {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  flex-grow: 1;
+  justify-content: center;
+  /* 置中排列 */
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none;
+    }
+  }
 }
 
 /* 共用導覽項目樣式 */
@@ -307,9 +305,58 @@ watch(userRole, (newRole) => {
   background-color: #f0f0f0;
 }
 
+/* 搜尋、下拉、會員區 */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 會員中心樣式 */
+.profile-button {
+  display: inline-flex;
+  align-items: center;
+  /* 垂直置中 */
+  justify-content: center;
+  /* 水平置中 */
+
+  gap: 8px;
+  /* icon和文字之間的距離 */
+
+  background-color: #2e7d32;
+  color: white;
+
+  padding: 8px 20px;
+  border-radius: 9999px;
+  /* 超圓角 */
+
+  font-size: 16px;
+  font-weight: 500;
+
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
+
+  min-width: 90px;
+  /* 按鈕最小寬度 */
+}
+
+
+.profile-button:hover {
+  background-color: #27682b;
+  /* hover時再深一點 */
+}
+
+.auth-icon {
+  width: 20px;
+  height: 20px;
+}
+
+
 /* 登入按鈕樣式 */
 .auth-button {
-  background-color: #59c2b9;
+  background-color: #2e7d32;
   color: white;
   padding: 8px 16px;
   border-radius: 4px;
@@ -319,42 +366,17 @@ watch(userRole, (newRole) => {
 }
 
 .auth-button:hover {
-  background-color: #59c2b9;
+  background-color: #2e7d32;
 }
 
 /* 三條線 icon 按鈕 */
 .menu-icon {
   background: none;
   border: none;
-  font-size: 30px;
+  font-size: 28px;
   cursor: pointer;
   display: block;
 }
-
-/* PC版 dropdown 選單（靜態設計） */
-/* .pc-dropdown {
-  position: absolute;
-  top: 60px;
-  right: 10px;
-  background: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pc-dropdown a {
-  text-decoration: none;
-  color: #333;
-  padding: 8px 12px;
-  border-radius: 4px;
-}
-
-.pc-dropdown a:hover {
-  background-color: #f0f0f0;
-} */
 
 /* 手機版 dropdown 選單 */
 .mobile-dropdown {
@@ -373,5 +395,40 @@ watch(userRole, (newRole) => {
 .mobile-dropdown a.active {
   background-color: #e0e0e0;
   border-radius: 4px;
+}
+
+.region-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100px;
+  /* 可以依需要調整寬度 */
+}
+
+.region-select {
+  appearance: none;
+  /* 取消原生select樣式 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 89px;
+  height: 36px;
+  padding: 0 32px 0 16px;
+  /* 左右內距，留右邊空間放箭頭 */
+
+  border: 1px solid #ccc;
+  border-radius: 9999px;
+  /* 超大圓角 */
+
+  font-size: 16px;
+  color: #555;
+  background: #fff url('@/assets/arrow-down-icon.png') no-repeat right 12px center;
+  background-size: 9px 9px;
+  /* 箭頭大小 */
+
+  cursor: pointer;
+  box-sizing: border-box;
+
+  text-align: center;
+  text-align-last: center;
 }
 </style>

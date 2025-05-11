@@ -40,7 +40,7 @@ button {
 
 /* 被選取角色按鈕（active class）樣式 */
 .active {
-  background-color: #59c2b9;
+  background-color: #2e7d32;
   color: white;
 }
 </style>

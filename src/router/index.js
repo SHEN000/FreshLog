@@ -9,8 +9,13 @@ const routes = [
     component: () => import("@/views/Consumer/VeggieInfo.vue"),
   }, // 蔬菜列表
   {
-    path: "/veggiepage",
-    component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
+    path: '/veggie',
+    redirect: '/veggie/001' 
+  }, // 蔬菜列表預設
+  {
+    path: '/veggie/:id',
+    name: 'VeggieInfo',
+    component: () => import('@/views/Consumer/VeggieInfoPage.vue')
   }, // 蔬菜內頁
   {
     path: "/foodsafety",

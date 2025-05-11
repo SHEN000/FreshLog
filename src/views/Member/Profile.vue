@@ -67,7 +67,7 @@ h2 {
 /* 登入 / 登出 按鈕共用樣式 */
 .btn-login,
 .btn-logout {
-  background-color: #007bff;
+  background-color: #2e7d32;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -78,7 +78,7 @@ h2 {
 
 .btn-login:hover,
 .btn-logout:hover {
-  background-color: #0056b3;
+  background-color: #2e7d32;
 }
 
 .logged-in h3 {
