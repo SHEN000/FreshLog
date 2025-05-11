@@ -33,8 +33,8 @@
 <script setup>
 // 匯入 D3 及 Vue Composition API
 import * as d3 from 'd3'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { veggieMockData } from '@/data/mockVeggieData.js'
+import { ref, onMounted, onUnmounted, watch} from 'vue'
+import { priceTrendData } from '@/data/priceTrendData.js'
 
 // 建立 Reactive 變數
 const chartArea = ref(null) // svg 容器
@@ -74,7 +74,7 @@ let resizeObserver = null
 
 // 繪製圖表
 function drawChart() {
-  const data = veggieMockData.priceTrend[selectedPeriod.value]
+  const data = priceTrendData[selectedPeriod.value]
   const container = chartArea.value
 
   // 清空之前繪製的
@@ -131,7 +131,7 @@ function drawChart() {
             : d
         })
     )
-    
+
   // Y 軸
   svg.append('g').call(d3.axisLeft(y))
 
@@ -279,8 +279,10 @@ watch(selectedPeriod, () => {
   padding: 8px 12px;
   border-radius: 4px;
   position: absolute;
-  transform: translateX(-50%);  /* 水平置中 */
-  top: 50px;  /* 定位在上方 */
+  transform: translateX(-50%);
+  /* 水平置中 */
+  top: 50px;
+  /* 定位在上方 */
   left: 50%;
   min-height: 20px;
   min-width: 80px;

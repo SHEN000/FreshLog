@@ -46,6 +46,7 @@
 
 <script setup>
 import { ref, computed, toRefs } from 'vue'
+import { priceTrendData } from '@/data/priceTrendData.js'
 
 // 收藏按鈕的灰心與紅心
 import grayHeart from '@/assets/icons/heart-gray.png'
@@ -64,7 +65,7 @@ const toggleFavorite = () => {
 }
 
 // 取 30 天趨勢資料
-const trend30 = computed(() => veggie.value.priceTrend?.['30days'] || [])
+const trend30 = computed(() => priceTrendData['30days'])
 
 // 當前價格：最後一筆
 const currentPrice = computed(() => {
