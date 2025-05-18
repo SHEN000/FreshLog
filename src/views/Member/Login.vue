@@ -107,7 +107,7 @@ input {
 .submit-btn {
   width: 100%;
   padding: 10px;
-  background-color: #59c2b9;
+  background-color: #2e7d32;
   color: white;
   border: none;
   border-radius: 4px;
@@ -115,7 +115,7 @@ input {
 }
 
 .submit-btn:hover {
-  background-color: #59c2b9;
+  background-color: #2e7d32;
 }
 
 /* 錯誤訊息樣式 */

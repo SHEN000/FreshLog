@@ -1,43 +1,42 @@
 <template>
-    <div class="layout-wrapper">
-      <!-- ✅ 把 Header 包在 page-container 裡，讓它也被內縮 -->
-      <div class="page-container">
-        <Header />
-      </div>
-  
-      <!-- ✅ 主內容也放在 page-container 中 -->
-      <div class="page-container">
-        <slot />
-      </div>
+  <div class="layout-wrapper">
+    <!-- Header 自己一層，不放 page-container -->
+    <Header />
+
+    <!-- 主內容包在 page-container 中 -->
+    <div class="page-container">
+      <slot />
     </div>
-  </template>
+  </div>
+</template>
   
-  <script setup>
-  import Header from '@/components/Header.vue'
-  </script>
-  
-  <style scoped>
-  .layout-wrapper {
-    background-color: #f9f9f1;
-    min-height: 100vh;
-  }
-  
-  /* 📦 內縮設定：兩邊保留空間，畫面置中 */
+<script setup>
+import Header from '@/components/Header.vue'
+</script>
+
+<style scoped>
+.layout-wrapper {
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 0 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 響應式內距 */
+@media (min-width: 768px) {
   .page-container {
     padding: 0 24px;
-    max-width: 1440px;
-    margin: 0 auto;
   }
-  
-  @media (min-width: 768px) {
-    .page-container {
-      padding: 0 32px;
-    }
+}
+@media (min-width: 1024px) {
+  .page-container {
+    padding: 0 32px;
   }
-  @media (min-width: 1024px) {
-    .page-container {
-      padding: 0 48px;
-    }
-  }
-  </style>
-  
+}
+</style>

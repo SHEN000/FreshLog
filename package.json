@@ -10,7 +10,9 @@
     "mock": "node mock/mock-server.js"
   },
   "dependencies": {
+    "@vueuse/core": "^13.1.0",
     "axios": "^1.8.4",
+    "chart.js": "^4.4.9",
     "cors": "^2.8.5",
     "d3": "^7.9.0",
     "express": "^5.1.0",

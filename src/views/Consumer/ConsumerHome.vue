@@ -2,21 +2,20 @@
   <div class="dashboard-grid">
     <RecipeListCard class="bento-card small" />
     <MarketTrendCard class="bento-card large" />
-    <FeaturedIngredientCard class="bento-card tall" />    
+    <FeaturedIngredientCard class="bento-card tall" />
     <SafetyInfoCard class="bento-card tall2" />
     <NewsCard class="bento-card medium" />
     <CommunityContentCard class="bento-card wide" />
   </div>
 </template>
 
-
 <script setup>
-import RecipeListCard from '@/components/RecipeListCard.vue'
-import MarketTrendCard from '@/components/MarketTrendCard.vue'
-import FeaturedIngredientCard from '@/components/FeaturedIngredientCard.vue'
-import CommunityContentCard from '@/components/CommunityContentCard.vue'
-import SafetyInfoCard from '@/components/SafetyInfoCard.vue'
-import NewsCard from '@/components/NewsCard.vue'
+import RecipeListCard from "@/components/ConsumerHome/RecipeListCard.vue";
+import MarketTrendCard from "@/components/ConsumerHome/MarketTrendCard.vue";
+import FeaturedIngredientCard from "@/components/ConsumerHome/FeaturedIngredientCard.vue";
+import CommunityContentCard from "@/components/ConsumerHome/CommunityContentCard.vue";
+import SafetyInfoCard from "@/components/ConsumerHome/SafetyInfoCard.vue";
+import NewsCard from "@/components/ConsumerHome/NewsCard.vue";
 </script>
 
 <style scoped>
@@ -56,8 +55,8 @@ import NewsCard from '@/components/NewsCard.vue'
 /* 手機版調整間距與 padding */
 @media (max-width: 768px) {
   .dashboard-grid {
-    padding: 0px 0px 24px 0px;   
-    gap: 16px; 
+    padding: 0px 0px 24px 0px;
+    gap: 16px;
   }
 
   .bento-card {
