@@ -1,1 +1,0 @@
-import{_ as t,c as o,b as n,o as r}from"./index-DaHOhnCn.js";const c={};function l(s,e){return r(),o("div",null,e[0]||(e[0]=[n("h2",null,"食譜詳情",-1),n("p",null,"顯示某個食譜的詳細資訊",-1)]))}const _=t(c,[["render",l]]);export{_ as default};
