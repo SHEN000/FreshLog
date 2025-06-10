@@ -1,252 +1,86 @@
 <template>
   <div class="ai-recommendation">
-    <div class="page-container">
-      <!-- 左側篩選面板 -->
-      <div class="filter-sidebar">
-        <!-- 特色篩選區塊 -->
-        <div class="filter-section">
-          <h3 class="filter-title">特色篩選</h3>
-          <div class="filter-options">
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="filters.antioxidant" />
-              <span class="checkbox-label">抗氧化</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="filters.supplement" />
-              <span class="checkbox-label">補鈣佳品</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="filters.eyecare" />
-              <span class="checkbox-label">護眼明目</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="filters.energy" />
-              <span class="checkbox-label">運動能量</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="filters.superFood" />
-              <span class="checkbox-label">超級食物</span>
-            </label>
-          </div>
+    <div class="content-wrapper">
+      <!-- PC版 -->
+      <div class="desktop-layout">
+        <div class="left-panel">
+          <FilterSidebar
+            :filters="filters"
+            :priceRange="priceRange"
+            :nutritionFilters="nutritionFilters"
+            :activeNutritionTab="activeNutritionTab"
+            @update-filters="updateFilters"
+            @update-price-range="updatePriceRange"
+            @update-nutrition-filters="updateNutritionFilters"
+            @update-nutrition-tab="updateNutritionTab"
+          />
         </div>
 
-        <!-- 更新後的價格區間滑桿區塊 -->
-        <div class="filter-section">
-          <h3 class="filter-title">價格區間</h3>
-          <div class="price-range">
-            <div class="price-labels">
-              <span>NT${{ priceRange[0] }}</span>
-              <span>NT${{ priceRange[1] }}</span>
-            </div>
-            <div class="slider-container">
-              <!-- 滑桿軌道 -->
-              <div class="slider-track"></div>
-              <!-- 選中區間的填充 -->
-              <div class="slider-fill" :style="sliderFillStyle"></div>
-              <!-- 雙滑桿輸入 -->
-              <input
-                type="range"
-                min="0"
-                max="200"
-                v-model.number="priceRange[0]"
-                @input="validatePriceRange"
-                class="slider-min"
-              />
-              <input
-                type="range"
-                min="0"
-                max="200"
-                v-model.number="priceRange[1]"
-                @input="validatePriceRange"
-                class="slider-max"
-              />
-            </div>
-          </div>
-          <button class="apply-btn" @click="applyPriceFilter">套用篩選</button>
-        </div>
-
-        <!-- 營養需求導航 -->
-        <div class="filter-section nutrition-nav">
-          <h3 class="filter-title">營養需求導航</h3>
-          <div class="nutrition-tabs">
-            <div
-              v-for="tab in nutritionTabs"
-              :key="tab.id"
-              class="nutrition-tab"
-              :class="{ active: activeNutritionTab === tab.id }"
-              @click="activeNutritionTab = tab.id"
-            >
-              {{ tab.name }}
-            </div>
-          </div>
-          <div class="nutrition-content">
-            <div
-              v-if="activeNutritionTab === 'vitaminA'"
-              class="nutrition-items"
-            >
-              <div class="nutrition-item">
-                <label class="checkbox-item">
-                  <input type="checkbox" v-model="nutritionFilters.vitaminA" />
-                  <span class="checkbox-label">維生素A</span>
-                </label>
-              </div>
-            </div>
-            <div
-              v-if="activeNutritionTab === 'vitaminC'"
-              class="nutrition-items"
-            >
-              <div class="nutrition-item">
-                <label class="checkbox-item">
-                  <input type="checkbox" v-model="nutritionFilters.vitaminC" />
-                  <span class="checkbox-label">維生素C</span>
-                </label>
-              </div>
-            </div>
-            <div
-              v-if="activeNutritionTab === 'minerals'"
-              class="nutrition-items"
-            >
-              <div class="nutrition-item">
-                <label class="checkbox-item">
-                  <input type="checkbox" v-model="nutritionFilters.calcium" />
-                  <span class="checkbox-label">鈣</span>
-                </label>
-              </div>
-              <div class="nutrition-item">
-                <label class="checkbox-item">
-                  <input type="checkbox" v-model="nutritionFilters.iron" />
-                  <span class="checkbox-label">鐵</span>
-                </label>
-              </div>
-            </div>
-            <div v-if="activeNutritionTab === 'others'" class="nutrition-items">
-              <div class="nutrition-item">
-                <label class="checkbox-item">
-                  <input
-                    type="checkbox"
-                    v-model="nutritionFilters.antioxidant"
-                  />
-                  <span class="checkbox-label">抗氧化</span>
-                </label>
-              </div>
-            </div>
-          </div>
+        <div class="right-panel">
+          <PageHeader
+            :searchQuery="searchQuery"
+            @update-search="updateSearchQuery"
+            @search="searchRecipes"
+          />
+          <CategoryTabs
+            :categories="categories"
+            :activeCategory="activeCategory"
+            @set-category="setCategory"
+          />
+          <MarketInsight />
+          <RecipeGrid
+            :recipes="filteredDishes"
+            @view-recipe="viewRecipeDetails"
+          />
+          <PaginationControls
+            :currentPage="currentPage"
+            :totalPages="totalPages"
+            @prev-page="prevPage"
+            @next-page="nextPage"
+            @go-to-page="goToPage"
+          />
         </div>
       </div>
 
-      <!-- 右側內容區 -->
-      <div class="content-area">
-        <!-- 頂部標題和搜尋欄 -->
-        <div class="page-header">
-          <h1>AI 智慧推薦</h1>
-          <!-- <div class="search-bar">
-            <input
-              type="text"
-              placeholder="AI推薦可查詢的料理>>"
-              v-model="searchQuery"
-            />
-            <button class="search-btn" @click="searchRecipes">搜尋</button> -->
-          <!-- </div> 不需要 -->
-        </div>
-
-        <!-- 食物分類標籤列 -->
-        <div class="food-category-section">
-          <div class="category-left">食物分類</div>
-          <div class="category-center">
-            <button
-              v-for="category in categories"
-              :key="category.id"
-              class="category-btn"
-              :class="{ active: activeCategory === category.id }"
-              @click="setCategory(category.id)"
-            >
-              {{ category.name }}
-            </button>
-          </div>
-          <div class="category-right">
-            更多分類 <span class="down-arrow">▼</span>
-          </div>
-        </div>
-
-        <!-- AI 市場洞察區域 -->
-        <div class="market-insight">
-          <div class="insight-header">
-            <span class="insight-icon">💡</span>
-            <h3>AI 市場洞察</h3>
-          </div>
-          <p class="insight-content">
-            根據最近市場趨勢，紅蘿蔔價格已連續三週下降，預計未來一週將回穩。建議現在是採購紅蘿蔔的好時機。
-          </p>
-        </div>
-
-        <!-- 新的蔬菜卡片網格佈局 -->
-        <div class="recipe-grid">
-          <div
-            class="recipe-card"
-            v-for="dish in filteredDishes"
-            :key="dish.id"
-          >
-            <!-- 圖片預留位置 -->
-            <div class="image-placeholder">
-              <span>🖼️ 圖片預留位置 🖼️</span>
-            </div>
-
-            <h3 class="recipe-title">{{ dish.name }}</h3>
-
-            <div class="recipe-info">
-              <span class="difficulty">{{ dish.difficulty }}</span>
-              <span class="time">{{ dish.time }}</span>
-            </div>
-
-            <div class="recipe-tag" :class="dish.type">{{ dish.type }}</div>
-
-            <div class="recipe-ingredients">
-              食材: {{ dish.ingredients.slice(0, 3).join("、")
-              }}{{ dish.ingredients.length > 3 ? "..." : "" }}
-            </div>
-
-            <a
-              href="#"
-              class="recipe-button"
-              @click.prevent="viewRecipeDetails(dish.id)"
-              >查看食譜</a
-            >
-          </div>
-        </div>
-
-        <!-- 分頁控制 -->
-        <div class="pagination">
-          <button
-            class="pagination-btn prev"
-            :disabled="currentPage === 1"
-            @click="prevPage"
-          >
-            上一頁
-          </button>
-          <div class="page-numbers">
-            <button
-              v-for="page in totalPages"
-              :key="page"
-              class="page-number"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >
-              {{ page }}
-            </button>
-          </div>
-          <button
-            class="pagination-btn next"
-            :disabled="currentPage === totalPages"
-            @click="nextPage"
-          >
-            下一頁
-          </button>
-        </div>
+      <!-- 手機版 -->
+      <div class="mobile-layout">
+        <PageHeader
+          :searchQuery="searchQuery"
+          @update-search="updateSearchQuery"
+          @search="searchRecipes"
+        />
+        <CategoryTabs
+          :categories="categories"
+          :activeCategory="activeCategory"
+          @set-category="setCategory"
+        />
+        <MarketInsight />
+        <FilterSidebar
+          :filters="filters"
+          :priceRange="priceRange"
+          :nutritionFilters="nutritionFilters"
+          :activeNutritionTab="activeNutritionTab"
+          @update-filters="updateFilters"
+          @update-price-range="updatePriceRange"
+          @update-nutrition-filters="updateNutritionFilters"
+          @update-nutrition-tab="updateNutritionTab"
+        />
+        <RecipeGrid
+          :recipes="filteredDishes"
+          @view-recipe="viewRecipeDetails"
+        />
+        <PaginationControls
+          :currentPage="currentPage"
+          :totalPages="totalPages"
+          @prev-page="prevPage"
+          @next-page="nextPage"
+          @go-to-page="goToPage"
+        />
       </div>
     </div>
 
-    <!-- 引用 Footer 元件 -->
-    <Footer />
+    <!-- 頁腳 -->
+    <SiteFooter />
   </div>
 </template>
 
@@ -255,14 +89,20 @@ import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { recommendedDishes } from "@/data/AiRecommendation.js";
 
+// 引入子元件
+import FilterSidebar from "@/components/CCC/Sidebar.vue";
+import PageHeader from "@/components/CCC/PageHeader.vue";
+import CategoryTabs from "@/components/CCC/CategoryTag.vue";
+import MarketInsight from "@/components/CCC/Marketsight.vue";
+import RecipeGrid from "@/components/CCC/Recipe.vue";
+import PaginationControls from "@/components/CCC/PageControls.vue";
+import SiteFooter from "@/components/Footer.vue";
+
 const router = useRouter();
 const searchQuery = ref("");
 const activeCategory = ref("all");
 const currentPage = ref(1);
-const itemsPerPage = 6; // 每頁顯示6個食譜
-const totalPages = computed(() =>
-  Math.ceil(filteredDishes.value.length / itemsPerPage)
-);
+const itemsPerPage = 6;
 
 // 分類選項
 const categories = [
@@ -276,41 +116,15 @@ const categories = [
 
 // 篩選條件
 const filters = reactive({
-  antioxidant: false, // 抗氧化
-  supplement: false, // 補鈣佳品
-  eyecare: false, // 護眼明目
-  energy: false, // 運動能量
-  superFood: false, // 超級食物
+  antioxidant: true,
+  supplement: true,
+  eyecare: false,
+  energy: false,
+  superFood: false,
 });
 
 // 價格區間
 const priceRange = ref([0, 200]);
-const sliderFillStyle = computed(() => {
-  const min = 0;
-  const max = 200;
-  const left = ((priceRange.value[0] - min) / (max - min)) * 100;
-  const right = ((max - priceRange.value[1]) / (max - min)) * 100;
-  return {
-    left: left + "%",
-    right: right + "%",
-  };
-});
-
-// 確保最小值不大於最大值
-const validatePriceRange = () => {
-  if (priceRange.value[0] > priceRange.value[1]) {
-    priceRange.value[0] = priceRange.value[1];
-  }
-};
-
-// 營養需求選項卡
-const activeNutritionTab = ref("vitaminA");
-const nutritionTabs = [
-  { id: "vitaminA", name: "維生素A" },
-  { id: "vitaminC", name: "維生素C" },
-  { id: "minerals", name: "礦食維他" },
-  { id: "others", name: "鉀" },
-];
 
 // 營養需求篩選條件
 const nutritionFilters = reactive({
@@ -320,6 +134,14 @@ const nutritionFilters = reactive({
   iron: false,
   antioxidant: false,
 });
+
+// 營養標籤
+const activeNutritionTab = ref("vitaminA");
+
+// 計算總頁數
+const totalPages = computed(() =>
+  Math.ceil(allFilteredDishes.value.length / itemsPerPage)
+);
 
 // 所有篩選後的菜餚
 const allFilteredDishes = computed(() => {
@@ -340,13 +162,6 @@ const allFilteredDishes = computed(() => {
     dishes = dishes.filter((dish) => dish.type === activeCategory.value);
   }
 
-  // TODO: 加入特色篩選、價格篩選和營養篩選的邏輯
-  // 這裡可以根據 filters, priceRange 和 nutritionFilters 的值進行篩選
-  // 例如：
-  // if (filters.antioxidant) {
-  //   dishes = dishes.filter(dish => dish.features.includes('antioxidant'));
-  // }
-
   return dishes;
 });
 
@@ -357,25 +172,43 @@ const filteredDishes = computed(() => {
   return allFilteredDishes.value.slice(start, end);
 });
 
-// 設定分類
+// 事件處理函數
+const updateFilters = (newFilters) => {
+  Object.assign(filters, newFilters);
+  currentPage.value = 1;
+};
+
+const updatePriceRange = (newRange) => {
+  priceRange.value = newRange;
+  currentPage.value = 1;
+};
+
+const updateNutritionFilters = (newFilters) => {
+  Object.assign(nutritionFilters, newFilters);
+  currentPage.value = 1;
+};
+
+const updateNutritionTab = (tab) => {
+  activeNutritionTab.value = tab;
+};
+
+const updateSearchQuery = (query) => {
+  searchQuery.value = query;
+};
+
 const setCategory = (categoryId) => {
   activeCategory.value = categoryId;
-  // 切換分類時重置頁碼
   currentPage.value = 1;
 };
 
-// 搜尋功能
 const searchRecipes = () => {
-  // 搜尋時重置頁碼
   currentPage.value = 1;
 };
 
-// 查看食譜詳情
 const viewRecipeDetails = (recipeId) => {
   router.push(`/recipes/${recipeId}`);
 };
 
-// 分頁功能
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
@@ -392,13 +225,12 @@ const goToPage = (page) => {
   currentPage.value = page;
 };
 
-// 初始化時從URL參數獲取分類
+// 初始化
 onMounted(() => {
   const categoryParam = router.currentRoute.value.query.category;
   if (categoryParam && categories.some((c) => c.id === categoryParam)) {
     activeCategory.value = categoryParam;
   } else {
-    // 預設選中"全部"
     activeCategory.value = "all";
   }
 });
@@ -409,584 +241,55 @@ onMounted(() => {
   padding: 20px 0;
 }
 
-.page-container {
-  display: flex;
-  gap: 20px;
-  max-width: 100vw;
+.content-wrapper {
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
-/* 左側篩選面板 */
-.filter-sidebar {
-  width: 280px;
-  flex-shrink: 0;
-}
-
-.filter-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  margin-bottom: 20px;
-}
-
-.filter-title {
-  color: #2e7d32;
-  font-size: 18px;
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-weight: 500;
-}
-
-.filter-options {
+/* 桌機版結構 */
+.desktop-layout {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 多選框樣式 */
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.checkbox-item input[type="checkbox"] {
-  margin-right: 8px;
-  width: 18px;
-  height: 18px;
-  accent-color: #2196f3;
-}
-
-.checkbox-label {
-  font-size: 14px;
-}
-
-/* 價格滑桿樣式 */
-.filter-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.filter-title {
-  color: #4caf50;
-  font-size: 18px;
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-weight: 600;
-}
-
-.price-range {
-  margin-bottom: 20px;
-}
-
-.price-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.slider-container {
-  position: relative;
-  height: 2rem;
-  margin: 2rem 0;
-  padding: 0 -15px;
-}
-
-/* 滑桿軌道背景 */
-.slider-track {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 0.5rem;
-  width: 100%;
-  background: #e3f2fd;
-  border-radius: 4px;
-  z-index: 1;
-}
-
-/* 選中區間的填充色 */
-.slider-fill {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 8px;
-  background: linear-gradient(90deg, #2196f3 100%);
-  border-radius: 4px;
-  z-index: 2;
-}
-
-/* 滑桿輸入元素 */
-.slider-container input[type="range"] {
-  position: absolute;
-  width: 100%;
-  height: 0.5rem;
-  background: transparent;
-  pointer-events: none;
-  -webkit-appearance: none;
-  appearance: none;
-  z-index: 3;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* 滑桿按鈕 - WebKit 瀏覽器 */
-.slider-container input[type="range"]::-webkit-slider-thumb {
-  height: 1.5rem;
-  width: 1.5rem;
-  border-radius: 50%;
-  background: #2196f3;
-  /* border: 4px solid #fff; */
-  box-shadow: 0 3px 8px rgba(33, 150, 243, 0.3);
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-appearance: none;
-  position: relative;
-  z-index: 4;
-}
-
-/* 滑桿按鈕 - Firefox 瀏覽器 */
-.slider-container input[type="range"]::-moz-range-thumb {
-  height: 1.5rem;
-  width: 1.5rem;
-  border-radius: 50%;
-  background: #2196f3;
-  /* border: 4px solid #fff; */
-  box-shadow: 0 3px 8px rgba(33, 150, 243, 0.3);
-  cursor: pointer;
-  pointer-events: auto;
-  border: none;
-}
-
-/* 隱藏 Firefox 的軌道 */
-.slider-container input[type="range"]::-moz-range-track {
-  background: transparent;
-}
-
-/* 按鈕懸停效果 */
-.slider-container input[type="range"]::-webkit-slider-thumb:hover {
-  background: #1976d2;
-  transform: scale(1.1);
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-}
-
-.slider-container input[type="range"]::-moz-range-thumb:hover {
-  background: #1976d2;
-  transform: scale(1.1);
-  transition: all 0.2s ease;
-}
-
-/* 套用篩選按鈕 - 模仿第一張圖的綠色風格 */
-.apply-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 0;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
-}
-
-.apply-btn:hover {
-  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
-  box-shadow: 0 5px 10px rgba(76, 175, 80, 0.3);
-  transform: translateY(-2px);
-}
-
-.apply-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(76, 175, 80, 0.2);
-}
-
-/* 營養需求導航 */
-.nutrition-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.nutrition-tab {
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.nutrition-tab.active {
-  background: #2196f3;
-  color: white;
-}
-
-.nutrition-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 右側內容區 */
-.content-area {
-  flex: 1;
-}
-
-/* 頁面標題和搜尋區 */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-h1 {
-  font-size: 24px;
-  margin: 0;
-  color: #333;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-}
-
-.search-bar input {
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-right: 10px;
-  min-width: 300px;
-}
-
-.search-btn {
-  background-color: #59c2b9;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  cursor: pointer;
-}
-
-/* 分類選項樣式 */
-.food-category-section {
-  display: flex;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.category-left {
-  font-weight: bold;
-  margin-right: 20px;
-  padding: 8px 0;
-  min-width: 80px;
-}
-
-.category-center {
-  display: flex;
-  gap: 10px;
-  flex: 1;
-}
-
-.category-btn {
-  background: none;
-  border: none;
-  padding: 8px 16px;
-  cursor: pointer;
-  border-radius: 40%;
-}
-
-.category-btn:hover {
-  background-color: #7dc5ff;
-  transition: ease-in-out 0.5s;
-}
-
-.category-btn.active {
-  background-color: #59c2b9;
-  color: white;
-}
-
-.category-right {
-  color: #59c2b9;
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  cursor: pointer;
-}
-
-.down-arrow {
-  font-size: 12px;
-  margin-left: 5px;
-}
-
-/* AI 市場洞察區域 */
-.market-insight {
-  background-color: #f1f8e9;
-  border-left: 4px solid #4caf50;
-  padding: 16px;
-  margin-bottom: 24px;
-  border-radius: 0 4px 4px 0;
-}
-
-.insight-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.insight-icon {
-  font-size: 20px;
-  margin-right: 8px;
-}
-
-.insight-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #2e7d32;
-}
-
-.insight-content {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #444;
-}
-
-/* 食譜卡片網格 */
-.recipe-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  margin-bottom: 30px;
 }
 
-.recipe-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+/* 左側欄 */
+.left-panel {
+  flex: 0 0 280px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
-  padding: 0 0 20px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  gap: 20px;
 }
 
-.recipe-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
-/* 圖片預留位置 */
-.image-placeholder {
-  height: 180px;
-  background-color: #e8f5e9; /* 使用淺綠色背景突出顯示 */
-  border: 2px dashed #59c2b9; /* 添加虛線邊框 */
+/* 右側欄 */
+.right-panel {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #2e7d32; /* 更改文字顏色為綠色 */
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 15px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.recipe-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0 0 10px;
-  padding: 0 20px;
-  color: #333;
+/* 手機版結構 */
+.mobile-layout {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.recipe-info {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 20px;
-  margin-bottom: 10px;
-  color: #666;
-  font-size: 14px;
-}
-
-.recipe-tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 15px;
-  color: white;
-  font-size: 13px;
-  margin: 0 20px 10px;
-}
-
-.dish1 {
-  background-color: #4caf50;
-}
-
-.dish2 {
-  background-color: #ff9800;
-}
-
-.dish3 {
-  background-color: #f44336;
-}
-
-.recipe-ingredients {
-  padding: 0 20px;
-  margin-bottom: 15px;
-  color: #555;
-  font-size: 14px;
-}
-
-.recipe-button {
-  display: block;
-  width: calc(100% - 40px);
-  margin: 0 20px;
-  padding: 8px 0;
-  text-align: center;
-  background: none;
-  border: 1px solid #4caf50;
-  color: #4caf50;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.recipe-button:hover {
-  background: #4caf50;
-  color: white;
-}
-
-/* 分頁控制 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 30px 0;
-}
-
-.pagination-btn {
-  padding: 8px 16px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  color: #333;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.pagination-btn:disabled {
-  color: #ccc;
-  cursor: not-allowed;
-}
-
-.pagination-btn.prev {
-  margin-right: 10px;
-}
-
-.pagination-btn.next {
-  margin-left: 10px;
-}
-
-.page-numbers {
-  display: flex;
-  gap: 5px;
-}
-
-.page-number {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: none;
-  cursor: pointer;
-}
-
-.page-number.active {
-  background-color: #59c2b9;
-  color: white;
-  border-color: #59c2b9;
-}
-
-/* 手機版適配 */
-@media (max-width: 992px) {
-  .recipe-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
+/* 響應式切換 */
 @media (max-width: 768px) {
-  .page-container {
-    flex-direction: column;
+  .desktop-layout {
+    display: none;
   }
 
-  .filter-sidebar {
-    width: 100%;
-    order: 2;
+  .mobile-layout {
+    display: flex;
   }
 
-  .content-area {
-    order: 1;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .search-bar {
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .search-bar input {
-    flex-grow: 1;
-    min-width: unset;
-  }
-
-  .food-category-section {
-    flex-direction: column;
-  }
-
-  .category-center {
-    overflow-x: auto;
-    margin: 10px 0;
-    padding-bottom: 5px;
-  }
-
-  .category-right {
-    align-self: flex-end;
-  }
-
-  .recipe-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 576px) {
-  .recipe-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-  }
-
-  .page-numbers {
-    margin: 10px 0;
+  .content-wrapper {
+    padding: 0 6px;
   }
 }
 </style>
