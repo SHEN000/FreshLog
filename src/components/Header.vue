@@ -8,32 +8,68 @@
       <h1 class="site-title">食價登錄&nbsp;&nbsp;FreshLog</h1>
 
       <div v-if="!isMobile" class="nav-links">
-        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
+        <RouterLink
+          v-if="isConsumer"
+          to="/"
+          :class="{ active: isActive('/') }"
+          class="nav-item"
+          >首頁</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/veggie/001"
+          :class="{ active: isActive('/veggie/001') }"
+          class="nav-item"
+        >
           蔬菜內頁
         </RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-          class="nav-item">AI 智慧推薦</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
+        <RouterLink
+          v-if="isConsumer"
+          to="/ai-recommendation"
+          :class="{ active: isActive('/ai-recommendation') }"
+          class="nav-item"
+          >蔬菜資訊</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/veggie"
+          :class="{ active: isActive('/veggie') }"
+          class="nav-item"
+          >蔬菜資訊
         </RouterLink>
-        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
+        <RouterLink
+          v-if="isConsumer"
+          to="/foodsafety"
+          :class="{ active: isActive('/foodsafety') }"
+          class="nav-item"
+        >
           食安資訊
         </RouterLink>
-        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-          class="nav-item">農民儀表板</RouterLink>
+        <RouterLink
+          v-if="isFarmer"
+          to="/farmer/crop-dashboard"
+          :class="{ active: isActive('/farmer/crop-dashboard') }"
+          class="nav-item"
+          >農民儀表板</RouterLink
+        >
       </div>
 
       <div class="search-container">
-        <input type="text" placeholder="搜尋蔬果名稱、類別或營養成分..." class="search-input" />
+        <input
+          type="text"
+          placeholder="搜尋蔬果名稱、類別或營養成分..."
+          class="search-input"
+        />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </div>
 
-      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button">註冊/登入</RouterLink>
+      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button"
+        >註冊/登入</RouterLink
+      >
       <RouterLink v-else to="/member/profile" class="profile-button">
         <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
         個人中心
       </RouterLink>
-
 
       <!-- 手機版三條線 -->
       <button class="menu-icon" @click="toggleMenu" v-if="isMobile">☰</button>
@@ -41,19 +77,51 @@
 
     <!-- 手機版展開選單 -->
     <div class="mobile-dropdown" v-if="showMenu && isMobile">
-      <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-      <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
-          蔬菜內頁
-        </RouterLink>
-      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-        class="nav-item">
-        AI 智慧推薦</RouterLink>
-      <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
+      <RouterLink
+        v-if="isConsumer"
+        to="/"
+        :class="{ active: isActive('/') }"
+        class="nav-item"
+        >首頁</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggie/001"
+        :class="{ active: isActive('/veggie/001') }"
+        class="nav-item"
+      >
+        蔬菜內頁
       </RouterLink>
-      <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
-        食安資訊</RouterLink>
-      <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-        class="nav-item">農民儀表板</RouterLink>
+      <RouterLink
+        v-if="isConsumer"
+        to="/ai-recommendation"
+        :class="{ active: isActive('/ai-recommendation') }"
+        class="nav-item"
+      >
+        AI 智慧推薦</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggie"
+        :class="{ active: isActive('/veggie') }"
+        class="nav-item"
+        >蔬菜資訊
+      </RouterLink>
+      <RouterLink
+        v-if="isConsumer"
+        to="/foodsafety"
+        :class="{ active: isActive('/foodsafety') }"
+        class="nav-item"
+      >
+        食安資訊</RouterLink
+      >
+      <RouterLink
+        v-if="isFarmer"
+        to="/farmer/crop-dashboard"
+        :class="{ active: isActive('/farmer/crop-dashboard') }"
+        class="nav-item"
+        >農民儀表板</RouterLink
+      >
     </div>
   </header>
 </template>
@@ -62,7 +130,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
-import magnifierIcon from '@/assets/magnifier-icon.png'
+import magnifierIcon from "@/assets/magnifier-icon.png";
 
 // 取得使用者狀態
 const userStore = useUserStore();
@@ -93,9 +161,14 @@ function closeMenu() {
 
 // 控制點擊外部區域關閉選單
 function handleClickOutside(event) {
-  const menu = document.querySelector('.mobile-dropdown')
-  const button = document.querySelector('.menu-icon')
-  if (menu && !menu.contains(event.target) && button && !button.contains(event.target)) {
+  const menu = document.querySelector(".mobile-dropdown");
+  const button = document.querySelector(".menu-icon");
+  if (
+    menu &&
+    !menu.contains(event.target) &&
+    button &&
+    !button.contains(event.target)
+  ) {
     showMenu.value = false;
   }
 }
@@ -160,15 +233,13 @@ onMounted(() => {
   window.addEventListener("resize", handleResize);
 
   // 監聽點擊外部關閉選單
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
 
   // 每次路徑跳轉後自動關閉選單
   router.afterEach(() => {
     closeMenu();
   });
 });
-
-
 
 // 移除 resize 監聽
 onBeforeUnmount(() => {
@@ -264,7 +335,6 @@ watch(userRole, (newRole) => {
   /* 與輸入框之間的距離 */
 }
 
-
 /* PC版主選單連結列 */
 .nav-links {
   display: flex;
@@ -333,7 +403,6 @@ watch(userRole, (newRole) => {
   /* 按鈕最小寬度 */
 }
 
-
 .profile-button:hover {
   background-color: #27682b;
   /* hover時再深一點 */
@@ -343,7 +412,6 @@ watch(userRole, (newRole) => {
   width: 20px;
   height: 20px;
 }
-
 
 /* 登入按鈕樣式 */
 .auth-button {

@@ -1,0 +1,1 @@
+import{_ as o,c as t,b as n,o as l}from"./index-Vt1V7DfG.js";const r={};function s(c,e){return l(),t("div",null,e[0]||(e[0]=[n("h2",null,"追蹤條件設定",-1),n("p",null,"設定哪些條件下要通知使用者",-1)]))}const _=o(r,[["render",s]]);export{_ as default};
