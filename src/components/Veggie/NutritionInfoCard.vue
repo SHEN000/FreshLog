@@ -74,7 +74,7 @@ export default {
 
 .section-title {
   color: #2e7d32;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   margin-bottom: 16px;
 }
@@ -117,6 +117,7 @@ export default {
   transition: width 0.5s ease;
   white-space: nowrap;
   font-weight: 500;
+  font-size: 12px;
 }
 
 /* 健康益處列表樣式 */
@@ -125,6 +126,7 @@ export default {
   padding-left: 20px;
   line-height: 1.6;
   margin: 0;
+  font-size: 14px;
 }
 
 .benefits-list li {
@@ -135,6 +137,7 @@ export default {
 .audience {
   line-height: 1.6;
   margin: 0;
+  font-size: 14px;
 }
 
 /* 手機版 */
@@ -144,15 +147,7 @@ export default {
   }
 
   .section-title {
-    font-size: 16px;
-  }
-
-  .sub-title {
-    font-size: 14px;
-  }
-
-  .bar-content {
-    font-size: 14px;
+    font-size: 18px;
   }
 }
 </style>

@@ -146,7 +146,7 @@ watch(
   }
 
   .content-wrapper {
-    padding: 0 6px;
+    padding: 0px;
   }
 }
 </style>

@@ -102,7 +102,7 @@ function drawChart() {
   if (selectedPeriod.value === '30days') {
     tickDates = allDates.filter((_, i) => i % 5 === 0); // 每5個點顯示一次
   } else if (selectedPeriod.value === '6months') {
-    tickDates = allDates.filter((_, i) => i % 4 === 0); // 每4個點顯示一次
+    tickDates = allDates.filter((_, i) => i % 5 === 0); // 每6個點顯示一次
   } else if (selectedPeriod.value === '1year') {
     tickDates = allDates.filter((_, i) => i % 2 === 0); // 每2個點顯示一次
   } else {
@@ -245,7 +245,7 @@ watch(selectedPeriod, () => {
 }
 
 .chart-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
   color: #2e7d32;

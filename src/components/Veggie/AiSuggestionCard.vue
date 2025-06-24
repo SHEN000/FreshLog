@@ -183,7 +183,7 @@ function onEditClick() {
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   color: #2e7d32;
   margin-bottom: 8px;

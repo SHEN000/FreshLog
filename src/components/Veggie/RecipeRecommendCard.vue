@@ -170,5 +170,13 @@ const icons = {
   .card:nth-child(n+3) {
     display: none;
   }
+
+  .meta {
+  display: flex;
+  gap: 4px;
+  font-size: 10px;
+  color: #777;
+  margin-bottom: 12px;
+}
 }
 </style>

@@ -5,181 +5,99 @@
         <img src="/logo.png" alt="logo" />
       </RouterLink>
 
-      <h1 class="site-title">食價登錄&nbsp;&nbsp;FreshLog</h1>
+      <!-- 桌機標題 -->
+      <h1 class="site-title desktop-only">食價登錄&nbsp;&nbsp;FreshLog</h1>
+
+      <!-- 手機標題 -->
+      <h1 class="site-title mobile-only">食價登錄</h1>
 
       <div v-if="!isMobile" class="nav-links">
         <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
-          蔬菜內頁
-        </RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-          class="nav-item">AI 智慧推薦</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
-        </RouterLink>
-        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
-          食安資訊
-        </RouterLink>
-        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-          class="nav-item">農民儀表板</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">蔬菜內頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
+        <RouterLink v-if="isConsumer" to="/recipes/:id" :class="{ active: isActive('/recipes/:id') }" class="nav-item">食譜內頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
+        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
       </div>
 
-      <div class="search-container">
+      <div class="search-container desktop-only">
         <input type="text" placeholder="搜尋蔬果名稱、類別或營養成分..." class="search-input" />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </div>
 
+      <!-- 手機搜尋icon -->
+      <button class="mobile-search-btn mobile-only">
+        <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
+      </button>
+
       <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button">註冊/登入</RouterLink>
       <RouterLink v-else to="/member/profile" class="profile-button">
         <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
-        個人中心
+        <span>個人中心</span>
       </RouterLink>
 
-
       <!-- 手機版三條線 -->
-      <button class="menu-icon" @click="toggleMenu" v-if="isMobile">☰</button>
+      <button class="menu-icon mobile-only" @click="toggleMenu">☰</button>
     </div>
 
     <!-- 手機版展開選單 -->
     <div class="mobile-dropdown" v-if="showMenu && isMobile">
-      <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-      <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">
-          蔬菜內頁
-        </RouterLink>
-      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-        class="nav-item">
-        AI 智慧推薦</RouterLink>
-      <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊
-      </RouterLink>
-      <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">
-        食安資訊</RouterLink>
-      <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-        class="nav-item">農民儀表板</RouterLink>
+        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊</RouterLink>
+        <RouterLink v-if="isConsumer" to="/veggie/001" :class="{ active: isActive('/veggie/001') }" class="nav-item">蔬菜內頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
+        <RouterLink v-if="isConsumer" to="/recipes/:id" :class="{ active: isActive('/recipes/:id') }" class="nav-item">食譜內頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
+        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
 import magnifierIcon from '@/assets/magnifier-icon.png'
 
-// 取得使用者狀態
 const userStore = useUserStore();
 const router = useRouter();
 const route = useRoute();
 
-// 是否登入
 const isLoggedIn = computed(() => userStore.isAuthenticated);
-
-// 使用者角色
 const userRole = computed(() => userStore.userRole);
 const isConsumer = computed(() => userRole.value === "consumer");
 const isFarmer = computed(() => userRole.value === "farmer");
 
-// 畫面狀態
 const showMenu = ref(false);
-const isMobile = ref(window.innerWidth <= 768); // 判斷是否為行動裝置（768px 為界線）
+const isMobile = ref(window.innerWidth <= 768);
 
-// 控制選單展開
-function toggleMenu() {
-  showMenu.value = !showMenu.value;
-}
+const toggleMenu = () => { showMenu.value = !showMenu.value; };
+const closeMenu = () => { showMenu.value = false; };
 
-// 當跳轉頁面後自動關閉選單
-function closeMenu() {
-  showMenu.value = false;
-}
+const isActive = (path) => route.path === path;
 
-// 控制點擊外部區域關閉選單
-function handleClickOutside(event) {
-  const menu = document.querySelector('.mobile-dropdown')
-  const button = document.querySelector('.menu-icon')
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
+
+const handleClickOutside = (event) => {
+  const menu = document.querySelector('.mobile-dropdown');
+  const button = document.querySelector('.menu-icon');
   if (menu && !menu.contains(event.target) && button && !button.contains(event.target)) {
     showMenu.value = false;
   }
-}
-
-// 判斷裝置寬度
-function handleResize() {
-  isMobile.value = window.innerWidth <= 768;
-}
-
-// 設定使用者角色並儲存到 localStorageuser-section
-const setRole = (role) => {
-  userStore.setUserRole(role);
-  localStorage.setItem("userRole", role);
 };
 
-// 登入後導回登入前頁面
-const login = () => {
-  isLoggedIn.value = true;
-  if (!userRole.value) userRole.value = "consumer";
-
-  const redirectPath = localStorage.getItem("redirectAfterLogin");
-  if (redirectPath) {
-    router.push(redirectPath);
-    localStorage.removeItem("redirectAfterLogin");
-  } else {
-    router.push("/");
-  }
-};
-
-// 判斷目前頁面
-const isActive = (path) => {
-  return route.path === path;
-};
-
-// 登出並清除所有登入資訊
-const logout = () => {
-  isLoggedIn.value = false;
-  localStorage.removeItem("userToken");
-  localStorage.removeItem("userRole");
-  localStorage.removeItem("redirectAfterLogin");
-  userStore.logout();
-  router.push("/"); // 登出後導向首頁
-};
-
-// 記錄登入前位置與角色、控制 body scroll
 onMounted(() => {
-  // 確保每次進入頁面都會從 localStorage 讀取角色並更新狀態
-  const storedRole = localStorage.getItem("userRole");
-  if (storedRole && storedRole !== userStore.userRole) {
-    userStore.setUserRole(storedRole); // 設定使用者角色
-  }
-
-  // 尚未登入時記錄頁面路徑
-  if (!isLoggedIn.value) {
-    const currentPath = router.currentRoute.value.fullPath;
-    if (!currentPath.startsWith("/member/login")) {
-      localStorage.setItem("redirectAfterLogin", currentPath);
-    }
-  }
-
-  // 監聽視窗縮放
   window.addEventListener("resize", handleResize);
-
-  // 監聽點擊外部關閉選單
   document.addEventListener('click', handleClickOutside);
-
-  // 每次路徑跳轉後自動關閉選單
-  router.afterEach(() => {
-    closeMenu();
-  });
+  router.afterEach(closeMenu);
 });
 
-
-
-// 移除 resize 監聽
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
-});
-
-// 當角色變化時（例如從選擇視窗選擇完畢），恢復畫面捲動
-watch(userRole, (newRole) => {
-  if (newRole) {
-    document.body.style.overflow = "auto";
-  }
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -202,7 +120,7 @@ watch(userRole, (newRole) => {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  max-width: 1600px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 24px;
   gap: 20px;
@@ -350,7 +268,7 @@ watch(userRole, (newRole) => {
   background-color: #2e7d32;
   color: white;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 9999px;
   font-size: 16px;
   text-decoration: none;
   transition: background-color 0.3s ease;
@@ -393,5 +311,71 @@ watch(userRole, (newRole) => {
   display: inline-block;
   width: 100px;
   /* 可以依需要調整寬度 */
+}
+
+.desktop-only { display: flex; }
+.mobile-only  { display: none; }
+
+@media (max-width: 768px) {
+  /* 隱藏桌面元素 */
+  .desktop-only {
+    display: none !important;
+  }
+  /* 顯示手機元素 */
+  .mobile-only {
+    display: inline-flex !important;
+    align-items: center;
+  }
+
+  /* 隱藏桌面版 nav-links、搜尋框 */
+  .nav-links,
+  .search-container {
+    display: none !important;
+  }
+
+  /* 手機版：從左到右原始排列 */
+  .header-inner {
+    justify-content: flex-start !important;
+    padding: 0 12px !important;
+    gap: 10px !important;
+  }
+
+  /* 手機 LOGO 縮小 */
+  .logo img {
+    width: 36px !important;
+    height: auto !important;
+  }
+
+  /* 手機標題字型 */
+  .site-title.mobile-only {
+    font-size: 18px !important;
+    margin: 0 !important;
+  }
+
+  /* 手機：將放大鏡按鈕往右群組推 */
+  .mobile-search-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: auto;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 手機 註冊/登入 & 會員中心 按鈕 */
+  .auth-button.mobile-only,
+  .profile-button.mobile-only {
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+    margin-left: 8px;
+  }
+
+  /* 手機 三條線 */
+  .menu-icon.mobile-only {
+    font-size: 24px !important;
+    margin-left: 8px;
+    color: #686868;
+  }
 }
 </style>

@@ -142,15 +142,15 @@ const adviceText = computed(() => {
 
 /* 中文名稱 */
 .name {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0;
 }
 
 /* 英文名稱 */
 .english-name {
-  font-size: 20px;
-  color: #555;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 /* 收藏按鈕樣式 */
@@ -193,7 +193,7 @@ const adviceText = computed(() => {
 .price-badge {
   background: #ff9800;
   color: white;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   padding: 6px 16px;
   border-radius: 999px;
@@ -203,7 +203,7 @@ const adviceText = computed(() => {
 /* 警示文字 */
 .warning-text {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* 新增：超跌 20% 時的文字顏色 */
@@ -336,7 +336,7 @@ const adviceText = computed(() => {
   /* 警示文字 */
   .warning-text {
     font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   /* 新增：超跌 20% 時的文字顏色 */

@@ -21,8 +21,8 @@ import Header from '@/components/Header.vue'
 }
 
 .page-container {
-  padding: 0 16px;
-  max-width: 1600px;
+  padding: 0 24px;
+  max-width: 1320px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -31,12 +31,7 @@ import Header from '@/components/Header.vue'
 /* 響應式內距 */
 @media (min-width: 768px) {
   .page-container {
-    padding: 0 24px;
-  }
-}
-@media (min-width: 1024px) {
-  .page-container {
-    padding: 0 32px;
+    padding: 0px;
   }
 }
 </style>
