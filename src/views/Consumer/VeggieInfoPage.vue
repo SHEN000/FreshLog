@@ -1,53 +1,57 @@
 <template>
-  <div class="veggie-page">
-    <div class="content-wrapper" v-if="veggieData">
+  <div class="VeggieInfoPage">
+    <div class="veggie-page">
+      <div class="content-wrapper" v-if="veggieData">
+        <!-- PC版 -->
+        <div class="desktop-layout">
+          <div class="left-panel">
+            <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
+            <NutritionInfoCard :nutrition="veggieData.nutrition" />
+            <SimilarVeggieCompareCard
+              :similarVeggies="veggieData.similarVeggies"
+            />
+            <FarmerInfoCard :farmer="veggieData.farmer" />
+          </div>
 
-      <!-- PC版 -->
-      <div class="desktop-layout">
-        <div class="left-panel">
-          <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
-          <NutritionInfoCard :nutrition="veggieData.nutrition" />
-          <SimilarVeggieCompareCard :similarVeggies="veggieData.similarVeggies" />
-          <FarmerInfoCard :farmer="veggieData.farmer" />
+          <div class="right-panel">
+            <VeggieMainInfoCard :veggie="veggieData" />
+            <AveragePriceTrendChart :priceTrend="veggieData.priceTrend" />
+            <!-- 這裡從 marketCompare 傳資料 -->
+            <MultiMarketPriceCompareCard
+              :marketCompare="veggieData.marketCompare"
+              :veggieName="veggieData.name"
+            />
+            <RecipeRecommendCard :recipes="veggieData.recipes" />
+            <StorageTipsCard :storageTips="veggieData.storageTips" />
+          </div>
         </div>
 
-        <div class="right-panel">
+        <!-- 手機版 -->
+        <div class="mobile-layout">
           <VeggieMainInfoCard :veggie="veggieData" />
+          <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
           <AveragePriceTrendChart :priceTrend="veggieData.priceTrend" />
-          <!-- 這裡從 marketCompare 傳資料 -->
           <MultiMarketPriceCompareCard
             :marketCompare="veggieData.marketCompare"
             :veggieName="veggieData.name"
           />
           <RecipeRecommendCard :recipes="veggieData.recipes" />
+          <NutritionInfoCard :nutrition="veggieData.nutrition" />
+          <SimilarVeggieCompareCard
+            :similarVeggies="veggieData.similarVeggies"
+          />
           <StorageTipsCard :storageTips="veggieData.storageTips" />
+          <FarmerInfoCard :farmer="veggieData.farmer" />
         </div>
       </div>
-
-      <!-- 手機版 -->
-      <div class="mobile-layout">
-        <VeggieMainInfoCard :veggie="veggieData" />
-        <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
-        <AveragePriceTrendChart :priceTrend="veggieData.priceTrend" />
-        <MultiMarketPriceCompareCard
-          :marketCompare="veggieData.marketCompare"
-          :veggieName="veggieData.name"
-        />
-        <RecipeRecommendCard :recipes="veggieData.recipes" />
-        <NutritionInfoCard :nutrition="veggieData.nutrition" />
-        <SimilarVeggieCompareCard :similarVeggies="veggieData.similarVeggies" />
-        <StorageTipsCard :storageTips="veggieData.storageTips" />
-        <FarmerInfoCard :farmer="veggieData.farmer" />
-      </div>
-
     </div>
+    <Footer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-
 import { veggieMockData } from "@/data/mockVeggieData.js";
 
 // 引入子元件
@@ -90,6 +94,12 @@ watch(
 </script>
 
 <style scoped>
+.VeggieInfoPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .veggie-page {
   padding: 30px 0px;
 }

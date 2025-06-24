@@ -58,7 +58,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
-import magnifierIcon from '@/assets/magnifier-icon.png'
+import magnifierIcon from "@/assets/magnifier-icon.png";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -93,6 +93,14 @@ onMounted(() => {
   window.addEventListener("resize", handleResize);
   document.addEventListener('click', handleClickOutside);
   router.afterEach(closeMenu);
+
+  // 監聽點擊外部關閉選單
+  document.addEventListener("click", handleClickOutside);
+
+  // 每次路徑跳轉後自動關閉選單
+  router.afterEach(() => {
+    closeMenu();
+  });
 });
 
 onBeforeUnmount(() => {
@@ -182,7 +190,6 @@ onBeforeUnmount(() => {
   /* 與輸入框之間的距離 */
 }
 
-
 /* PC版主選單連結列 */
 .nav-links {
   display: flex;
@@ -251,7 +258,6 @@ onBeforeUnmount(() => {
   /* 按鈕最小寬度 */
 }
 
-
 .profile-button:hover {
   background-color: #27682b;
   /* hover時再深一點 */
@@ -261,7 +267,6 @@ onBeforeUnmount(() => {
   width: 20px;
   height: 20px;
 }
-
 
 /* 登入按鈕樣式 */
 .auth-button {

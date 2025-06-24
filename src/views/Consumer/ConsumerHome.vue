@@ -1,11 +1,16 @@
 <template>
-  <div class="dashboard-grid">
-    <RecipeListCard class="bento-card small" />
-    <MarketTrendCard class="bento-card large" />
-    <FeaturedIngredientCard class="bento-card tall" />
-    <SafetyInfoCard class="bento-card tall2" />
-    <NewsCard class="bento-card medium" />
-    <CommunityContentCard class="bento-card wide" />
+  <div class="consumer-home-container">
+    <!-- 主要內容區域 -->
+    <div class="dashboard-grid">
+      <RecipeListCard class="bento-card small" />
+      <MarketTrendCard class="bento-card large" />
+      <FeaturedIngredientCard class="bento-card tall" />
+      <SafetyInfoCard class="bento-card tall2" />
+      <NewsCard class="bento-card medium" />
+      <CommunityContentCard class="bento-card wide" />
+    </div>
+
+    <Footer />
   </div>
 </template>
 
@@ -19,7 +24,15 @@ import NewsCard from "@/components/ConsumerHome/NewsCard.vue";
 </script>
 
 <style scoped>
+/* 整體容器 */
+.consumer-home-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .dashboard-grid {
+  flex: 1; /* 佔用剩餘空間 */
   display: grid;
   grid-template-columns: repeat(12, 1fr); /* 設定12欄 */
   grid-auto-rows: auto; /* 行高自動 */

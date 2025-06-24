@@ -1,1 +1,0 @@
-import{_ as l,c as n,b as e,o}from"./index-DaHOhnCn.js";const s={};function r(a,t){return o(),n("div",null,t[0]||(t[0]=[e("h2",null,"食安資訊列表",-1),e("p",null,"顯示所有最新食安新聞",-1),e("p",null,"顯示所有最新蔬果新聞test",-1),e("p",null,"顯示所有最新蔬果新聞test002",-1)]))}const u=l(s,[["render",r]]);export{u as default};
