@@ -130,8 +130,8 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 0 24px;
-  gap: 20px;
+  padding: 0 12px;
+  gap: 10px;
   /* 每個項目間距都一致 */
   box-sizing: border-box;
 }
@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
   /* 超大圓角 */
   padding: 4px 12px;
   width: 100%;
-  max-width: 300px;
+  max-width: 280px;
   /* 可以依需求調整 */
   box-sizing: border-box;
   position: relative;
@@ -246,7 +246,7 @@ onBeforeUnmount(() => {
   border-radius: 9999px;
   /* 超圓角 */
 
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 
   text-decoration: none;
@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
   border: none;
   cursor: pointer;
 
-  min-width: 90px;
+  min-width: 80px;
   /* 按鈕最小寬度 */
 }
 
@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
   color: white;
   padding: 8px 16px;
   border-radius: 9999px;
-  font-size: 16px;
+  font-size: 14px;
   text-decoration: none;
   transition: background-color 0.3s ease;
 }
