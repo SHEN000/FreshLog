@@ -289,20 +289,16 @@ const badgeLabel = computed(() => {
 
 /* 品質分數：藍→綠 漸層 */
 .bar-fill.quality {
-  background: linear-gradient(
-    to right,
-    #2196f3 0%, 
-    #26c281 100%
-  );
+  background: linear-gradient(to right,
+      #2196f3 0%,
+      #26c281 100%);
 }
 
 /* CP值：藍→綠 漸層 */
 .bar-fill.cp {
-  background: linear-gradient(
-    to right,
-    #2196f3 0%,
-    #26c281 100% 
-  );
+  background: linear-gradient(to right,
+      #2196f3 0%,
+      #26c281 100%);
 }
 
 .value {
@@ -360,6 +356,15 @@ const badgeLabel = computed(() => {
   .card {
     flex: 0 0 260px;
     min-width: 260px;
+  }
+
+  .tabs button {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
   }
 }
 </style>

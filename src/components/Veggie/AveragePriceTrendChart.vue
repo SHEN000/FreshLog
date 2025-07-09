@@ -1,7 +1,7 @@
 <template>
   <div class="chart-container">
     <div class="chart-header">
-      <div class="chart-title">平均價格趨勢(每公斤)</div>
+      <div class="chart-title">平均價格趨勢</div>
       <div ref="tooltipEl" class="fixed-tooltip">
         <template v-if="activePoint">
           價格: {{ activePoint.price.toFixed(1) }}<br>

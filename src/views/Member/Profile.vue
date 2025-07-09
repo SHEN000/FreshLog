@@ -18,8 +18,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+
 
 // 判斷是否登入（根據 localStorage 中是否有 userToken）
 const isLoggedIn = computed(() => !!localStorage.getItem('userToken'))
@@ -32,7 +32,10 @@ const username = computed(() => localStorage.getItem('username') || '使用者')
 function handleLogout() {
   localStorage.removeItem('userToken') // 清除登入狀態
   localStorage.removeItem('username')
+  localStorage.removeItem('userRole')
   window.location.reload()  // 重新加載頁面，更新狀態
+
+
 }
 </script>
 

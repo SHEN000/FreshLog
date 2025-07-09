@@ -1,1 +1,0 @@
-import{_ as n,c as l,b as o,o as r}from"./index-Vt1V7DfG.js";const s={};function t(c,e){return r(),l("div",null,e[0]||(e[0]=[o("h2",null,"我的追蹤清單",-1),o("p",null,"追蹤的作物或農民",-1)]))}const _=n(s,[["render",t]]);export{_ as default};

@@ -18,6 +18,7 @@
         <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
         <RouterLink v-if="isConsumer" to="/recipes/:id" :class="{ active: isActive('/recipes/:id') }" class="nav-item">食譜內頁</RouterLink>
         <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
+        <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
         <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
       </div>
 
@@ -49,6 +50,7 @@
         <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
         <RouterLink v-if="isConsumer" to="/recipes/:id" :class="{ active: isActive('/recipes/:id') }" class="nav-item">食譜內頁</RouterLink>
         <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
+        <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
         <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
     </div>
   </header>

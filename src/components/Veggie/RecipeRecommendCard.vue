@@ -1,3 +1,4 @@
+<!-- 蔬菜內頁、食譜內頁共用元件 -->
 <template>
   <div class="recipe-card">
     <div class="header">
@@ -9,7 +10,7 @@
     </div>
 
     <div class="cards">
-      <div class="card" v-for="recipe in veggieMockData.recipes" :key="recipe.id">
+      <div class="card" v-for="recipe in recipeList" :key="recipe.id">
 
         <!-- 食譜縮圖 -->
         <img :src="recipe.image" alt="食譜圖片" class="thumb" />
@@ -41,14 +42,24 @@
 </template>
 
 <script setup>
-import { veggieMockData } from '@/data/mockVeggieData.js'
+// import { veggieMockData } from '@/data/mockVeggieData.js'
 
 // 引入 icon 圖片
 import clockIcon from '@/assets/icons/clock2.png'
 import peopleIcon from '@/assets/icons/people.png'
 import sparkleIcon from '@/assets/icons/sparkle.png'
 
-const recipes = veggieMockData.recipes || []
+// const recipes = veggieMockData.recipes || []
+
+// 由外層傳入的 recipes，若沒傳才 fallback
+const props = defineProps({
+  recipes: {
+    type: Array,
+    default: () => []  // 空陣列：父層沒傳就不顯示內容
+  }
+})
+
+const recipeList = props.recipes
 
 // 圖示物件
 const icons = {
@@ -97,8 +108,10 @@ const icons = {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 12px;
-  overflow: hidden;  /* 圖片超出遮罩 */
-  width: calc((100% - 32px) / 3);  /* 三欄等寬 */
+  overflow: hidden;
+  /* 圖片超出遮罩 */
+  width: calc((100% - 32px) / 3);
+  /* 三欄等寬 */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -136,7 +149,8 @@ const icons = {
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 4px; /* Icon 與文字間距 */
+  gap: 4px;
+  /* Icon 與文字間距 */
 }
 
 .meta-icon {
@@ -172,11 +186,26 @@ const icons = {
   }
 
   .meta {
-  display: flex;
-  gap: 4px;
-  font-size: 10px;
-  color: #777;
-  margin-bottom: 12px;
-}
+    display: flex;
+    gap: 4px;
+    font-size: 10px;
+    color: #777;
+    margin-bottom: 12px;
+  }
+
+  .recipe-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  .card-body {
+    padding: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
 }
 </style>
