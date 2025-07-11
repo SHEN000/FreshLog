@@ -93,7 +93,7 @@ import { recommendedDishes } from "@/data/AiRecommendation.js";
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
 import PageHeader from "@/components/CCC/PageHeader.vue";
 import CategoryTabs from "@/components/CCC/CategoryTag.vue";
-import MarketInsight from "@/components/CCC/Marketsight.vue";
+import MarketInsight from "@/components/CCC/MarketSight.vue";
 import RecipeGrid from "@/components/CCC/Recipe.vue";
 import PaginationControls from "@/components/CCC/PageControls.vue";
 import SiteFooter from "@/components/Footer.vue";
