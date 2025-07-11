@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
+    "build": "node -e \"require('vite').build()\"",
     "postinstall": "chmod +x node_modules/.bin/vite",
     "preview": "vite preview",
     "mock": "node mock/mock-server.js"
