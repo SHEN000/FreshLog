@@ -3,7 +3,7 @@ export const veggieMockData = {
   id: "001",
   name: "紅蘿蔔", //中文名稱
   englishName: "Carrot", //英文名稱
-  image: "/src/assets/images/veggies/carrot.png", //作物示意圖
+  image: "/images/veggies/carrot.png", //作物示意圖
   category: "根莖類蔬菜", //作物分類
   usage: "適合涼拌、熱炒、燉煮", //作物用途
   pricePerKg: "35", //最新均價
@@ -41,7 +41,7 @@ export const veggieMockData = {
     {
       id: 'm1',
       name: '批發市場-未洗紅蘿蔔',
-      image: '/src/assets/images/veggies/carrot1.png', // 作物示意圖
+      image: '/images/veggies/carrot1.png', // 作物示意圖
       pricePerKg: 30, //作物價格
       qualityScore: 50, //品質分數
       cpValue: 3.68, //CP值
@@ -52,7 +52,7 @@ export const veggieMockData = {
     {
       id: 'm2',
       name: '古坑有機紅蘿蔔',
-      image: '/src/assets/images/veggies/carrot2.png',
+      image: '/images/veggies/carrot2.png',
       pricePerKg: 65,
       qualityScore: 95,
       cpValue: 1.21,
@@ -63,7 +63,7 @@ export const veggieMockData = {
     {
       id: 'm3',
       name: '批發市場-未洗紅蘿蔔',
-      image: '/src/assets/images/veggies/carrot3.png',
+      image: '/images/veggies/carrot3.png',
       pricePerKg: 20,
       qualityScore: 70,
       cpValue: 1.18,
@@ -108,7 +108,7 @@ export const veggieMockData = {
       subtitle: '無農藥栽培', //相關敘述
       pricePerKg: 58, //價格
       trend: 'up', //漲跌趨勢 (判斷未定可先不管)
-      icon: '/src/assets/images/icons/carrot-organic.png' //作物示意圖
+      icon: '/images/icons/carrot-organic.png' //作物示意圖
     },
     {
       id: '003',
@@ -116,7 +116,7 @@ export const veggieMockData = {
       subtitle: '澳洲進口',
       pricePerKg: 45,
       trend: 'up',
-      icon: '/src/assets/images/icons/carrot-import.png'
+      icon: '/images/icons/carrot-import.png'
     },
     {
       id: '004',
@@ -124,7 +124,7 @@ export const veggieMockData = {
       subtitle: '適合即食',
       pricePerKg: 65,
       trend: 'down',
-      icon: '/src/assets/images/icons/carrot-mini.png'
+      icon: '/images/icons/carrot-mini.png'
     },
     {
       id: '005',
@@ -132,7 +132,7 @@ export const veggieMockData = {
       subtitle: '替代選擇',
       pricePerKg: 22,
       trend: 'down',
-      icon: '/src/assets/images/icons/daikon.png'
+      icon: '/images/icons/daikon.png'
     }
   ],
 
@@ -142,7 +142,7 @@ export const veggieMockData = {
     {
       id: 'r1',
       name: '香濃紅蘿蔔湯', //食譜名稱
-      image: '/src/assets/images/recipes/carrot-soup.png', //食譜示意圖
+      image: '/images/recipes/carrot-soup.png', //食譜示意圖
       time: 30,           // 分鐘
       servings: 4,        // 人份
       difficulty: '簡單'  // 難度
@@ -150,7 +150,7 @@ export const veggieMockData = {
     {
       id: 'r2',
       name: '健康紅蘿蔔蛋糕',
-      image: '/src/assets/images/recipes/carrot-cake.png',
+      image: '/images/recipes/carrot-cake.png',
       time: 90,
       servings: 8,
       difficulty: '中等'
@@ -158,7 +158,7 @@ export const veggieMockData = {
     {
       id: 'r3',
       name: '韓式涼拌紅蘿蔔',
-      image: '/src/assets/images/recipes/korean-carrot.png',
+      image: '/images/recipes/korean-carrot.png',
       time: 15,
       servings: 2,
       difficulty: '簡單'
@@ -168,7 +168,7 @@ export const veggieMockData = {
   // 農民資訊 (這邊未確定也可先不管)
   farmer: {
     id: 'f001',
-    image: '/src/assets/images/farmers/zhangming.png', //農民照片
+    image: '/images/farmers/zhangming.png', //農民照片
     name: '張大明',
     farm: '綠野農場',
     location: '宜蘭縣',
