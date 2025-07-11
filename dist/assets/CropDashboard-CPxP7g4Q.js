@@ -1,1 +1,0 @@
-import{_ as o,c as r,o as l,b as e}from"./index-BaVgpSkO.js";const s={};function t(a,n){return l(),r("div",null,n[0]||(n[0]=[e("h2",null,"農民儀表板",-1),e("p",null,"這裡會顯示作物的價格走勢、庫存等資訊",-1),e("p",null,"這裡會顯示作物的價格走勢、庫存等資訊",-1)]))}const p=o(s,[["render",t]]);export{p as default};

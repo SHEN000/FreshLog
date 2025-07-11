@@ -2,7 +2,7 @@ export default {
     // 基本資訊
     title: '經典紅蘿蔔濃湯',
     desc: '香濃滑甜的紅蘿蔔濃湯，營養滿滿又暖胃，冬天喝暖身又暖心。',
-    image: '/src/images/recipes/carrot-soup.png',
+    image: '/src/assets/images/recipes/carrot-soup.png',
     cookTime: '45 分鐘',
     servings: 4,
     difficulty: '中等',
@@ -49,30 +49,30 @@ export default {
 
     // 當季推薦食材
     seasonalItems: [
-        { name: '紅蘿蔔', image: '/src/images/ingredients/carrot.png', price: '28 元/斤', recommended: true },
-        { name: '馬鈴薯', image: '/src/images/ingredients/potato.png', price: '20 元/斤', recommended: true },
-        { name: '洋蔥', image: '/src/images/ingredients/onion.png', price: '25 元/斤' },
-        { name: '南瓜', image: '/src/images/ingredients/pumpkin.png', price: '30 元/斤', recommended: true },
-        { name: '高麗菜', image: '/src/images/ingredients/cabbage.png', price: '28 元/斤' },
-        { name: '黃瓜', image: '/src/images/ingredients/cucumber.png', price: '20 元/斤' },
-        { name: '紅豆', image: '/src/images/ingredients/redbeans.png', price: '25 元/斤' },
-        { name: '花椰菜', image: '/src/images/ingredients/cauliflower.png', price: '30 元/斤', recommended: true }
+        { name: '紅蘿蔔', image: '/src/assets/images/ingredients/carrot.png', price: '28 元/斤', recommended: true },
+        { name: '馬鈴薯', image: '/src/assets/images/ingredients/potato.png', price: '20 元/斤', recommended: true },
+        { name: '洋蔥', image: '/src/assets/images/ingredients/onion.png', price: '25 元/斤' },
+        { name: '南瓜', image: '/src/assets/images/ingredients/pumpkin.png', price: '30 元/斤', recommended: true },
+        { name: '高麗菜', image: '/src/assets/images/ingredients/cabbage.png', price: '28 元/斤' },
+        { name: '黃瓜', image: '/src/assets/images/ingredients/cucumber.png', price: '20 元/斤' },
+        { name: '紅豆', image: '/src/assets/images/ingredients/redbeans.png', price: '25 元/斤' },
+        { name: '花椰菜', image: '/src/assets/images/ingredients/cauliflower.png', price: '30 元/斤', recommended: true }
     ],
 
 
     // 替代食材建議
     substitutes: [
-        { name: '南瓜濃湯', image: '/src/images/recipes/pumpkin-soup.png', save: '$12', desc: '南瓜當季盛產，價格比紅蘿蔔更便宜，口感同樣香甜濃郁' },
-        { name: '大頭菜湯', image: '/src/images/recipes/kohlrabi-soup.png', save: '$18', desc: '大頭菜清甜爽口，是目前最便宜的根莖類蔬菜選擇' },
-        { name: '蘿蔔排骨湯', image: '/src/images/recipes/radish-pork-ribs-soup.png', save: '$15', desc: '白蘿蔔當季價格實惠，搭配排骨營養更豐富' }
+        { name: '南瓜濃湯', image: '/src/assets/images/recipes/pumpkin-soup.png', save: '$12', desc: '南瓜當季盛產，價格比紅蘿蔔更便宜，口感同樣香甜濃郁' },
+        { name: '大頭菜湯', image: '/src/assets/images/recipes/kohlrabi-soup.png', save: '$18', desc: '大頭菜清甜爽口，是目前最便宜的根莖類蔬菜選擇' },
+        { name: '蘿蔔排骨湯', image: '/src/assets/images/recipes/radish-pork-ribs-soup.png', save: '$15', desc: '白蘿蔔當季價格實惠，搭配排骨營養更豐富' }
     ],
 
     // 市場行情
     marketTrends: [
-        { name: '紅蘿蔔', image: '/src/images/ingredients/carrot.png', price: 28, unit: '元/斤', change: '+5%' },
-        { name: '洋蔥', image: '/src/images/ingredients/onion.png', price: 22, unit: '元/斤', change: '-3%' },
-        { name: '南瓜', image: '/src/images/ingredients/pumpkin.png', price: 35, unit: '元/斤', change: '-7%' },
-        { name: '馬鈴薯', image: '/src/images/ingredients/potato.png', price: 25, unit: '元/斤', change: '+0%' }
+        { name: '紅蘿蔔', image: '/src/assets/images/ingredients/carrot.png', price: 28, unit: '元/斤', change: '+5%' },
+        { name: '洋蔥', image: '/src/assets/images/ingredients/onion.png', price: 22, unit: '元/斤', change: '-3%' },
+        { name: '南瓜', image: '/src/assets/images/ingredients/pumpkin.png', price: 35, unit: '元/斤', change: '-7%' },
+        { name: '馬鈴薯', image: '/src/assets/images/ingredients/potato.png', price: 25, unit: '元/斤', change: '+0%' }
     ],
     // 加上一個「省錢小提醒」文字
     marketTip: '本週南瓜與洋蔥價格下跌，建議可趁機入手製作更多濃湯！',
@@ -82,7 +82,7 @@ export default {
         {
             id: 'r4',
             name: '奶油蘑菇湯', //食譜名稱
-            image: '/src/images/recipes/1.png', //食譜示意圖
+            image: '/src/assets/images/recipes/1.png', //食譜示意圖
             time: 30,           // 分鐘
             servings: 4,        // 人份
             difficulty: '中等'  // 難度
@@ -90,7 +90,7 @@ export default {
         {
             id: 'r5',
             name: '蒜香青江菜',
-            image: '/src/images/recipes/2.png',
+            image: '/src/assets/images/recipes/2.png',
             time: 15,
             servings: 4,
             difficulty: '簡單'
@@ -98,7 +98,7 @@ export default {
         {
             id: 'r6',
             name: '紫菜蛋花湯',
-            image: '/src/images/recipes/3.png',
+            image: '/src/assets/images/recipes/3.png',
             time: 10,
             servings: 2,
             difficulty: '簡單'
