@@ -4,7 +4,7 @@
     <div class="breadcrumb">
       <RouterLink to="/" class="crumb">首頁</RouterLink>
       <span class="sep">›</span>
-      <RouterLink to="/recipes" class="crumb">食譜推薦</RouterLink>
+      <RouterLink to="/ai-recommendation" class="crumb">食譜推薦</RouterLink>
       <span class="sep">›</span>
       <span class="current">{{ recipe.title }}</span>
     </div>
