@@ -1,5 +1,6 @@
 export default {
     // 基本資訊
+    id: "r1",
     title: '經典紅蘿蔔濃湯',
     desc: '香濃滑甜的紅蘿蔔濃湯，營養滿滿又暖胃，冬天喝暖身又暖心。',
     image: '/images/recipes/carrot-soup.png',

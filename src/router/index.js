@@ -54,8 +54,9 @@ const routes = [
     component: () => import("@/views/Consumer/AiRecommendation.vue"),
   }, // AI 智慧推薦
   {
-    path: "/recipes/:id",
-    component: () => import("@/views/Consumer/RecipeDetail.vue"),
+    path: '/recipes/:id',
+    name: 'RecipeDetail',
+    component: () => import('@/views/Consumer/RecipeDetail.vue')
   }, // 食譜內頁
 ];
 

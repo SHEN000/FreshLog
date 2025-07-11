@@ -1,10 +1,10 @@
 <template>
-  <div>
-    <!-- 所在位置引導 -->
+  <div v-if="recipe">
+    <!-- breadcrumb -->
     <div class="breadcrumb">
       <RouterLink to="/" class="crumb">首頁</RouterLink>
       <span class="sep">›</span>
-      <RouterLink to="/ai-recommendation" class="crumb">食譜推薦</RouterLink>
+      <RouterLink to="/recipes" class="crumb">食譜推薦</RouterLink>
       <span class="sep">›</span>
       <span class="current">{{ recipe.title }}</span>
     </div>
@@ -51,10 +51,17 @@
       </div>
     </div>
   </div>
+
+  <div v-else>
+    <p>找不到這個食譜！</p>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import RecipeData from '@/data/RecipeData.js' // 單一測試食譜
+
 import RecipeDetailHeader from '@/components/Recipe/RecipeDetailHeader.vue'
 import MainIngredientPrice from '@/components/Recipe/MainIngredientPrice.vue'
 import IngredientsList from '@/components/Recipe/IngredientsList.vue'
@@ -65,11 +72,28 @@ import SubstituteRecommendations from '@/components/Recipe/SubstituteRecommendat
 import MarketTrends from '@/components/Recipe/MarketTrends.vue'
 import RecipeRecommendCard from "@/components/Veggie/RecipeRecommendCard.vue";
 
-// 從靜態檔案載入假資料
-import RecipeData from '@/data/RecipeData.js'
+const recipe = ref(null)
+const route = useRoute()
 
-// 建立一個響應式的 recipe 物件，並初始化為 RecipeData
-const recipe = ref(RecipeData)
+function loadRecipe(id) {
+  if (RecipeData.id === id) {
+    recipe.value = RecipeData
+  } else {
+    recipe.value = null
+  }
+}
+
+onMounted(() => {
+  loadRecipe(route.params.id || RecipeData.id)
+})
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    loadRecipe(newId)
+  }
+)
+
 </script>
 
 <style scoped>
