@@ -51,7 +51,7 @@ const routes = [
   }, // 追蹤設定
   {
     path: "/ai-recommendation",
-    component: () => import("@/views/Consumer/AIRecommendation.vue"),
+    component: () => import("@/views/Consumer/AiRecommendation.vue"),
   }, // AI 智慧推薦
   {
     path: "/recipes/:id",
