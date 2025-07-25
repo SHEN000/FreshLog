@@ -1,5 +1,8 @@
 <template>
   <div class="header-container">
+    <!-- 動態漸層背景 -->
+    <div class="header-bg" :style="{ background: gradientStyle }"></div>
+
     <div class="header-gradient">
       <h1 class="header-title">{{ title }}</h1>
       <p class="header-desc">{{ desc }}</p>
@@ -23,13 +26,39 @@
 </template>
 
 <script setup>
-defineProps({
-  title:      String,
-  desc:       String,
-  image:      String,
-  cookTime:   String,
-  servings:   [String, Number],
-  difficulty: String
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+
+const props = defineProps({
+  title: String,
+  desc: String,
+  image: String,
+  cookTime: String,
+  servings: [String, Number],
+  difficulty: String,
+  gradientColors: Array // 只需提供 3 色色碼
+})
+
+// 處理漸層 CSS 字串（for desktop & mobile）
+function generateGradientCSS() {
+  const [c1, c2, c3] = props.gradientColors
+  const transparent = 'rgba(255, 102, 0, 0)'
+
+  const desktopGradient = `linear-gradient(90deg, ${c1} 0%, ${c2} 20%, ${c3} 60%, ${transparent} 100%)`
+  const mobileGradient = `linear-gradient(to bottom, ${c1} 0%, ${c2} 30%, ${c3} 65%, ${transparent} 100%)`
+
+  // 寫入 CSS 變數供 ::before 使用
+  document.documentElement.style.setProperty('--recipe-header-gradient-pc', desktopGradient)
+  document.documentElement.style.setProperty('--recipe-header-gradient-mobile', mobileGradient)
+}
+
+onMounted(() => {
+  generateGradientCSS()
+})
+
+onUnmounted(() => {
+  // 可選：離開頁面時清掉變數
+  document.documentElement.style.removeProperty('--recipe-header-gradient-pc')
+  document.documentElement.style.removeProperty('--recipe-header-gradient-mobile')
 })
 </script>
 
@@ -46,19 +75,21 @@ defineProps({
   background: #fff;
 }
 
-/* 全幅漸層，疊於圖片上方、文字下方 */
+/* 動態背景漸層層 */
+.header-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 漸層背景：使用 CSS 變數動態注入 */
 .header-container::before {
   content: "";
   position: absolute;
-  inset: 0;       /* 覆蓋整個容器 */
-  background: linear-gradient(
-    90deg,
-    #ff9800 0%,
-    #ff9000 20%,
-    #ff6600 60%,
-    rgba(255, 102, 0, 0) 100%
-  );
-  z-index: 1;  /* 漸層在圖片之上，但在文字下方 */
+  inset: 0;
+  background: var(--recipe-header-gradient-pc); /* default PC 漸層 */
+  z-index: 1;
 }
 
 /* 文字 */
@@ -140,13 +171,7 @@ defineProps({
 
     /* 漸層改為上下方向 */
   .header-container::before {
-    background: linear-gradient(
-      to bottom,
-    #ff9800 0%,
-    #ff9000 30%,
-    #ff6600 65%,
-    rgba(255, 102, 0, 0) 100%
-    );
+    background: var(--recipe-header-gradient-mobile); /* mobile 漸層 */
   }
 }
 </style>

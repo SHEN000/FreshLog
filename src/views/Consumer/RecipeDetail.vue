@@ -13,7 +13,7 @@
       <!-- Banner/Header -->
       <div class="block header">
         <RecipeDetailHeader :title="recipe.title" :desc="recipe.desc" :image="recipe.image" :cookTime="recipe.cookTime"
-          :servings="recipe.servings" :difficulty="recipe.difficulty" />
+          :servings="recipe.servings" :difficulty="recipe.difficulty"  :gradientColors="recipe.gradientColors" />
       </div>
 
       <!-- 左側主欄 -->

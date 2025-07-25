@@ -7,6 +7,8 @@ export default {
     cookTime: '45 分鐘',
     servings: 4,
     difficulty: '中等',
+    // Benner三色
+    gradientColors: ['#ff9800', '#ff9000', '#ff6600'],
 
     // 料理步驟
     steps: [
@@ -50,7 +52,7 @@ export default {
 
     // 當季推薦食材
     seasonalItems: [
-        { name: '紅蘿蔔', image: '/images/ingredients/carrot.png', price: '28 元/斤', recommended: true },
+        { name: '紅蘿蔔', image: '/images/ingredients/carrot.png', price: '28 元/斤', recommended: true }, //recommended 先不用實作
         { name: '馬鈴薯', image: '/images/ingredients/potato.png', price: '20 元/斤', recommended: true },
         { name: '洋蔥', image: '/images/ingredients/onion.png', price: '25 元/斤' },
         { name: '南瓜', image: '/images/ingredients/pumpkin.png', price: '30 元/斤', recommended: true },
