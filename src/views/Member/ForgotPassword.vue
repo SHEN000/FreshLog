@@ -21,7 +21,7 @@
                     </p>
                     <!-- 取得驗證碼按鈕: 僅 step===1 時顯示，且 Email 格式通過才可點 -->
                     <button v-if="step === 1" type="button" class="submit-btn" @click="requestCode"
-                        :disabled="!canRequestCode">取得驗證碼</button>
+                        :disabled="!canRequestCode">獲取驗證碼</button>
                 </div>
 
                 <!-- 2. 驗證碼階段: step>=2 時顯示 -->
@@ -31,10 +31,13 @@
                         請於 {{ countdown }} 秒內輸入驗證碼
                     </p>
 
-                    <div class="verification-group">
-                        <input type="text" v-model="code" placeholder="驗證碼" class="verification-input" />
-                        <button type="button" class="resend-btn" @click="resendCode"
-                            :disabled="!canResend">重新寄送</button>
+                    <div class="form-group horizontal-group">
+                        <div class="input-container">
+                            <input type="text" v-model="code" placeholder="請輸入6位數驗證碼" />
+                        </div>
+                        <button type="button" class="resend-btn" @click="resendCode" :disabled="!canResend">
+                            重新寄送
+                        </button>
                     </div>
 
                     <!-- 長度不足時 -->
@@ -44,7 +47,7 @@
                     <!-- 確認驗證碼按鈕: 僅 step===2 時顯示，且 code 長度與同意條款通過才可點 -->
                     <button v-if="step === 2" type="button" class="submit-btn" @click="verifyCode"
                         :disabled="!canVerifyCode">
-                        確認驗證碼
+                        確認
                     </button>
                 </div>
 
@@ -354,25 +357,28 @@ onBeforeUnmount(() => {
     background: #e6f4ec;
 }
 
+.horizontal-group {
+  display: flex;
+  gap: 8px;
+}
+
 .resend-btn {
-    background-color: #2e7d32;
-    color: #fff;
-    border: none;
-    border-radius: 0;
-    padding: 0 14px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 16px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .resend-btn:disabled {
-    background-color: #BDBDBD;
-    cursor: not-allowed;
-    color: #fff;
+  background: #BDBDBD;
+  cursor: not-allowed;
 }
 
 
