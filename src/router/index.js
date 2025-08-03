@@ -38,6 +38,10 @@ const routes = [
     component: () => import("@/views/Member/Register.vue"),
   }, // 註冊
   {
+    path: "/member/forgot-password",
+    component: () => import("@/views/Member/ForgotPassword.vue"),
+  }, // 忘記密碼
+  {
     path: "/member/profile",
     component: () => import("@/views/Member/Profile.vue"),
   }, // 個人資訊
