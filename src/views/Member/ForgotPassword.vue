@@ -271,7 +271,7 @@ onBeforeUnmount(() => {
 }
 
 .form-group {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .input-container {
