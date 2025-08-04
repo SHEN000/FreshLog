@@ -1,5 +1,5 @@
 <template>
-  <!-- 頁腳區域 -->
+  <!-- 頁腳區域 - 佔據整個視窗寬度 -->
   <footer class="site-footer">
     <div class="footer-container">
       <div class="footer-section">
@@ -33,12 +33,20 @@
 </template>
 
 <style scoped>
-/* footer樣式 */
+/* Footer 佔據整個視窗寬度 */
 .site-footer {
   background-color: #222;
   color: #fff;
   padding: 40px 0 20px;
   margin-top: 0;
+
+  /* 確保 Footer 佔據整個視窗寬度 */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 .footer-container {

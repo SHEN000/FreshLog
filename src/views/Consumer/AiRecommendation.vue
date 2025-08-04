@@ -1,22 +1,50 @@
 <template>
-  <div class="ai-recommendation">
-    <div class="content-wrapper">
-      <!-- PC版 -->
-      <div class="desktop-layout">
-        <div class="left-panel">
-          <FilterSidebar
-            :filters="filters"
-            :priceRange="priceRange"
-            :nutritionFilters="nutritionFilters"
-            :activeNutritionTab="activeNutritionTab"
-            @update-filters="updateFilters"
-            @update-price-range="updatePriceRange"
-            @update-nutrition-filters="updateNutritionFilters"
-            @update-nutrition-tab="updateNutritionTab"
-          />
+  <div>
+    <div class="ai-recommendation">
+      <div class="content-wrapper">
+        <!-- 桌機版佈局 -->
+        <div class="desktop-layout">
+          <div class="left-panel">
+            <FilterSidebar
+              :filters="filters"
+              :priceRange="priceRange"
+              :nutritionFilters="nutritionFilters"
+              :activeNutritionTab="activeNutritionTab"
+              @update-filters="updateFilters"
+              @update-price-range="updatePriceRange"
+              @update-nutrition-filters="updateNutritionFilters"
+              @update-nutrition-tab="updateNutritionTab"
+            />
+          </div>
+
+          <div class="right-panel">
+            <PageHeader
+              :searchQuery="searchQuery"
+              @update-search="updateSearchQuery"
+              @search="searchRecipes"
+            />
+            <CategoryTabs
+              :categories="categories"
+              :activeCategory="activeCategory"
+              @set-category="setCategory"
+            />
+            <MarketInsight />
+            <RecipeGrid
+              :recipes="filteredDishes"
+              @view-recipe="viewRecipeDetails"
+            />
+            <PaginationControls
+              :currentPage="currentPage"
+              :totalPages="totalPages"
+              @prev-page="prevPage"
+              @next-page="nextPage"
+              @go-to-page="goToPage"
+            />
+          </div>
         </div>
 
-        <div class="right-panel">
+        <!-- 手機版佈局 - 移除重複的 FilterSidebar -->
+        <div class="mobile-layout">
           <PageHeader
             :searchQuery="searchQuery"
             @update-search="updateSearchQuery"
@@ -28,6 +56,16 @@
             @set-category="setCategory"
           />
           <MarketInsight />
+          <!-- 移除手機版的重複 FilterSidebar -->
+          <RecipeGrid
+            :recipes="filteredDishes"
+            @view-recipe="viewRecipeDetails"
+          />Sidebar :filters="filters" :priceRange="priceRange"
+          :nutritionFilters="nutritionFilters"
+          :activeNutritionTab="activeNutritionTab"
+          @update-filters="updateFilters" @update-price-range="updatePriceRange"
+          @update-nutrition-filters="updateNutritionFilters"
+          @update-nutrition-tab="updateNutritionTab" />
           <RecipeGrid
             :recipes="filteredDishes"
             @view-recipe="viewRecipeDetails"
@@ -41,46 +79,8 @@
           />
         </div>
       </div>
-
-      <!-- 手機版 -->
-      <div class="mobile-layout">
-        <PageHeader
-          :searchQuery="searchQuery"
-          @update-search="updateSearchQuery"
-          @search="searchRecipes"
-        />
-        <CategoryTabs
-          :categories="categories"
-          :activeCategory="activeCategory"
-          @set-category="setCategory"
-        />
-        <MarketInsight />
-        <FilterSidebar
-          :filters="filters"
-          :priceRange="priceRange"
-          :nutritionFilters="nutritionFilters"
-          :activeNutritionTab="activeNutritionTab"
-          @update-filters="updateFilters"
-          @update-price-range="updatePriceRange"
-          @update-nutrition-filters="updateNutritionFilters"
-          @update-nutrition-tab="updateNutritionTab"
-        />
-        <RecipeGrid
-          :recipes="filteredDishes"
-          @view-recipe="viewRecipeDetails"
-        />
-        <PaginationControls
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          @prev-page="prevPage"
-          @next-page="nextPage"
-          @go-to-page="goToPage"
-        />
-      </div>
     </div>
-
-    <!-- 頁腳 -->
-    <SiteFooter />
+    <Footer />
   </div>
 </template>
 
@@ -96,7 +96,7 @@ import CategoryTabs from "@/components/CCC/CategoryTag.vue";
 import MarketInsight from "@/components/CCC/Marketsight.vue";
 import RecipeGrid from "@/components/CCC/Recipe.vue";
 import PaginationControls from "@/components/CCC/PageControls.vue";
-import SiteFooter from "@/components/Footer.vue";
+// 不引入任何 Footer 元件，讓 Layout 處理
 
 const router = useRouter();
 const searchQuery = ref("");
