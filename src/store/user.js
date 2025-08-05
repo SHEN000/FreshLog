@@ -31,6 +31,13 @@ export const useUserStore = defineStore('user', {
     // 儲存使用者個人資料
     setUserInfo(info) {
       this.userInfo = info;
+    },
+     // 新增 logout：呼叫 setIsAuthenticated(false) 並清掉 username/userInfo
+    logout() {
+      this.setIsAuthenticated(false)
+      this.userInfo = {}
+      // 如果有存在 localStorage 的 username，要清就清：
+      localStorage.removeItem('username')
     }
   }
 });

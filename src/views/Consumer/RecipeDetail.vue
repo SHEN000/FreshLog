@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <!-- 所在位置引導 -->
+  <div v-if="recipe">
+    <!-- breadcrumb -->
     <div class="breadcrumb">
       <RouterLink to="/" class="crumb">首頁</RouterLink>
       <span class="sep">›</span>
@@ -12,17 +12,31 @@
     <div class="recipe-detail">
       <!-- Banner/Header -->
       <div class="block header">
-        <RecipeDetailHeader :title="recipe.title" :desc="recipe.desc" :image="recipe.image" :cookTime="recipe.cookTime"
-          :servings="recipe.servings" :difficulty="recipe.difficulty" />
+        <RecipeDetailHeader
+          :title="recipe.title"
+          :desc="recipe.desc"
+          :image="recipe.image"
+          :cookTime="recipe.cookTime"
+          :servings="recipe.servings"
+          :difficulty="recipe.difficulty"
+          :gradientColors="recipe.gradientColors"
+        />
       </div>
 
       <!-- 左側主欄 -->
       <div class="left-col">
         <div class="block steps">
-          <RecipeSteps :steps="recipe.steps" :times="recipe.times" :tags="recipe.tags" />
+          <RecipeSteps
+            :steps="recipe.steps"
+            :times="recipe.times"
+            :tags="recipe.tags"
+          />
         </div>
         <div class="block season">
-          <SeasonalRecommend :items="recipe.seasonalItems" :month="`${new Date().getMonth() + 1}月`" />
+          <SeasonalRecommend
+            :items="recipe.seasonalItems"
+            :month="`${new Date().getMonth() + 1}月`"
+          />
         </div>
         <div class="block subs">
           <SubstituteRecommendations :subs="recipe.substitutes" />
@@ -32,7 +46,10 @@
       <!-- 右側主欄 -->
       <div class="right-col">
         <div class="block price">
-          <MainIngredientPrice :items="recipe.mainPrices" :cost="recipe.mainPriceCost" />
+          <MainIngredientPrice
+            :items="recipe.mainPrices"
+            :cost="recipe.mainPriceCost"
+          />
         </div>
         <div class="block ing">
           <IngredientsList :ingredients="recipe.ingredients" />
@@ -50,26 +67,51 @@
         <RecipeRecommendCard :recipes="recipe.recipes" />
       </div>
     </div>
+    <!-- footer -->
+    <Footer />
+  </div>
+
+  <div v-else>
+    <p>找不到這個食譜！</p>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import RecipeDetailHeader from '@/components/Recipe/RecipeDetailHeader.vue'
-import MainIngredientPrice from '@/components/Recipe/MainIngredientPrice.vue'
-import IngredientsList from '@/components/Recipe/IngredientsList.vue'
-import MainNutritionCard from '@/components/Recipe/MainNutritionCard.vue'
-import RecipeSteps from '@/components/Recipe/RecipeSteps.vue'
-import SeasonalRecommend from '@/components/Recipe/SeasonalRecommend.vue'
-import SubstituteRecommendations from '@/components/Recipe/SubstituteRecommendations.vue'
-import MarketTrends from '@/components/Recipe/MarketTrends.vue'
+import { ref, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
+import RecipeData from "@/data/RecipeData.js"; // 單一測試食譜
+
+import RecipeDetailHeader from "@/components/Recipe/RecipeDetailHeader.vue";
+import MainIngredientPrice from "@/components/Recipe/MainIngredientPrice.vue";
+import IngredientsList from "@/components/Recipe/IngredientsList.vue";
+import MainNutritionCard from "@/components/Recipe/MainNutritionCard.vue";
+import RecipeSteps from "@/components/Recipe/RecipeSteps.vue";
+import SeasonalRecommend from "@/components/Recipe/SeasonalRecommend.vue";
+import SubstituteRecommendations from "@/components/Recipe/SubstituteRecommendations.vue";
+import MarketTrends from "@/components/Recipe/MarketTrends.vue";
 import RecipeRecommendCard from "@/components/Veggie/RecipeRecommendCard.vue";
 
-// 從靜態檔案載入假資料
-import RecipeData from '@/data/RecipeData.js'
+const recipe = ref(null);
+const route = useRoute();
 
-// 建立一個響應式的 recipe 物件，並初始化為 RecipeData
-const recipe = ref(RecipeData)
+function loadRecipe(id) {
+  if (RecipeData.id === id) {
+    recipe.value = RecipeData;
+  } else {
+    recipe.value = null;
+  }
+}
+
+onMounted(() => {
+  loadRecipe(route.params.id || RecipeData.id);
+});
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    loadRecipe(newId);
+  }
+);
 </script>
 
 <style scoped>
@@ -166,7 +208,6 @@ const recipe = ref(RecipeData)
     order: 9;
   }
 }
-
 
 /* PC版：Grid 兩欄 + Header、食譜推薦 橫跨兩欄 */
 @media (min-width: 769px) {

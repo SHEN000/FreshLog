@@ -114,7 +114,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { recommendedDishes } from "@/data/AiRecommendation.js";
+import { recommendedDishes } from "@/data/6424/AiRecommendation.js";
 
 const router = useRouter();
 const searchQuery = ref("");

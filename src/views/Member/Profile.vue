@@ -19,23 +19,20 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store/user.js'
 
+const router    = useRouter()
+const userStore = useUserStore()
 
-// 判斷是否登入（根據 localStorage 中是否有 userToken）
-const isLoggedIn = computed(() => !!localStorage.getItem('userToken'))
+const isLoggedIn = computed(() => userStore.isAuthenticated)
+const userRole   = computed(() => userStore.userRole)
+const username   = computed(() => userStore.userInfo.name || '')
 
-// 從 localStorage 讀取使用者資料（角色與名稱）
-const userRole = computed(() => localStorage.getItem('userRole') || '未設定')
-const username = computed(() => localStorage.getItem('username') || '使用者')
-
-// 登出功能
+// 登出：呼叫 Pinia.logout() + 程式導航
 function handleLogout() {
-  localStorage.removeItem('userToken') // 清除登入狀態
-  localStorage.removeItem('username')
-  localStorage.removeItem('userRole')
-  window.location.reload()  // 重新加載頁面，更新狀態
-
-
+   userStore.logout()
+   router.replace('/member/login')
 }
 </script>
 

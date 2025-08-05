@@ -10,7 +10,7 @@ const routes = [
   }, // 蔬菜列表
   {
     path: '/veggie',
-    redirect: '/veggie/001' 
+    redirect: '/veggie/001'
   }, // 蔬菜列表預設
   {
     path: '/veggie/:id',
@@ -38,6 +38,10 @@ const routes = [
     component: () => import("@/views/Member/Register.vue"),
   }, // 註冊
   {
+    path: "/member/forgot-password",
+    component: () => import("@/views/Member/ForgotPassword.vue"),
+  }, // 忘記密碼
+  {
     path: "/member/profile",
     component: () => import("@/views/Member/Profile.vue"),
   }, // 個人資訊
@@ -51,11 +55,12 @@ const routes = [
   }, // 追蹤設定
   {
     path: "/ai-recommendation",
-    component: () => import("@/views/Consumer/AIRecommendation.vue"),
+    component: () => import("@/views/Consumer/AiRecommendation.vue"),
   }, // AI 智慧推薦
   {
-    path: "/recipes/:id",
-    component: () => import("@/views/Consumer/RecipeDetail.vue"),
+    path: '/ai-recommendation/:id',
+    name: 'RecipeDetail',
+    component: () => import('@/views/Consumer/RecipeDetail.vue')
   }, // 食譜內頁
 ];
 
