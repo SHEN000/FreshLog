@@ -1,16 +1,52 @@
-// src/services/api.js
 import axios from "axios";
 
-// 建立 axios 實例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://43.199.27.51", // 你的 API 基礎網址
+  baseURL:
+    import.meta.env.MODE === "development"
+      ? "/api"
+      : import.meta.env.VITE_API_BASE_URL || "http://43.199.27.51/api",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// 請求攔截器 (如果需要加入 token)
+// debug log
+if (import.meta.env.MODE === "development") {
+  apiClient.interceptors.request.use((config) => {
+    console.log(
+      "📤 API Request:",
+      config.method?.toUpperCase(),
+      config.url,
+      config.data || config.params
+    );
+    return config;
+  });
+
+  apiClient.interceptors.response.use(
+    (response) => {
+      console.log(
+        "📥 API Response:",
+        response.status,
+        response.config.url,
+        response.data
+      );
+      return response;
+    },
+    (error) => {
+      console.error("❌ API Error:", {
+        status: error.response?.status,
+        url: error.config?.url,
+        message: error.response?.data?.message || error.message,
+      });
+      return Promise.reject(error);
+    }
+  );
+}
+
+// TODO: 未來要加入會員系統時，取消註解
+/*
+// 請求攔截器 - 添加認證 Token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("userToken");
@@ -24,7 +60,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 響應攔截器
+// 響應攔截器 - 處理認證錯誤
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -36,5 +72,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+*/
 
 export default apiClient;

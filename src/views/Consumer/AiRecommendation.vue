@@ -1,3 +1,143 @@
+<template>
+  <div class="ai-recommendation">
+    <!-- 主要容器 -->
+    <div class="main-container">
+      <!-- 左側篩選欄 -->
+      <div class="sidebar-container">
+        <FilterSidebar
+          :filters="filters"
+          :priceRange="priceRange"
+          :nutritionFilters="nutritionFilters"
+          :activeNutritionTab="activeNutritionTab"
+          @update-filters="updateFilters"
+          @update-price-range="updatePriceRange"
+          @update-nutrition-filters="updateNutritionFilters"
+          @update-nutrition-tab="updateNutritionTab"
+        />
+      </div>
+
+      <!-- 右側內容區 -->
+      <div class="main-content">
+        <!-- 分類標籤 -->
+        <CategoryTabs
+          :categories="categories"
+          :activeCategory="activeCategory"
+          :sortOptions="sortOptions"
+          :currentSort="currentSort"
+          @set-category="setCategory"
+          @sort-change="handleSortChange"
+        />
+
+        <!-- AI 市場洞察 -->
+        <MarketInsight />
+
+        <!-- 載入狀態 -->
+        <div v-if="isLoading" class="loading-container">
+          <p>載入中...</p>
+        </div>
+
+        <!-- 食譜卡片網格 - 調整為2x3布局 -->
+        <div v-else class="recipe-grid">
+          <div
+            class="recipe-card"
+            v-for="dish in paginatedDishes"
+            :key="dish.id"
+          >
+            <!-- 圖片區域  -->
+            <div class="image-container">
+              <div class="image-placeholder">
+                <span class="placeholder-text">🖼️ {{ dish.name }} 🖼️</span>
+              </div>
+              <!-- 評分標籤 -->
+              <div class="rating-badge">★★★</div>
+              <!-- 追蹤狀態 -->
+              <div class="track-status">
+                <span class="track-icon">📍</span>
+                <span>追蹤狀態</span>
+              </div>
+            </div>
+
+            <!-- 卡片內容 -->
+            <div class="card-content">
+              <h3 class="dish-name">{{ dish.name }}</h3>
+
+              <!-- 分類標籤 -->
+              <div class="category-tag" :class="getCardClass(dish.type)">
+                {{ dish.type }}
+              </div>
+
+              <!-- 描述 -->
+              <div class="dish-description">
+                {{ getDescription(dish) }}
+              </div>
+
+              <!-- 營養標籤 -->
+              <div class="nutrition-tags">
+                <span
+                  v-for="tag in dish.ingredients.slice(0, 2)"
+                  :key="tag"
+                  class="nutrition-tag"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+
+              <!-- 價格區域 -->
+              <div class="price-section">
+                <div class="price-info">
+                  <span class="price">NT${{ dish.price }}/台斤</span>
+                  <span class="price-change" :class="getPriceChangeClass()">
+                    {{ getPriceChangeText() }}
+                  </span>
+                </div>
+                <button class="detail-btn">詳細資訊</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 沒有資料時的顯示 -->
+        <div v-if="!isLoading && paginatedDishes.length === 0" class="no-data">
+          <p>目前沒有符合條件的食譜</p>
+        </div>
+
+        <!-- 分頁控制 - 更新樣式 -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button
+            class="page-btn"
+            :disabled="currentPage === 1"
+            @click="prevPage"
+          >
+            上一頁
+          </button>
+
+          <div class="page-numbers">
+            <button
+              v-for="page in displayPages"
+              :key="page"
+              class="page-number"
+              :class="{ active: currentPage === page }"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            class="page-btn"
+            :disabled="currentPage === totalPages"
+            @click="nextPage"
+          >
+            下一頁
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <Footer />
+  </div>
+</template>
+
 <script setup>
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
@@ -5,50 +145,35 @@ import { foodApi } from "@/data/6424/FoodApi.js";
 
 // 引入子元件
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
-import PageHeader from "@/components/CCC/PageHeader.vue";
 import CategoryTabs from "@/components/CCC/CategoryTag.vue";
 import MarketInsight from "@/components/CCC/MarketSight.vue";
-import RecipeGrid from "@/components/CCC/Recipe.vue";
-import PaginationControls from "@/components/CCC/PageControls.vue";
-import SiteFooter from "@/components/Footer.vue";
 
 const router = useRouter();
 
 // 基本狀態
-const searchQuery = ref("");
 const activeCategory = ref("all");
 const currentPage = ref(1);
-const itemsPerPage = 6;
-const isLoading = ref(false);
-const currentSort = ref("seasonal"); // 預設排序
+const itemsPerPage = 6; // 2x3 網格
+const isLoading = ref(true);
+const currentSort = ref("seasonal");
 
-// API 資料
-const allDishes = ref([]); // 從 API 取得的所有菜餚
-const sortOptions = ref([]); // 從 API 取得的排序選項
+// 資料
+const allDishes = ref([]);
+const sortOptions = ref([]);
 
-// 分類選項
-const categories = [
-  { id: "all", name: "全部" },
-  { id: "breakfast", name: "早餐" },
-  { id: "main", name: "主食" },
-  { id: "soup", name: "湯品" },
-  { id: "leftover", name: "剩菜飯" },
-  { id: "international", name: "異國料理" },
-];
-
-// 篩選條件
+// 篩選條件 - 與 FilterSidebar 同步
 const filters = reactive({
-  antioxidant: true,
-  supplement: true,
+  antioxidant: false,
+  supplement: false,
   eyecare: false,
   energy: false,
   superFood: false,
 });
 
-// 價格區間
+// 價格區間 - 與 FilterSidebar 同步
 const priceRange = ref([0, 200]);
 
-// 營養需求篩選條件
+// 營養需求篩選條件 - 與 FilterSidebar 同步
 const nutritionFilters = reactive({
   vitaminA: false,
   vitaminC: false,
@@ -57,170 +182,250 @@ const nutritionFilters = reactive({
   antioxidant: false,
 });
 
-// 營養標籤
-const activeNutritionTab = ref("vitaminA");
+// 營養標籤 - 與 FilterSidebar 同步，空字串表示未選取
+const activeNutritionTab = ref("");
 
-// 從 API 載入食品列表
-const loadFoodsList = async () => {
+// 分類選項
+const categories = [
+  { id: "all", name: "全部" },
+  { id: "vegetable", name: "蔬菜" },
+  { id: "fruit", name: "水果" },
+  { id: "leafy", name: "葉菜類" },
+  { id: "root", name: "根莖類" },
+  { id: "other", name: "其他" },
+];
+
+// 載入資料
+const loadData = async () => {
   isLoading.value = true;
   try {
-    // 準備請求參數
-    const params = {
+    console.log("開始載入資料...");
+
+    // 載入排序選項
+    const sortResponse = await foodApi.getFoodSortEnums();
+    if (sortResponse && sortResponse.data) {
+      sortOptions.value = sortResponse.data;
+    }
+
+    // 載入食物列表
+    const foodResponse = await foodApi.findFoodsList({
       category:
         activeCategory.value === "all"
           ? ""
           : getCategoryMapping(activeCategory.value),
-      subCategory: "",
-      name: searchQuery.value,
-      nameEn: "",
-      priceMin: priceRange.value[0],
-      priceMax: priceRange.value[1],
-      tag: getTagFromFilters(filters),
+      name: "",
       sort: currentSort.value,
-    };
+    });
 
-    const response = await foodApi.findFoodsList(params);
-
-    // 處理回應資料
-    if (Array.isArray(response)) {
-      // 將 API 資料轉換成元件需要的格式
-      allDishes.value = response.map((item) => ({
+    if (foodResponse && foodResponse.data) {
+      allDishes.value = foodResponse.data.map((item) => ({
         id: item.foodId,
         name: item.name,
-        type: mapCategoryToType(item.category),
-        difficulty: "難易度:3顆星",
-        time: "15分鐘",
-        ingredients: item.tag ? item.tag.split("/").filter((t) => t) : [],
         price: item.price,
+        type: item.category,
+        ingredients: item.tag
+          ? item.tag.split("/").filter((t) => t.trim())
+          : ["新鮮", "營養"],
         description: item.description,
-        image: getFullImageUrl(item.image),
-        lastModifyDate: item.lastModifyDate,
-        isRecommendation: item.isRecommendation,
-        // 保存原始資料
-        originalData: item,
       }));
-    } else if (response && response.code === "8008") {
-      console.log("API 成功:", response.message);
-      // 如果資料在 response.data 中
-      if (response.data && Array.isArray(response.data)) {
-        allDishes.value = response.data.map((item) => ({
-          id: item.foodId,
-          name: item.name,
-          type: mapCategoryToType(item.category),
-          difficulty: "難易度:3顆星",
-          time: "15分鐘",
-          ingredients: item.tag ? item.tag.split("/").filter((t) => t) : [],
-          price: item.price,
-          description: item.description,
-          image: getFullImageUrl(item.image),
-          lastModifyDate: item.lastModifyDate,
-          isRecommendation: item.isRecommendation,
-          originalData: item,
-        }));
-      }
     }
+
+    console.log("載入完成，共", allDishes.value.length, "個項目");
   } catch (error) {
-    console.error("載入食品列表失敗:", error);
-    allDishes.value = [];
+    console.error("載入資料失敗:", error);
   } finally {
     isLoading.value = false;
   }
 };
 
-// 載入排序選項
-const loadSortOptions = async () => {
-  try {
-    const response = await foodApi.getFoodSortEnums();
-
-    // 處理 API 回應
-    if (response && response.code === "8000") {
-      // 將排序選項轉換為元件需要的格式
-      sortOptions.value = response.data.map((item) => ({
-        value: item.code,
-        label: item.label,
-      }));
-
-      // 設定預設排序
-      if (sortOptions.value.length > 0 && !currentSort.value) {
-        currentSort.value = sortOptions.value[0].value;
-      }
-    } else {
-      console.error("API 錯誤:", response?.message || "未知錯誤");
-      useDefaultSortOptions();
-    }
-  } catch (error) {
-    console.error("載入排序選項失敗:", error);
-    useDefaultSortOptions();
-  }
-};
-
-// 使用預設排序選項
-const useDefaultSortOptions = () => {
-  sortOptions.value = [
-    { value: "seasonal", label: "產季由近到遠" },
-    { value: "price_asc", label: "價格由低到高" },
-    { value: "price_desc", label: "價格由高到低" },
-  ];
-  if (!currentSort.value) {
-    currentSort.value = "seasonal";
-  }
-};
-
-// 處理完整圖片路徑
-const getFullImageUrl = (imagePath) => {
-  if (!imagePath) return "/placeholder-image.jpg";
-  if (imagePath.startsWith("http")) return imagePath;
-  return `${import.meta.env.VITE_API_BASE_URL}${imagePath}`;
+// 應用篩選邏輯
+const applyFilters = () => {
+  // 這個函數會被 computed 取代，但保留以備不時之需
+  console.log("篩選條件更新");
 };
 
 // 分類對應函數
 const getCategoryMapping = (category) => {
   const mapping = {
-    breakfast: "早餐",
-    main: "主食",
-    soup: "湯品",
-    leftover: "剩菜飯",
-    international: "異國料理",
+    vegetable: "蔬菜",
+    fruit: "水果",
+    leafy: "葉菜類",
+    root: "根莖類",
+    other: "其他",
   };
   return mapping[category] || category;
 };
 
-// 將 API 分類轉換為元件類型
-const mapCategoryToType = (apiCategory) => {
-  const typeMapping = {
-    醃菜品: "dish1",
-    主食: "dish2",
-    湯品: "dish3",
-    早餐: "dish1",
-    剩菜飯: "dish2",
-    異國料理: "dish3",
-  };
-  return typeMapping[apiCategory] || "dish1";
-};
-
-// 從篩選條件產生標籤
-const getTagFromFilters = (filters) => {
-  const tags = [];
-  if (filters.antioxidant) tags.push("抗氧化");
-  if (filters.supplement) tags.push("補鈣佳品");
-  if (filters.eyecare) tags.push("護眼明目");
-  if (filters.energy) tags.push("運動能量");
-  if (filters.superFood) tags.push("超級食物");
-  return tags.join("/");
-};
-
-// 計算總頁數 (前端分頁)
-const totalItems = computed(() => allDishes.value.length);
-const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
-
-// 當前頁面的菜餚 (前端分頁)
+// 計算篩選後的資料
 const filteredDishes = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return allDishes.value.slice(start, end);
+  let filtered = [...allDishes.value];
+
+  // 價格篩選
+  filtered = filtered.filter(
+    (dish) =>
+      dish.price >= priceRange.value[0] && dish.price <= priceRange.value[1]
+  );
+
+  // 特色篩選
+  if (filters.antioxidant) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("抗氧化"))
+    );
+  }
+
+  if (filters.supplement) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("補鈣") || ing.includes("鈣"))
+    );
+  }
+
+  if (filters.eyecare) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some(
+        (ing) => ing.includes("護眼") || ing.includes("維生素A")
+      )
+    );
+  }
+
+  if (filters.energy) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some(
+        (ing) => ing.includes("能量") || ing.includes("營養")
+      )
+    );
+  }
+
+  if (filters.superFood) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("超級"))
+    );
+  }
+
+  // 營養篩選 - 只有在有選取營養標籤時才進行篩選
+  if (nutritionFilters.vitaminA) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("維生素A"))
+    );
+  }
+
+  if (nutritionFilters.vitaminC) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("維生素C"))
+    );
+  }
+
+  if (nutritionFilters.calcium) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("鈣"))
+    );
+  }
+
+  if (nutritionFilters.iron) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("鐵"))
+    );
+  }
+
+  if (nutritionFilters.antioxidant) {
+    filtered = filtered.filter((dish) =>
+      dish.ingredients.some((ing) => ing.includes("抗氧化"))
+    );
+  }
+
+  return filtered;
 });
 
-// 查看食譜詳情
+// 計算分頁
+const totalPages = computed(() => {
+  return Math.ceil(filteredDishes.value.length / itemsPerPage);
+});
+
+const paginatedDishes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredDishes.value.slice(start, end);
+});
+
+const displayPages = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const pages = [];
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i);
+    }
+  } else {
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, start + 4);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+  }
+
+  return pages;
+});
+
+const getDescription = (dish) => {
+  return (
+    dish.description ||
+    `產自台灣/當季/富含營養的${dish.name}，新鮮美味，營養豐富。`
+  );
+};
+
+const getCardClass = (type) => {
+  const typeMap = {
+    蔬菜: "vegetable",
+    葉菜類: "leafy",
+    醃菜品: "pickled",
+    根莖類: "root",
+  };
+  return typeMap[type] || "vegetable";
+};
+
+const getPriceChangeClass = () => {
+  // 模擬價格變動
+  return Math.random() > 0.5 ? "price-up" : "price-down";
+};
+
+const getPriceChangeText = () => {
+  return Math.random() > 0.5 ? "▲1.5%" : "▼0.2%";
+};
+
+// 事件處理 - 恢復完整的篩選邏輯
+const setCategory = (categoryId) => {
+  activeCategory.value = categoryId;
+  currentPage.value = 1;
+  loadData();
+};
+
+const handleSortChange = (newSort) => {
+  currentSort.value = newSort;
+  currentPage.value = 1;
+  loadData();
+};
+
+// FilterSidebar 事件處理
+const updateFilters = (newFilters) => {
+  Object.assign(filters, newFilters);
+  currentPage.value = 1; // 重置到第一頁
+};
+
+const updatePriceRange = (newRange) => {
+  priceRange.value = newRange;
+  currentPage.value = 1; // 重置到第一頁
+};
+
+const updateNutritionFilters = (newFilters) => {
+  Object.assign(nutritionFilters, newFilters);
+  currentPage.value = 1; // 重置到第一頁
+};
+
+const updateNutritionTab = (tab) => {
+  activeNutritionTab.value = tab;
+};
+
 const viewRecipeDetails = async (recipeId) => {
   try {
     // 預載食品詳細資料
@@ -237,56 +442,6 @@ const viewRecipeDetails = async (recipeId) => {
   router.push(`/ai-recommendation/${recipeId}`);
 };
 
-// 更新搜尋
-const updateSearchQuery = (query) => {
-  searchQuery.value = query;
-};
-
-const searchRecipes = () => {
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 更新分類
-const setCategory = (categoryId) => {
-  activeCategory.value = categoryId;
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 更新篩選條件
-const updateFilters = (newFilters) => {
-  Object.assign(filters, newFilters);
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 更新價格區間
-const updatePriceRange = (newRange) => {
-  priceRange.value = newRange;
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 更新營養篩選
-const updateNutritionFilters = (newFilters) => {
-  Object.assign(nutritionFilters, newFilters);
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 更新營養標籤
-const updateNutritionTab = (tab) => {
-  activeNutritionTab.value = tab;
-};
-
-// 處理排序變更
-const handleSortChange = () => {
-  currentPage.value = 1;
-  loadFoodsList();
-};
-
-// 分頁功能
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
@@ -303,18 +458,339 @@ const goToPage = (page) => {
   currentPage.value = page;
 };
 
-// 初始化
-onMounted(async () => {
-  // 先載入排序選項
-  await loadSortOptions();
-
-  // 處理 URL 參數
-  const categoryParam = router.currentRoute.value.query.category;
-  if (categoryParam && categories.some((c) => c.id === categoryParam)) {
-    activeCategory.value = categoryParam;
-  }
-
-  // 載入食品列表
-  await loadFoodsList();
+onMounted(() => {
+  loadData();
 });
 </script>
+
+<style scoped>
+.ai-recommendation {
+  padding: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: #f8f9fa;
+}
+
+/* 主要容器 */
+.main-container {
+  display: flex;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+}
+
+/* 左側篩選欄 - 固定在左側 */
+.sidebar-container {
+  flex: 0 0 280px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+/* 右側主要內容 */
+.main-content {
+  flex: 1;
+  min-width: 0; /* 防止溢出 */
+}
+
+/* 載入狀態 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 18px;
+}
+
+/* 食譜卡片網格 - 2x3 布局 */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, auto);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.recipe-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.recipe-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 圖片容器 */
+.image-container {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border: 2px dashed #81c784;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.placeholder-text {
+  color: #2e7d32;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.recipe-card:hover .image-placeholder {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #66bb6a;
+}
+
+.rating-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #ff9800;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.track-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 卡片內容 */
+.card-content {
+  padding: 16px;
+}
+
+.dish-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.category-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.category-tag.vegetable {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.category-tag.leafy {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.category-tag.root {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.dish-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.nutrition-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.nutrition-tag {
+  background-color: #f0f0f0;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+/* 價格區域 */
+.price-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.price-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.price-change {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.price-change.price-up {
+  color: #f44336;
+}
+
+.price-change.price-down {
+  color: #4caf50;
+}
+
+.detail-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.detail-btn:hover {
+  background-color: #45a049;
+}
+
+/* 沒有資料 */
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
+}
+
+/* 分頁控制 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 40px 0;
+}
+
+.page-btn {
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #666;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.page-number:hover {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.page-number.active {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+  font-weight: bold;
+}
+
+/* 響應式調整 */
+@media (max-width: 1200px) {
+  .recipe-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .sidebar-container {
+    order: 2;
+    margin-top: 20px;
+    position: static;
+  }
+
+  .main-content {
+    order: 1;
+  }
+
+  .category-sort-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+</style>
