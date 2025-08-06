@@ -3,8 +3,8 @@ import axios from "axios";
 const apiClient = axios.create({
   baseURL:
     import.meta.env.MODE === "development"
-      ? "/api"
-      : import.meta.env.VITE_API_BASE_URL || "http://43.199.27.51/api",
+      ? "/api" // 開發環境：使用代理
+      : "http://43.199.27.51/api", // 生產環境：直連
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
