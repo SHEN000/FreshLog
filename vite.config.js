@@ -16,6 +16,7 @@ export default defineConfig({
         target: "http://43.199.27.51",
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/api/, "/api"), // 保留 /api 開頭
         configure: (proxy, options) => {
           proxy.on("error", (err, req, res) => {
             console.log("proxy error", err);
