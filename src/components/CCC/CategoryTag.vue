@@ -12,6 +12,25 @@
         {{ category.name }}
       </button>
     </div>
+    <!-- 新增排序下拉選單 -->
+    <div class="category-right">
+      <div class="sort-section" v-if="sortOptions && sortOptions.length > 0">
+        <span>產季：</span>
+        <select
+          :value="currentSort"
+          @change="$emit('sort-change', $event.target.value)"
+          class="sort-select"
+        >
+          <option
+            v-for="option in sortOptions"
+            :key="option.value || option.code"
+            :value="option.value || option.code"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -19,9 +38,11 @@
 defineProps({
   categories: Array,
   activeCategory: String,
+  sortOptions: Array, // 新增
+  currentSort: String, // 新增
 });
 
-defineEmits(["set-category"]);
+defineEmits(["set-category", "sort-change"]); // 新增 sort-change
 </script>
 
 <style scoped>
@@ -80,6 +101,38 @@ defineEmits(["set-category"]);
   border-color: #1976d2;
 }
 
+/* 新增右側排序區域 */
+.category-right {
+  margin-left: 20px;
+}
+
+.sort-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sort-section span {
+  font-size: 14px;
+  color: #555;
+}
+
+.sort-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.sort-select:focus {
+  border-color: #1976d2;
+}
+
 /* 手機版適配 */
 @media (max-width: 768px) {
   .food-category-section {
@@ -95,6 +148,13 @@ defineEmits(["set-category"]);
     width: 100%;
     overflow-x: auto;
     padding-bottom: 8px;
+  }
+
+  .category-right {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 10px;
+    justify-content: flex-end;
   }
 }
 </style>

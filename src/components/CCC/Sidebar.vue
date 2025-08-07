@@ -86,69 +86,9 @@
           :key="tab.id"
           class="nutrition-tab"
           :class="{ active: activeNutritionTab === tab.id }"
-          @click="$emit('update-nutrition-tab', tab.id)"
+          @click="handleNutritionTabClick(tab.id)"
         >
           {{ tab.name }}
-        </div>
-      </div>
-      <div class="nutrition-content">
-        <div v-if="activeNutritionTab === 'vitaminA'" class="nutrition-items">
-          <div class="nutrition-item">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                v-model="localNutritionFilters.vitaminA"
-                @change="emitNutritionFilters"
-              />
-              <span class="checkbox-label">維生素A</span>
-            </label>
-          </div>
-        </div>
-        <div v-if="activeNutritionTab === 'vitaminC'" class="nutrition-items">
-          <div class="nutrition-item">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                v-model="localNutritionFilters.vitaminC"
-                @change="emitNutritionFilters"
-              />
-              <span class="checkbox-label">維生素C</span>
-            </label>
-          </div>
-        </div>
-        <div v-if="activeNutritionTab === 'minerals'" class="nutrition-items">
-          <div class="nutrition-item">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                v-model="localNutritionFilters.calcium"
-                @change="emitNutritionFilters"
-              />
-              <span class="checkbox-label">鈣</span>
-            </label>
-          </div>
-          <div class="nutrition-item">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                v-model="localNutritionFilters.iron"
-                @change="emitNutritionFilters"
-              />
-              <span class="checkbox-label">鐵</span>
-            </label>
-          </div>
-        </div>
-        <div v-if="activeNutritionTab === 'others'" class="nutrition-items">
-          <div class="nutrition-item">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                v-model="localNutritionFilters.antioxidant"
-                @change="emitNutritionFilters"
-              />
-              <span class="checkbox-label">抗氧化</span>
-            </label>
-          </div>
         </div>
       </div>
     </div>
@@ -159,10 +99,22 @@
 import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-  filters: Object,
-  priceRange: Array,
-  nutritionFilters: Object,
-  activeNutritionTab: String,
+  filters: {
+    type: Object,
+    required: true,
+  },
+  priceRange: {
+    type: Array,
+    required: true,
+  },
+  nutritionFilters: {
+    type: Object,
+    required: true,
+  },
+  activeNutritionTab: {
+    type: String,
+    default: "",
+  },
 });
 
 const emit = defineEmits([
@@ -181,9 +133,15 @@ const localNutritionFilters = ref({ ...props.nutritionFilters });
 const nutritionTabs = [
   { id: "vitaminA", name: "維生素A" },
   { id: "vitaminC", name: "維生素C" },
-  { id: "minerals", name: "礦食維他" },
-  { id: "others", name: "鉀" },
+  { id: "minerals", name: "膳食纖維" },
+  { id: "potassium", name: "鉀" },
+  { id: "calcium", name: "鈣" },
+  { id: "iron", name: "鐵" },
+  { id: "antioxidant", name: "抗氧化" },
 ];
+
+// 使用 computed 來讀取 activeNutritionTab
+const activeNutritionTab = computed(() => props.activeNutritionTab);
 
 // 計算滑桿填充樣式
 const sliderFillStyle = computed(() => {
@@ -221,6 +179,68 @@ watch(
   { deep: true }
 );
 
+// 處理營養標籤點擊 - 支援取消選取
+const handleNutritionTabClick = (tabId) => {
+  console.log("點擊營養標籤:", tabId, "當前選中:", activeNutritionTab.value);
+
+  // 如果點擊的是當前已選中的標籤，則清空選取狀態
+  if (activeNutritionTab.value === tabId) {
+    console.log("清空選取狀態");
+    // 清空當前標籤
+    emit("update-nutrition-tab", "");
+
+    // 清空所有營養篩選
+    const clearedFilters = { ...localNutritionFilters.value };
+    Object.keys(clearedFilters).forEach((key) => {
+      clearedFilters[key] = false;
+    });
+
+    localNutritionFilters.value = clearedFilters;
+    emit("update-nutrition-filters", clearedFilters);
+    return;
+  }
+
+  console.log("設定新的選取狀態:", tabId);
+  // 更新當前標籤
+  emit("update-nutrition-tab", tabId);
+
+  // 根據點擊的標籤自動啟用對應的篩選
+  const newNutritionFilters = { ...localNutritionFilters.value };
+
+  // 重置所有篩選
+  Object.keys(newNutritionFilters).forEach((key) => {
+    newNutritionFilters[key] = false;
+  });
+
+  // 啟用對應的篩選
+  switch (tabId) {
+    case "vitaminA":
+      newNutritionFilters.vitaminA = true;
+      break;
+    case "vitaminC":
+      newNutritionFilters.vitaminC = true;
+      break;
+    case "minerals":
+      newNutritionFilters.calcium = true;
+      break;
+    case "potassium":
+      newNutritionFilters.iron = true;
+      break;
+    case "calcium":
+      newNutritionFilters.calcium = true;
+      break;
+    case "iron":
+      newNutritionFilters.iron = true;
+      break;
+    case "antioxidant":
+      newNutritionFilters.antioxidant = true;
+      break;
+  }
+
+  localNutritionFilters.value = newNutritionFilters;
+  emit("update-nutrition-filters", newNutritionFilters);
+};
+
 // 事件發射函數
 const emitFilters = () => {
   emit("update-filters", { ...localFilters.value });
@@ -234,10 +254,6 @@ const validateAndEmitPriceRange = () => {
 
 const emitPriceRange = () => {
   emit("update-price-range", [...localPriceRange.value]);
-};
-
-const emitNutritionFilters = () => {
-  emit("update-nutrition-filters", { ...localNutritionFilters.value });
 };
 </script>
 
@@ -356,28 +372,54 @@ const emitNutritionFilters = () => {
 
 /* 營養需求導航 */
 .nutrition-tabs {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
   margin-bottom: 12px;
-  flex-wrap: wrap;
 }
 
 .nutrition-tab {
-  padding: 8px 16px;
+  padding: 6px 8px;
   background: #f5f5f5;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  user-select: none;
+}
+
+.nutrition-tab:hover {
+  background: #e3f2fd;
+  border-color: #2196f3;
 }
 
 .nutrition-tab.active {
-  background: #2196f3;
-  color: white;
+  background: #2196f3 !important;
+  color: white !important;
+  border-color: #2196f3 !important;
 }
 
-.nutrition-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* 讓第5、6、7個標籤到第二排 */
+.nutrition-tab:nth-child(5) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.nutrition-tab:nth-child(6) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.nutrition-tab:nth-child(7) {
+  grid-column: 3;
+  grid-row: 2;
 }
 </style>
