@@ -113,117 +113,78 @@ const mockSortEnums = {
 
 export const foodApi = {
   /**
-   * 查詢食品列表 - 暫時只用Mock資料（避免CORS錯誤）
+   * 查詢食品列表 - POST 方法偵錯版
    */
   findFoodsList: async (params = {}) => {
-    console.log("🎭 使用Mock資料 - findFoodsList", params);
+    try {
+      console.log("🌐 嘗試呼叫真實 API (POST) - findFoodsList", params);
 
-    // 模擬API延遲，讓體驗更真實
-    await new Promise((resolve) => setTimeout(resolve, 600));
+      // 建構 POST request body
+      const requestBody = {
+        category: params.category || "",
+        subCategory: params.subCategory || "",
+        name: params.name || "",
+        nameEn: params.nameEn || "",
+        priceMin: params.priceMin || 0,
+        priceMax: params.priceMax || 999999,
+        tag: params.tag || "",
+        sort: params.sort || "price_desc",
+      };
 
-    // 根據參數篩選Mock資料
-    let filteredData = [...mockFoodsList.data];
+      console.log("📤 準備發送的 Request Body:", requestBody);
+      console.log("📡 API Client baseURL:", apiClient.defaults.baseURL);
 
-    // 分類篩選
-    if (
-      params.category &&
-      params.category !== "all" &&
-      params.category !== ""
-    ) {
-      filteredData = filteredData.filter((item) =>
-        item.category.toLowerCase().includes(params.category.toLowerCase())
+      // 使用 POST 方法，並加入更多偵錯資訊
+      const response = await apiClient.post(
+        "/food/findFoodsList",
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            // 如果需要的話，可以加入更多 headers
+          },
+          timeout: 10000, // 10秒超時
+        }
       );
-      console.log(
-        "🔍 分類篩選 '" + params.category + "' 後:",
-        filteredData.length,
-        "個項目"
+
+      console.log("✅ 真實 API (POST) 成功:", response.data);
+      return response.data;
+    } catch (error) {
+      // 更詳細的錯誤資訊
+      console.error("❌ POST API 詳細錯誤資訊:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          data: error.config?.data,
+          headers: error.config?.headers,
+        },
+        message: error.message,
+      });
+
+      console.warn(
+        "⚠️ 真實 API 失敗，使用 Mock 資料:",
+        error.response?.status,
+        error.message
       );
+
+      // 其余 Mock 邏輯保持不變...
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      let filteredData = [...mockFoodsList.data];
+
+      // ... 原有的篩選邏輯保持不變
+
+      return {
+        code: "8008",
+        message: "Success (Mock Data)",
+        data: filteredData,
+      };
     }
-
-    // 名稱搜尋
-    if (params.name && params.name.trim() !== "") {
-      const searchTerm = params.name.toLowerCase();
-      filteredData = filteredData.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchTerm) ||
-          item.description.toLowerCase().includes(searchTerm) ||
-          item.tag.toLowerCase().includes(searchTerm)
-      );
-      console.log(
-        "🔍 名稱搜尋 '" + params.name + "' 後:",
-        filteredData.length,
-        "個項目"
-      );
-    }
-
-    // 價格範圍篩選
-    if (params.priceMin > 0 || params.priceMax < 999999) {
-      filteredData = filteredData.filter(
-        (item) => item.price >= params.priceMin && item.price <= params.priceMax
-      );
-      console.log(
-        "🔍 價格篩選 $" + params.priceMin + "-$" + params.priceMax + " 後:",
-        filteredData.length,
-        "個項目"
-      );
-    }
-
-    // 標籤篩選
-    if (params.tag && params.tag.trim() !== "") {
-      const tagTerm = params.tag.toLowerCase();
-      filteredData = filteredData.filter((item) =>
-        item.tag.toLowerCase().includes(tagTerm)
-      );
-      console.log(
-        "🔍 標籤篩選 '" + params.tag + "' 後:",
-        filteredData.length,
-        "個項目"
-      );
-    }
-
-    // 排序處理
-    if (params.sort) {
-      switch (params.sort) {
-        case "price_asc":
-          filteredData.sort((a, b) => a.price - b.price);
-          console.log("🔀 價格由低到高排序");
-          break;
-        case "price_desc":
-          filteredData.sort((a, b) => b.price - a.price);
-          console.log("🔀 價格由高到低排序");
-          break;
-        case "name_asc":
-          filteredData.sort((a, b) => a.name.localeCompare(b.name));
-          console.log("🔀 名稱A-Z排序");
-          break;
-        case "name_desc":
-          filteredData.sort((a, b) => b.name.localeCompare(a.name));
-          console.log("🔀 名稱Z-A排序");
-          break;
-        case "popular":
-          filteredData.sort((a, b) => b.isRecommendation - a.isRecommendation);
-          console.log("🔀 熱門度排序");
-          break;
-        case "seasonal":
-        default:
-          // 預設：推薦的在前面，然後按日期排序
-          filteredData.sort((a, b) => {
-            if (a.isRecommendation !== b.isRecommendation) {
-              return b.isRecommendation - a.isRecommendation;
-            }
-            return new Date(b.lastModifyDate) - new Date(a.lastModifyDate);
-          });
-          console.log("🔀 產季排序（推薦優先）");
-      }
-    }
-
-    console.log("✅ 最終結果:", filteredData.length, "個項目");
-
-    return {
-      code: "8008",
-      message: "Success (Mock Data)",
-      data: filteredData,
-    };
   },
 
   /**

@@ -1,6 +1,7 @@
 <template>
   <div class="ai-recommendation">
     <!-- 添加API測試區塊  記得把最後div tag 刪除-->
+
     <div
       class="api-test-section"
       style="
@@ -209,6 +210,70 @@
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { foodApi } from "@/data/6424/FoodApi.js";
+
+// 在 AiRecommendation.vue 中加入這個測試函數
+
+const testPostAPIDirectly = async () => {
+  try {
+    console.log("🧪 直接測試 POST API...");
+
+    const testData = {
+      category: "蔬菜類",
+      subCategory: "水果",
+      name: "蘋果",
+      nameEn: "Apple",
+      priceMin: 1,
+      priceMax: 100,
+      tag: "當季含鈣",
+      sort: "price_desc",
+    };
+
+    // 方法 1: 使用 axios 直接測試
+    console.log("📤 測試資料:", testData);
+
+    const response = await axios.post("/api/food/findFoodsList", testData, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    console.log("✅ 直接 POST 測試成功:", response.data);
+    testResult.value = {
+      success: true,
+      method: "POST",
+      data: response.data,
+      timestamp: new Date().toLocaleTimeString(),
+    };
+  } catch (error) {
+    console.error("❌ 直接 POST 測試失敗:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    });
+
+    testResult.value = {
+      success: false,
+      method: "POST",
+      error: {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        fullError: error.response?.data,
+      },
+      timestamp: new Date().toLocaleTimeString(),
+    };
+
+    // 如果是 403，嘗試檢查是否是 CORS 問題
+    if (error.response?.status === 403) {
+      console.log("🔍 403 錯誤可能原因:");
+      console.log("1. 後端 CORS 設定不允許 POST 請求");
+      console.log("2. 後端需要特殊的 Authentication headers");
+      console.log("3. 後端對 POST 請求有額外的驗證規則");
+      console.log("4. Content-Type 不正確");
+    }
+  }
+};
 
 // 添加測試相關的 ref
 const testResult = ref(null);
