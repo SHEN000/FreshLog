@@ -12,7 +12,7 @@
     <div class="center">
       <div class="title-line">
         <h2 class="name">{{ veggie.name }}</h2>
-        <span class="english-name">{{ veggie.englishName }}</span>
+        <span class="english-name">{{ veggie.nameEn }}</span>
         <button class="favorite-button" @click="toggleFavorite">
           <img :src="isFavorite ? redHeart : grayHeart" alt="收藏" class="heart-icon" />
         </button>
@@ -21,7 +21,7 @@
       <div class="sub-info">{{ veggie.category }} / {{ veggie.usage }}</div>
 
       <div class="price-warning">
-        <div class="price-badge">最新均價：${{ veggie.pricePerKg || "35" }}/公斤</div>
+        <div class="price-badge">最新均價：${{ veggie.displayPrice }}/公斤</div>
       </div>
 
       <!-- 動態警示文字 -->
@@ -36,7 +36,7 @@
     </div>
 
     <div class="right">
-      <div class="date-text">數據日期：{{ veggie.date }}</div>
+      <div class="date-text">數據日期：{{ formattedDate }}</div>
       <div class="season-badge">
         <img src="@/assets/season-badge.png" alt="當季推薦" />
       </div>
@@ -57,6 +57,17 @@ const props = defineProps({
 })
 
 const { veggie } = toRefs(props)
+
+// 把數據日期字串轉成 YYYY/MM/DD
+const formattedDate = computed(() => {
+  const raw = veggie.value.date
+  if (!raw) return ''
+  const d = new Date(raw)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}/${mm}/${dd}`
+})
 
 // 收藏狀態與切換
 const isFavorite = ref(false)

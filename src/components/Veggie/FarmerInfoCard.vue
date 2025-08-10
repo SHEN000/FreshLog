@@ -59,12 +59,16 @@
 
 <script setup>
 import { computed } from 'vue'
-import { veggieMockData } from '@/data/mockVeggieData.js'
+// import { veggieMockData } from '@/data/mockVeggieData.js'
 import truckIcon from '@/assets/icons/truck.png'
 import shieldIcon from '@/assets/icons/shield.png'
 
 // 取得 farmer 資料，若不存在則預設空物件
-const farmer = veggieMockData.farmer || {}
+// const farmer = veggieMockData.farmer || {}
+
+const { farmer } = defineProps({
+  farmer: { type: Object, default: () => ({}) }
+})
 
 // 計算要顯示的評分數值：
 // 先轉成數字，clamp 在 0~5 範圍內，四捨五入到小數 1 位

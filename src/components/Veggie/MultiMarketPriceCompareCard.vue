@@ -20,16 +20,18 @@
     <div class="cards">
       <div class="card" v-for="(item, index) in sortedItems" :key="item.id" :class="{ highlight: index === 0 }">
         <div class="card-header">
-          <span class="market-name">{{ item.name }}</span>
+          <span class="market-name">{{ item.channelFoodName }}</span>
           <!-- 根據 排序方式 動態顯示標籤 -->
           <span class="badge" v-if="index === 0">
             {{ badgeLabel }}
           </span>
         </div>
 
-        <img :src="item.image" class="market-img" alt="市場圖片" />
+        <img :src="item.channelImage" class="market-img" alt="市場圖片" />
 
-        <div class="price">NT${{ item.pricePerKg }}/公斤</div>
+        <div class="price">
+          NT${{ item.price !== undefined ? item.price : '—' }}/公斤
+        </div>
 
         <!-- 品質分數與 CP 值兩條進度條 -->
         <div class="metrics">
@@ -44,9 +46,11 @@
             <span class="label">CP值</span>
             <div class="bar-bg">
               <!-- 填滿比例 = cpValue / maxCp * 100% -->
-              <div class="bar-fill cp" :style="{ width: (item.cpValue / maxCp) * 100 + '%' }"></div>
+              <div class="bar-fill cp" :style="{ width: (item.cp / maxCp) * 100 + '%' }"></div>
             </div>
-            <span class="value">{{ item.cpValue.toFixed(2) }}</span>
+            <span class="value">
+              {{ typeof item.cp === 'number' ? item.cp.toFixed(2) : '—' }}
+            </span>
           </div>
         </div>
 
@@ -54,7 +58,10 @@
         <p class="description">{{ item.description }}</p>
 
         <div class="tags">
-          <span v-for="tag in item.tags" :key="tag" class="tag">{{ tag }}</span>
+          <span v-for="label in (typeof item.tag === 'string' ? item.tag.split('/') : item.tag)" :key="label"
+            class="tag">
+            {{ label }}
+          </span>
         </div>
       </div>
     </div>
@@ -98,12 +105,14 @@ const maxCp = computed(() => {
 
 // 排序後的陣列
 const sortedItems = computed(() => {
+  if (!marketCompare.value || !Array.isArray(marketCompare.value)) return []
+
   return [...marketCompare.value].sort((a, b) => {
     if (sortBy.value === 'cp') {
       return b.cpValue - a.cpValue
     }
     if (sortBy.value === 'price') {
-      return a.pricePerKg - b.pricePerKg
+      return (a.pricePerKg ?? Infinity) - (b.pricePerKg ?? Infinity)
     }
     return b.qualityScore - a.qualityScore
   })

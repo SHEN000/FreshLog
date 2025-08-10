@@ -9,7 +9,7 @@
       <div class="header-info">
         <span class="info-item">
           <img src="@/assets/icons/recipetime.png" alt="時間" class="icon" />
-          {{ cookTime }}
+          {{ cookTimeMinutes }}分鐘
         </span>
         <span class="info-item">
           <img src="@/assets/icons/quantity.png" alt="份量" class="icon" />
@@ -32,10 +32,18 @@ const props = defineProps({
   title: String,
   desc: String,
   image: String,
-  cookTime: String,
-  servings: [String, Number],
+  cookTimeMinutes: { type: [Number, String], default: null },
+  servings: { type: [Number, String], default: null },
   difficulty: String,
-  gradientColors: Array // 只需提供 3 色色碼
+  gradientColors: { type: Array, default: () => [] }
+})
+
+// 產生背景用的 CSS
+const gradientStyle = computed(() => {
+  const colors = props.gradientColors || []
+  if (colors.length < 2) return ''
+  // e.g. ["#f00","#0f0"] => "linear-gradient(to right, #f00, #0f0)"
+  return `linear-gradient(to right, ${props.gradientColors.join(', ')})`
 })
 
 // 處理漸層 CSS 字串（for desktop & mobile）
@@ -72,7 +80,7 @@ onUnmounted(() => {
   overflow: hidden;
   width: 100%;
   min-height: 150px;
-  background: #fff;
+  background: #ccc;
 }
 
 /* 動態背景漸層層 */

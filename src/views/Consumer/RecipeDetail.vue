@@ -1,5 +1,7 @@
 <template>
-  <div v-if="recipe">
+  <div v-if="isLoading">載入中…</div>
+  <div v-else-if="errorMsg">{{ errorMsg }}</div>
+  <div v-else-if="recipe">
     <!-- breadcrumb -->
     <div class="breadcrumb">
       <RouterLink to="/" class="crumb">首頁</RouterLink>
@@ -12,25 +14,14 @@
     <div class="recipe-detail">
       <!-- Banner/Header -->
       <div class="block header">
-        <RecipeDetailHeader
-          :title="recipe.title"
-          :desc="recipe.desc"
-          :image="recipe.image"
-          :cookTime="recipe.cookTime"
-          :servings="recipe.servings"
-          :difficulty="recipe.difficulty"
-          :gradientColors="recipe.gradientColors"
-        />
+        <RecipeDetailHeader :title="recipe.name" :desc="recipe.description" :image="recipe.image" :cook-time-minutes="recipe.cookTimeMinutes"
+          :servings="recipe.servings" :difficulty="recipe.difficulty" :gradientColors="recipe.gradientColors || []" />
       </div>
 
       <!-- 左側主欄 -->
       <div class="left-col">
         <div class="block steps">
-          <RecipeSteps
-            :steps="recipe.steps"
-            :times="recipe.times"
-            :tags="recipe.tags"
-          />
+          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tags || []" />
         </div>
         <div class="block season">
           <SeasonalRecommend
@@ -46,10 +37,7 @@
       <!-- 右側主欄 -->
       <div class="right-col">
         <div class="block price">
-          <MainIngredientPrice
-            :items="recipe.mainPrices"
-            :cost="recipe.mainPriceCost"
-          />
+          <MainIngredientPrice :items="recipe.mainIngredient" :cost="recipe.mainPriceCost" />
         </div>
         <div class="block ing">
           <IngredientsList :ingredients="recipe.ingredients" />
@@ -64,7 +52,7 @@
 
       <!-- 最下方相關推薦 -->
       <div class="block related">
-        <RecipeRecommendCard :recipes="recipe.recipes" />
+        <RecipeRecommendCard :recipes="recipe.recipeSuggestions" />
       </div>
     </div>
     <!-- footer -->
@@ -77,9 +65,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
-import RecipeData from "@/data/RecipeData.js"; // 單一測試食譜
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+//import RecipeData from '@/data/RecipeData.js' // 單一測試食譜
+import axios from 'axios'
 
 import RecipeDetailHeader from "@/components/Recipe/RecipeDetailHeader.vue";
 import MainIngredientPrice from "@/components/Recipe/MainIngredientPrice.vue";
@@ -91,25 +80,50 @@ import SubstituteRecommendations from "@/components/Recipe/SubstituteRecommendat
 import MarketTrends from "@/components/Recipe/MarketTrends.vue";
 import RecipeRecommendCard from "@/components/Veggie/RecipeRecommendCard.vue";
 
-const recipe = ref(null);
-const route = useRoute();
+const recipe = ref(null)
+const route = useRoute()
+const isLoading = ref(false)
+const errorMsg = ref(null)
 
-function loadRecipe(id) {
-  if (RecipeData.id === id) {
-    recipe.value = RecipeData;
-  } else {
-    recipe.value = null;
+// function loadRecipe(id) {
+//   if (RecipeData.id === id) {
+//     recipe.value = RecipeData
+//   } else {
+//     recipe.value = null
+//   }
+// }
+
+const loadRecipeData = async (id) => {
+  if (!id) {
+    recipe.value = null
+    return
+  }
+  isLoading.value = true
+  errorMsg.value = null
+
+  try {
+    const res = await axios.get('/api/recipes/findRecipesData', {
+      params: { RecipesId: id }    // ← Swagger 裡參數名稱「RecipesId」
+    })
+    // 將 data.data 結構賦值給 recipe
+    recipe.value = res.data.data
+  } catch (err) {
+    console.error('載入食譜失敗：', err)
+    errorMsg.value = '載入食譜失敗'
+    recipe.value = null
+  } finally {
+    isLoading.value = false
   }
 }
 
 onMounted(() => {
-  loadRecipe(route.params.id || RecipeData.id);
-});
+  loadRecipeData(route.params.id)
+})
 
 watch(
   () => route.params.id,
   (newId) => {
-    loadRecipe(newId);
+    loadRecipeData(newId)
   }
 );
 </script>

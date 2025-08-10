@@ -18,11 +18,16 @@
             {{ item.name }}
           </div>
           <div class="trend-value">
-            <span :class="['price', { 'no-change': item.change === '0%' }]">${{ item.price }}{{ item.unit }}</span>
-            <span class="change"
-              :class="item.change.startsWith('-') ? 'down' : item.change.startsWith('+') ? 'up' : ''">
-              {{ item.change.startsWith('-') ? '↓' : item.change.startsWith('+') ? '↑' : '' }}
-              {{ item.change.replace(/[+-]/, '') }}
+            <span :class="['price', { 'no-change': item.change === '0%' }]">${{ item.displayPrice }}{{ item.unit
+              }}</span>
+            <span class="change" :class="{
+              up: item.trend === '上升',
+              down: item.trend === '下降'
+            }">
+              <!-- 平穩顯示 '-'，上升/下降顯示箭頭 -->
+              {{ item.trend === '上升' ? '↑'
+                : item.trend === '下降' ? '↓'
+                  : '-' }}
             </span>
           </div>
         </div>
@@ -194,18 +199,18 @@ defineProps({
   border-radius: 12px;
   margin-top: 16px;
   padding: 16px;
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* 提醒標題列：圖示 + 文案 */
 .tip-header {
   display: flex;
   align-items: center;
-  justify-content: center;  
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 8px; 
+  margin-bottom: 8px;
 }
 
 /* 提醒圖示尺寸 */

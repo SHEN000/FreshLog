@@ -6,11 +6,7 @@
 
     <!-- 列表 -->
     <div class="items">
-      <div
-        v-for="veg in similarVeggies"
-        :key="veg.id"
-        class="item"
-      >
+      <div v-for="veg in similarVeggies" :key="veg.id" class="item">
         <!-- 左側：icon + 文字 -->
         <div class="item-left">
           <div class="icon-wrapper">
@@ -18,18 +14,21 @@
           </div>
           <div class="info">
             <div class="name">{{ veg.name }}</div>
-            <div class="subtitle">{{ veg.subtitle }}</div>
+            <div class="subtitle">{{ veg.description }}</div>
           </div>
         </div>
 
         <!-- 右側：價格 + 漲跌箭頭 -->
         <div class="price">
-          ${{ veg.pricePerKg }}/公斤
-          <span
-            class="trend"
-            :class="veg.trend === 'up' ? 'up' : 'down'"
-          >
-            {{ veg.trend === 'up' ? '↑' : '↓' }}
+          ${{ veg.displayPrice }}/公斤
+          <span class="trend" :class="{
+            up: veg.trend === '[上升]',
+            down: veg.trend === '[下降]'
+          }">
+            <!-- 平穩顯示 '-'，上升/下降顯示箭頭 -->
+            {{ veg.trend === '[上升]' ? '↑'
+              : veg.trend === '[下降]' ? '↓'
+                : '-' }}
           </span>
         </div>
       </div>
@@ -38,8 +37,12 @@
 </template>
 
 <script setup>
-import { veggieMockData } from '@/data/mockVeggieData.js'
-const similarVeggies = veggieMockData.similarVeggies || []
+const props = defineProps({
+  similarVeggies: {
+    type: Array,
+    default: () => []
+  }
+})
 </script>
 
 <style scoped>
@@ -47,7 +50,7 @@ const similarVeggies = veggieMockData.similarVeggies || []
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
 
@@ -64,6 +67,25 @@ const similarVeggies = veggieMockData.similarVeggies || []
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 350px;
+  /* 可依需求調整高度 */
+  overflow-y: auto;
+  padding-right: 4px;
+  /* 留空間給 scrollbar */
+}
+
+/* 美化 scrollbar（可選） */
+.items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.items::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
 /* 單一項目 */
@@ -74,8 +96,10 @@ const similarVeggies = veggieMockData.similarVeggies || []
   padding: 12px 0;
   border-bottom: 1px solid #eee;
 }
+
 .item:last-child {
-  border-bottom: none;  /* 最後一筆不畫底線 */
+  border-bottom: none;
+  /* 最後一筆不畫底線 */
 }
 
 /* 左側區塊：icon + 文字 */
@@ -83,6 +107,7 @@ const similarVeggies = veggieMockData.similarVeggies || []
   display: flex;
   align-items: center;
 }
+
 .icon-wrapper {
   width: 40px;
   height: 40px;
@@ -92,18 +117,23 @@ const similarVeggies = veggieMockData.similarVeggies || []
   align-items: center;
   justify-content: center;
 }
+
 .icon-wrapper img {
   width: 24px;
   height: 24px;
 }
+
 .info {
-  margin-left: 12px; /* 與 icon 之間間距 */
+  margin-left: 12px;
+  /* 與 icon 之間間距 */
 }
+
 .name {
   font-size: 14px;
   font-weight: 600;
   color: #333;
 }
+
 .subtitle {
   font-size: 12px;
   color: #777;
@@ -118,15 +148,20 @@ const similarVeggies = veggieMockData.similarVeggies || []
   display: flex;
   align-items: center;
 }
+
 .trend {
   font-size: 14px;
   margin-left: 4px;
 }
+
 .trend.up {
-  color: #E53935; /* 漲：紅 */
+  color: #E53935;
+  /* 漲：紅 */
 }
+
 .trend.down {
-  color: #43A047; /* 跌：綠 */
+  color: #43A047;
+  /* 跌：綠 */
 }
 
 /* 手機版 */

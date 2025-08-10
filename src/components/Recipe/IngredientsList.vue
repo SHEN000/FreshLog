@@ -7,7 +7,7 @@
     <ul class="ingredients-list">
       <li v-for="(ing, idx) in ingredients" :key="ing.name + idx" class="ingredient-item">
         <span class="name">{{ ing.name }}</span>
-        <span class="quantity">{{ ing.quantity }}</span>
+        <span class="quantity">{{ ing.quantityUnit }}</span>
       </li>
     </ul>
   </div>

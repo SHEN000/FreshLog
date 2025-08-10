@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { veggieMockData } from '@/data/mockVeggieData.js'
+// import { veggieMockData } from '@/data/mockVeggieData.js'
 
 // 引入 icon 圖片
 import snowflakeIcon from '@/assets/icons/snowflake.png'
@@ -33,7 +33,9 @@ import flameIcon from '@/assets/icons/flame.png'
 import recycleIcon from '@/assets/icons/recycle.png'
 import clockIcon from '@/assets/icons/clock.png'
 
-const { storageTips } = veggieMockData
+defineProps({
+  storageTips: Object
+})
 
 // 建立 key 到 icon 的對應表
 const icons = {

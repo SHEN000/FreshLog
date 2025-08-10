@@ -7,25 +7,16 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)), // 確保這行有
+      '@': fileURLToPath(new URL('./src', import.meta.url)), // 路徑別名
     },
   },
   server: {
     proxy: {
-      "/api": {
-        target: "http://43.199.27.51",
+      '/api': {
+        target: 'http://43.199.27.51',  // 你的後端 API 主機
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path, // 保持路徑不變
-        configure: (proxy, options) => {
-          proxy.on("error", (err, req, res) => {
-            console.log("proxy error", err);
-          });
-          proxy.on("proxyReq", (proxyReq, req, res) => {
-            console.log("Sending Request:", req.method, req.url);
-          });
-        },
+        rewrite: (path) => path.replace(/^\/api/, '/api'), // 保留 /api 開頭
       },
     },
   },
-});
+})

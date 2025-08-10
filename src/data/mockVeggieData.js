@@ -1,12 +1,12 @@
 export const veggieMockData = {
   // 蔬菜基本資訊
-  id: "001",
+  foodid: "001",
   name: "紅蘿蔔", //中文名稱
-  englishName: "Carrot", //英文名稱
+  nameEn: "Carrot", //英文名稱
   image: "/images/veggies/carrot.png", //作物示意圖
   category: "根莖類蔬菜", //作物分類
   usage: "適合涼拌、熱炒、燉煮", //作物用途
-  pricePerKg: "35", //最新均價
+  displayPrice: "40", //最新均價
   date: "2025/04/25",
 
   // AI智慧推薦

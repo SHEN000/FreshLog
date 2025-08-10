@@ -6,6 +6,7 @@ import Footer from "./components/Footer.vue";
 
 import "./assets/style.css"; // 匯入全域樣式
 
+
 const app = createApp(App); // 建立 Vue App 實體，並掛載 App.vue 為根組件
 app.component("Footer", Footer); //我直接全域註冊footer
 

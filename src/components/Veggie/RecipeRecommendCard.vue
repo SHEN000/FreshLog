@@ -21,11 +21,11 @@
           <!-- 時間／份數／難度 -->
           <div class="meta">
             <span class="meta-item">
-              <img :src="icons.clock" alt="時間" class="meta-icon" />{{ recipe.time }}分鐘
+              <img :src="icons.clock" alt="時間" class="meta-icon" />{{ recipe.cookTimeMinutes }}分鐘
             </span>
             <span class="meta-item">
               <img :src="icons.people" alt="人數" class="meta-icon" />
-              {{ recipe.servings }}人份
+              {{ recipe.servings }}
             </span>
             <span class="meta-item">
               <img :src="icons.sparkle" alt="難度" class="meta-icon" />
@@ -115,6 +115,11 @@ const icons = {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
+}
+
+/* 隱藏第 3 筆以後 */
+.card:nth-child(n+4) {
+  display: none;
 }
 
 /* 縮圖 */

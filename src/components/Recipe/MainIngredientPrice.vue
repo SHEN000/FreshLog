@@ -11,20 +11,20 @@
                         <!-- 食材名稱 -->
                         <span class="item-name">{{ item.name }}</span>
                         <!-- 價格數字 -->
-                        <span class="item-price">${{ item.price }}</span>
+                        <span class="item-price">${{ item.displayPrice }}</span>
                         <!-- 漲跌顯示 -->
                         <span class="item-unit">/{{ item.unit }}</span>
                         <span class="item-change"
-                            :class="{ up: item.change.startsWith('+'), down: item.change.startsWith('-') }">
+                            :class="{ up: item.trend.startsWith('+'), down: item.trend.startsWith('-') }">
                             <!-- 根據漲跌顯示箭頭 -->
-                            {{ item.change.startsWith('+') ? '↑' : '↓' }}
-                            比上週{{ item.change.startsWith('+') ? '貴' : '便宜' }}
-                            {{ item.change.replace(/[+-]/, '') }}
+                            {{ item.trend.startsWith('+') ? '↑' : '↓' }}
+                            比上週{{ item.trend.startsWith('+') ? '貴' : '便宜' }}
+                            {{ item.trend.replace(/[+-]/, '') }}
                         </span>
                     </div>
-                    <div class="cost-summary">
+                    <!-- <div class="cost-summary">
                         主要食材預估成本約 <span class="cost-value">${{ cost }}</span>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -80,7 +80,7 @@ defineProps({
 /* 主要內容行：圖示 + 資訊 */
 .main-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
 }
 

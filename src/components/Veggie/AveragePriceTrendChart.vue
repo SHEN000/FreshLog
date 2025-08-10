@@ -31,21 +31,92 @@
 </template>
 
 <script setup>
-// 匯入 D3 及 Vue Composition API
+
 import * as d3 from 'd3'
-import { ref, onMounted, onUnmounted, watch} from 'vue'
-import { priceTrendData } from '@/data/priceTrendData.js'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import axios from 'axios'
 
 // 建立 Reactive 變數
 const chartArea = ref(null) // svg 容器
 const tooltipEl = ref(null) // 固定提示框 DOM
 const selectedPeriod = ref('30days') // 當前選擇時間區間
 const activePoint = ref(null) // 當前滑鼠懸停的資料點
-const basePrice = 30 // 均價參考線(先寫死)
 const labelMap = { '30days': '30天', '6months': '半年', '1year': '1年' }
+
+// API 對應
+const periodToApi = {
+  '30days': 'DAY_30',
+  '6months': 'DAY_180',
+  '1year': 'DAY_360'
+}
+
+// 快取每個區間的資料：[{date, price}]
+const seriesCache = ref({})
+
+// 以目前區間資料的平均價當基準線
+const basePrice = ref()
+
+// 重新計算「全部資料」的平均價
+function recomputeGlobalBase() {
+  const uniq = new Map(); 
+  Object.values(seriesCache.value).forEach(arr => {
+    if (Array.isArray(arr)) {
+      arr.forEach(p => {
+        if (!uniq.has(p.date)) uniq.set(p.date, p.price);
+      });
+    }
+  });
+
+  const vals = Array.from(uniq.values());
+  if (vals.length) {
+    const avg = d3.mean(vals);      
+    if (typeof avg === 'number' && !isNaN(avg)) {
+      basePrice.value = avg;    
+    }
+  }
+}
+
 
 // D3 時間格式化：月/日
 const formatMonthDay = d3.timeFormat("%m/%d")
+
+// 轉 API 回傳 -> 圖表資料
+function mapApiTrend(list = []) {
+  return (list ?? [])
+    .filter(x => x && x.intervalEnd != null)
+    .map(({ intervalEnd, avgPrice }) => ({
+      date: intervalEnd,
+      price: avgPrice === 0 ? null : Number(avgPrice ?? null)   // ← 0 當缺資料
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+}
+
+const props = defineProps({
+  foodId: { type: String, required: true }
+})
+
+const inFlight = new Map()
+const keyOf = (period) => `${props.foodId}:${period}`
+
+async function ensureData(period, { force = false } = {}) {
+  const key = keyOf(period);
+  if (!force && Array.isArray(seriesCache.value[key])) return; // 有快取才跳過
+  if (inFlight.has(key)) return inFlight.get(key);
+
+  const p = axios.get('/api/food/average-price-trends', {
+    params: { days: periodToApi[period], foodId: props.foodId }
+  })
+  .then(({ data }) => {
+    const payload = data?.data || {};
+    const candidate = payload.trend30 ?? payload.trendHalfYear ?? payload.trendYear ?? [];
+    seriesCache.value[key] = mapApiTrend(candidate);
+    recomputeGlobalBase();
+  })
+  .finally(() => inFlight.delete(key));
+
+  inFlight.set(key, p);
+  return p;
+}
 
 /*
  * 根據不同區間，把日期字串格式化顯示
@@ -72,10 +143,57 @@ const formatDate = (dateStr) => {
 
 let resizeObserver = null
 
+// 線性補值：把 price 為 null/0 的點補成左右相鄰有值點之間的線性插值
+function interpolateMissing(arr) {
+  const out = arr.map(d => ({ ...d, imputed: false }))
+
+  let i = 0
+  while (i < out.length) {
+    if (out[i].price == null || out[i].price <= 0) {
+      // 找左/右最近的有值點
+      let L = i - 1
+      while (L >= 0 && (out[L].price == null || out[L].price <= 0)) L--
+      let R = i + 1
+      while (R < out.length && (out[R].price == null || out[R].price <= 0)) R++
+
+      if (L >= 0 && R < out.length) {
+        // 兩側都有值 → 用線性補值把 L..R 之間全部補起來
+        const left = out[L].price
+        const right = out[R].price
+        const span = R - L
+        for (let k = L + 1; k < R; k++) {
+          const t = (k - L) / span
+          out[k].price = left + (right - left) * t
+          out[k].imputed = true
+        }
+        i = R + 1
+        continue
+      } else {
+        // 只有一側有值（開頭或結尾缺）→ 用最近的一側值帶過去
+        if (L >= 0) {
+          out[i].price = out[L].price
+          out[i].imputed = true
+        } else if (R < out.length) {
+          out[i].price = out[R].price
+          out[i].imputed = true
+        }
+      }
+    }
+    i++
+  }
+  return out
+}
+
 // 繪製圖表
 function drawChart() {
-  const data = priceTrendData[selectedPeriod.value]
+  const raw = seriesCache.value[keyOf(selectedPeriod.value)] || []
   const container = chartArea.value
+
+  d3.select(container).selectAll('*').remove()
+  if (!raw.length) return
+
+    // 先做補值
+  const data = interpolateMissing(raw)
 
   // 清空之前繪製的
   d3.select(container).selectAll('*').remove()
@@ -109,15 +227,48 @@ function drawChart() {
     tickDates = allDates;
   }
 
+  // 預先產生每個 tick 的 label，只在跨年時帶上年
+  const tickLabels = {}
+  let lastYear = null
+  tickDates.forEach(dStr => {
+    const dt = new Date(dStr)
+    const yyyy = dt.getFullYear()
+    const mm = String(dt.getMonth() + 1).padStart(2, '0')
+    const dd = String(dt.getDate()).padStart(2, '0')
+    let lbl
+    if (selectedPeriod.value === '1year') {
+      // 1 年：第一個或跨年的才顯示 YYYY/MM，其餘只顯示 MM
+      if (yyyy !== lastYear) {
+        lbl = `${yyyy}/${mm}`
+        lastYear = yyyy
+      } else {
+        lbl = mm
+      }
+    } else if (selectedPeriod.value === '6months') {
+      // 半年：跨年時顯示 YYYY/MM/DD，其餘只顯示 MM/DD
+      if (yyyy !== lastYear) {
+        lbl = `${yyyy}/${mm}/${dd}`
+        lastYear = yyyy
+      } else {
+        lbl = `${mm}/${dd}`
+      }
+    } else {
+      // 30天：保持原來的 月/日
+      lbl = formatMonthDay(dt)
+    }
+    tickLabels[dStr] = lbl
+  })
+
+
   // 建立比例尺
   const x = d3.scalePoint()
     .domain(allDates)
     .range([0, width])
 
-  // 修改Y軸下限為均價的50%
-  const y = d3.scaleLinear()
-    .domain([basePrice * 0.5, d3.max(data, d => d.price) * 1.2])
-    .range([height, 0])
+  // y 軸：只看有價點，避免 0 拉垮比例
+  const maxY = (d3.max(data, d => d.price) || 1) * 1.2
+  const minY = Math.min(basePrice.value * 0.5, (d3.min(data, d => d.price) || basePrice.value) * 0.9)
+  const y = d3.scaleLinear().domain([minY, maxY]).range([height, 0])
 
   // X 軸
   svg.append('g')
@@ -125,36 +276,25 @@ function drawChart() {
     .call(
       d3.axisBottom(x)
         .tickValues(tickDates)
-        .tickFormat(d => {
-          return selectedPeriod.value === '30days'
-            ? formatMonthDay(new Date(d))
-            : d
-        })
+        .tickFormat(d => tickLabels[d] || d)
     )
 
   // Y 軸
   svg.append('g').call(d3.axisLeft(y))
 
   // 底色區域：超跌 / 正常 / 超漲 , 調整為正負20%
-  const areaLower = d3.area()
-    .x(d => x(d.date))
-    .y0(height).y1(y(basePrice * 0.8))
-  const areaNormal = d3.area()
-    .x(d => x(d.date))
-    .y0(y(basePrice * 0.8)).y1(y(basePrice * 1.2))
-  const areaUpper = d3.area()
-    .x(d => x(d.date))
-    .y0(y(basePrice * 1.2)).y1(0)
-
+  const areaLower  = d3.area().x(d => x(d.date)).y0(height).y1(y(basePrice.value * 0.8))
+  const areaNormal = d3.area().x(d => x(d.date)).y0(y(basePrice.value * 0.8)).y1(y(basePrice.value * 1.2))
+  const areaUpper  = d3.area().x(d => x(d.date)).y0(y(basePrice.value * 1.2)).y1(0)
   svg.append('path').datum(data).attr('fill', '#e0d7f1').attr('d', areaLower)
   svg.append('path').datum(data).attr('fill', '#e0f1e0').attr('d', areaNormal)
   svg.append('path').datum(data).attr('fill', '#f1e0e0').attr('d', areaUpper)
 
   // 參考線 - 調整為正負20%
   const guides = [
-    { price: basePrice * 0.8, color: 'purple' },
-    { price: basePrice, color: 'orange' },
-    { price: basePrice * 1.2, color: 'red' }
+    { price: basePrice.value * 0.8, color: 'purple' },
+    { price: basePrice.value, color: 'orange' },
+    { price: basePrice.value * 1.2, color: 'red' }
   ]
   guides.forEach(({ price, color }) => {
     svg.append('line')
@@ -165,7 +305,7 @@ function drawChart() {
       .attr('stroke-dasharray', '3,3')
   })
 
-  // 折線
+  // 折線：跳過缺資料 → 自動斷線
   const line = d3.line()
     .x(d => x(d.date))
     .y(d => y(d.price))
@@ -181,35 +321,43 @@ function drawChart() {
   activePoint.value = null;
 
   // 數據點與滑鼠互動
+  // 點：原始 = 實心；補值 = 空心
+  const observed = raw.map((d, i) => ({ ...data[i], isObserved: d.price != null && d.price > 0 }))
   svg.selectAll('.dot')
-    .data(data)
+    .data(observed.filter(d => d.isObserved))
     .join('circle')
     .attr('class', 'dot')
-    .attr('cx', d => x(d.date))
-    .attr('cy', d => y(d.price))
-    .attr('r', 3)
-    .attr('fill', '#2e7d32')
-    .on('mouseover', function (event, d) {
-      // 當滑鼠懸停時
-      d3.select(this).attr('r', 6);
-      // 設為活躍點，觸發 tooltip 顯示
-      activePoint.value = d;
-    })
-    .on('mouseout', function () {
-      // 當滑鼠移出時
-      d3.select(this).attr('r', 3);
-      // 清掉活躍點，隱藏 tooltip
-      activePoint.value = null;
-    });
+    .attr('cx', d => x(d.date)).attr('cy', d => y(d.price))
+    .attr('r', 3).attr('fill', '#2e7d32')
+    .on('mouseover', function (event, d) { d3.select(this).attr('r', 6); activePoint.value = d })
+    .on('mouseout',  function () { d3.select(this).attr('r', 3); activePoint.value = null })
+
+  svg.selectAll('.dot-imputed')
+    .data(observed.filter(d => !d.isObserved))
+    .join('circle')
+    .attr('class', 'dot-imputed')
+    .attr('cx', d => x(d.date)).attr('cy', d => y(d.price))
+    .attr('r', 3).attr('fill', 'white').attr('stroke', '#2e7d32')
+    .append('title')
+    .text(d => `補值：${formatDate(d.date)}`)
 }
 
-const changePeriod = (period) => {
+const changePeriod = async (period) => {
+  if (selectedPeriod.value === period) return
   selectedPeriod.value = period
+  // 每次切換都重打就 force: true；只打一次就拿掉 force
+  await ensureData(period, { force: true })
+  drawChart()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 先抓 1 年資料 → 做為「全部資料」的基準
+  await ensureData('1year')
+  // 再抓目前選取的區間（例如 30 天）
+  await ensureData(selectedPeriod.value)
+  // 這時候 basePrice 已經是「全部資料平均
   drawChart()
-  resizeObserver = new ResizeObserver(drawChart)
+  resizeObserver = new ResizeObserver(() => drawChart())
   resizeObserver.observe(chartArea.value)
 })
 
@@ -218,7 +366,8 @@ onUnmounted(() => {
 })
 
 // 當區間變更時重畫
-watch(selectedPeriod, () => {
+watch(selectedPeriod, async (p) => {
+  await ensureData(p /*, { force: true }*/ )
   drawChart()
 })
 </script>

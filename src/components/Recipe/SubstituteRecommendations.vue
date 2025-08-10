@@ -13,12 +13,12 @@
           <img :src="item.image" :alt="item.name" class="card-icon" />
           <div class="header-right">
             <h4 class="card-title">{{ item.name }}</h4>
-            <span class="badge">省{{ item.save }}</span>
+            <span class="badge">省${{ item.save }}</span>
           </div>
         </div>
 
         <!-- 說明文字：替代食譜的描述 -->
-        <p class="card-desc">{{ item.desc }}</p>
+        <p class="card-desc">{{ item.description}}</p>
       </div>
     </div>
   </div>

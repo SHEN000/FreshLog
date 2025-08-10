@@ -22,7 +22,7 @@
         <!-- 圖片、名稱、價格 -->
         <img :src="item.image" :alt="item.name" class="item-img" />
         <div class="item-name">{{ item.name }}</div>
-        <div class="item-price">{{ item.price }}</div>
+        <div class="item-price">{{ item.displayPrice }}</div>
       </div>
     </div>
   </div>
