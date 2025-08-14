@@ -33,8 +33,7 @@
             </span>
           </div>
 
-          <!-- 之後會連接到該食譜的內頁 -->
-          <button class="btn">查看食譜</button>
+          <button class="btn" @click="goDetail(recipe.recipeId)">查看食譜</button>
         </div>
       </div>
     </div>
@@ -42,14 +41,15 @@
 </template>
 
 <script setup>
-// import { veggieMockData } from '@/data/mockVeggieData.js'
 
 // 引入 icon 圖片
 import clockIcon from '@/assets/icons/clock2.png'
 import peopleIcon from '@/assets/icons/people.png'
 import sparkleIcon from '@/assets/icons/sparkle.png'
+import { useRouter } from 'vue-router'
 
-// const recipes = veggieMockData.recipes || []
+const router = useRouter()
+const goDetail = (id) => router.push(`/ai-recommendation/${id}`)
 
 // 由外層傳入的 recipes，若沒傳才 fallback
 const props = defineProps({

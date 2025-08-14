@@ -8,7 +8,7 @@
       <span class="sep">›</span>
       <RouterLink to="/ai-recommendation" class="crumb">食譜推薦</RouterLink>
       <span class="sep">›</span>
-      <span class="current">{{ recipe.title }}</span>
+      <span class="current">{{ recipe.name }}</span>
     </div>
 
     <div class="recipe-detail">
@@ -21,7 +21,7 @@
       <!-- 左側主欄 -->
       <div class="left-col">
         <div class="block steps">
-          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tags || []" />
+          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tag || []" />
         </div>
         <div class="block season">
           <SeasonalRecommend

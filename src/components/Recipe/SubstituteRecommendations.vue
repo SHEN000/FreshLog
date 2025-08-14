@@ -1,5 +1,6 @@
 <template>
-  <div class="subs-card">
+  <!-- 只有有資料才顯示整塊 -->
+  <div class="subs-card" v-if="hasSubs">
     <div class="header">
       <img src="@/assets/icons/lightbulb.png" alt="當季推薦" class="header-icon" />
       <span class="title">當季替代食譜推薦</span>
@@ -7,8 +8,9 @@
     <div class="subtitle">
       根據目前蔬果價格，為您推薦更經濟的類似料理
     </div>
+
     <div class="grid">
-      <div v-for="item in subs" :key="item.name" class="card">
+      <div v-for="item in visibleSubs" :key="item.name" class="card">
         <div class="card-header">
           <img :src="item.image" :alt="item.name" class="card-icon" />
           <div class="header-right">
@@ -17,20 +19,40 @@
           </div>
         </div>
 
-        <!-- 說明文字：替代食譜的描述 -->
-        <p class="card-desc">{{ item.description}}</p>
+        <p class="card-desc">{{ item.description }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   subs: {
     type: Array,
     default: () => []
   }
 })
+
+/** 過濾掉空值/空項目：只保留至少有一個欄位有內容的項目 */
+const visibleSubs = computed(() => {
+  const arr = Array.isArray(props.subs) ? props.subs : []
+  return arr.filter(it => {
+    if (!it) return false
+    const { name, image, description, save } = it
+    // 只要有任一欄位有值就算可顯示（save 允許 0）
+    return (
+      (name && String(name).trim() !== '') ||
+      (image && String(image).trim() !== '') ||
+      (description && String(description).trim() !== '') ||
+      save !== undefined
+    )
+  })
+})
+
+/** 是否有可顯示的資料 */
+const hasSubs = computed(() => visibleSubs.value.length > 0)
 </script>
 
 <style scoped>

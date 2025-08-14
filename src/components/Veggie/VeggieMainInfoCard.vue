@@ -21,7 +21,7 @@
       <div class="sub-info">{{ veggie.category }} / {{ veggie.usage }}</div>
 
       <div class="price-warning">
-        <div class="price-badge">最新均價：${{ veggie.displayPrice }}/公斤</div>
+        <div class="price-badge">最新均價：${{ veggie.displayPrice }}</div>
       </div>
 
       <!-- 動態警示文字 -->

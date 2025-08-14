@@ -30,7 +30,7 @@
         <img :src="item.channelImage" class="market-img" alt="市場圖片" />
 
         <div class="price">
-          NT${{ item.price !== undefined ? item.price : '—' }}/公斤
+          NT${{ item.price !== undefined ? item.price : '—' }}
         </div>
 
         <!-- 品質分數與 CP 值兩條進度條 -->

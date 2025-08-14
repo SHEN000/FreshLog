@@ -15,8 +15,8 @@
 
     <div class="sub-section">
       <div class="sub-title">健康益處</div>
-      <ul class="benefits-list">
-        <li v-for="(benefit, index) in nutrition.benefits" :key="index">{{ benefit }}</li>
+      <ul class="benefits-list" v-if="parsedBenefits.length">
+        <li v-for="(benefit, index) in parsedBenefits" :key="index">{{ benefit }}</li>
       </ul>
     </div>
 
@@ -33,7 +33,7 @@ export default {
   props: { nutrition: { type: Object, required: true } },
 
   computed: {
-    // （可留可拿掉）為了顏色穩定，固定顯示順序；若想照 API 原順序，就改回 this.nutrition.macros
+    // 為了顏色穩定，固定顯示順序
     orderedMacros() {
       const ORDER = ['carbohydrate', 'protein', 'fat', 'vitamin a', 'potassium', 'fiber']
       const norm = (s = '') => String(s).trim().toLowerCase()
@@ -42,6 +42,29 @@ export default {
         const ia = idx(a.nutrient), ib = idx(b.nutrient)
         return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib)
       })
+    },
+    parsedBenefits() {
+      const src = this.nutrition?.benefits
+      if (Array.isArray(src)) return src.filter(Boolean)
+
+      if (typeof src === 'string') {
+        const s = src.trim()
+        if (!s) return []
+        // 先嘗試 JSON.parse("[\"...\",\"...\"]")
+        try {
+          const arr = JSON.parse(s)
+          if (Array.isArray(arr)) return arr.filter(Boolean)
+        } catch (_) {
+          // 不是合法 JSON：試著去掉方括號/引號，依常見分隔符切開
+          return s
+            .replace(/^\s*\[|\]\s*$/g, '')    // 去掉最外層 []
+            .replace(/^"|"$|^'|'$/g, '')      // 去掉整體首尾引號
+            .split(/","|','|,|；|;|\n/g)      // 以 "," 或 , / ; / 換行 分隔
+            .map(t => t.replace(/^"|"$|^'|'$/g, '').trim())
+            .filter(Boolean)
+        }
+      }
+      return []
     }
   },
 
@@ -81,7 +104,7 @@ export default {
       const v = Number(macro.amount ?? macro.value ?? 0)
       let spec = this.getScaleSpec(macro.nutrient)
 
-      // （可選）如果是其他維生素沒在表內，給個通用門檻避免顯示 50%
+      // 如果是其他維生素沒在表內，給個通用門檻避免顯示 50%
       if (!spec && /^vitamin\b/i.test(macro.nutrient || '')) {
         // mg 用 100 當滿刻度、µg 用 1000，g 用 1
         const u = (macro.unit || '').toLowerCase()
