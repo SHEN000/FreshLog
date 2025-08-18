@@ -14,7 +14,7 @@
       <div class="trend-list">
         <div v-for="item in trends" :key="item.name" class="trend-row">
           <div class="trend-name">
-            <img :src="item.image" :alt="item.name" class="trend-icon" />
+            <img :src="$img(item.image)" :alt="item.name" class="trend-icon" />
             {{ item.name }}
           </div>
           <div class="trend-value">

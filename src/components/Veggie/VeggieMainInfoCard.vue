@@ -6,7 +6,7 @@
     </div>
 
     <div class="left">
-      <img :src="veggie.image" alt="蔬菜圖片" class="veggie-image" />
+      <img :src="$img(veggie.image)" alt="蔬菜圖片" class="veggie-image" />
     </div>
 
     <div class="center">

@@ -10,7 +10,7 @@
         <!-- 左側：icon + 文字 -->
         <div class="item-left">
           <div class="icon-wrapper">
-            <img :src="veg.icon" alt="" />
+            <img :src="$img(veg.image)" alt="" />
           </div>
           <div class="info">
             <div class="name">{{ veg.name }}</div>

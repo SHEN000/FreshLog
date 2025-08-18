@@ -20,7 +20,7 @@
         <div v-if="item.recommended" class="badge">推薦</div>
 
         <!-- 圖片、名稱、價格 -->
-        <img :src="item.image" :alt="item.name" class="item-img" />
+        <img :src="$img(item.image)" :alt="item.name" class="item-img" />
         <div class="item-name">{{ item.name }}</div>
         <div class="item-price">{{ item.displayPrice }}</div>
       </div>

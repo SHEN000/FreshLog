@@ -1,5 +1,5 @@
 <template>
-  <div class="storage-card">
+  <div class="storage-card" v-if="hasTips">
     <div class="header">
       <h2 class="title">保存與烹飪技巧</h2>
     </div>
@@ -26,6 +26,7 @@
 
 <script setup>
 // import { veggieMockData } from '@/data/mockVeggieData.js'
+import { computed } from 'vue'
 
 // 引入 icon 圖片
 import snowflakeIcon from '@/assets/icons/snowflake.png'
@@ -33,8 +34,8 @@ import flameIcon from '@/assets/icons/flame.png'
 import recycleIcon from '@/assets/icons/recycle.png'
 import clockIcon from '@/assets/icons/clock.png'
 
-defineProps({
-  storageTips: Object
+const props = defineProps({
+  storageTips: { type: Object, default: () => ({}) }
 })
 
 // 建立 key 到 icon 的對應表
@@ -44,6 +45,25 @@ const icons = {
   waste: recycleIcon,     // 減少浪費
   bestBefore: clockIcon,  // 最佳食用期限
 }
+
+// 判斷是否至少有一筆「title 或 content」有字
+const hasTips = computed(() => {
+  const obj = props.storageTips || {}
+  return Object.values(obj).some(t =>
+    t &&
+    (t.title?.trim()?.length > 0 || t.content?.trim()?.length > 0)
+  )
+})
+
+// 僅保留有內容的項目供渲染
+const filteredTips = computed(() => {
+  const entries = Object.entries(props.storageTips || {})
+  return entries
+    .filter(([_, t]) =>
+      t && (t.title?.trim()?.length > 0 || t.content?.trim()?.length > 0)
+    )
+    .map(([key, t]) => ({ key, ...t }))
+})
 </script>
 
 <style scoped>

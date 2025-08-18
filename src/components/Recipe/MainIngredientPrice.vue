@@ -117,7 +117,6 @@ function trendInfo(t) {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 4px;
     flex-shrink: 0;
     box-shadow: 0 2px 8px #eaf7ea;
 }

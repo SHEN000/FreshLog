@@ -13,7 +13,7 @@
       <div class="card" v-for="recipe in recipeList" :key="recipe.id">
 
         <!-- 食譜縮圖 -->
-        <img :src="recipe.image" alt="食譜圖片" class="thumb" />
+        <img :src="$img(recipe.image)" alt="食譜圖片" class="thumb" />
 
         <div class="card-body">
           <h3 class="name">{{ recipe.name }}</h3>

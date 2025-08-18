@@ -12,7 +12,7 @@
     <div class="grid">
       <div v-for="item in visibleSubs" :key="item.name" class="card">
         <div class="card-header">
-          <img :src="item.image" :alt="item.name" class="card-icon" />
+          <img :src="$img(item.image)" :alt="item.name" class="card-icon" />
           <div class="header-right">
             <h4 class="card-title">{{ item.name }}</h4>
             <span class="badge">省${{ item.save }}</span>
