@@ -8,11 +8,8 @@
     "build": "node -e \"require('vite').build()\"",
     "postinstall": "chmod +x node_modules/.bin/vite",
     "preview": "vite preview",
-    "vercel-build": "vite build",
     "mock": "node mock/mock-server.js"
   },
-  "engines": { "node": ">=18" },
-
   "dependencies": {
     "@vueuse/core": "^13.1.0",
     "axios": "^1.8.4",
