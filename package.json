@@ -8,6 +8,7 @@
     "build": "node -e \"require('vite').build()\"",
     "postinstall": "chmod +x node_modules/.bin/vite",
     "preview": "vite preview",
+    "vercel-build": "vite build",
     "mock": "node mock/mock-server.js"
   },
   "dependencies": {
