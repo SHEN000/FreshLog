@@ -1,15 +1,15 @@
 export function resolveImg(path) {
   if (!path) return ''
-  const p = String(path).trim()
-  if (/^(https?:|data:|blob:)/i.test(p) || p.startsWith('//')) return p
+  const trimmed = String(path).trim()
 
-  const isProd = import.meta.env.PROD
-  if (isProd) {
-    const rel = p.startsWith('/') ? p.slice(1) : p
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return new URL(`/api/img/${rel}`, origin).href   // => https://freshlog.ttshow.tw/api/img/...
+  // 已是完整網址就直接回傳
+  if (/^(http|https|data|blob):/i.test(trimmed) || trimmed.startsWith('//')) {
+    return trimmed
   }
 
-  const base = import.meta.env.VITE_ASSET_BASE || 'http://43.199.27.51'
-  return new URL(p.startsWith('/') ? p : `/${p}`, base).href
+  // 預設用 .env 裡的 VITE_ASSET_BASE
+  const base = import.meta.env.VITE_ASSET_BASE
+  if (!base) return trimmed
+
+  return new URL(trimmed.startsWith('/') ? trimmed : `/${trimmed}`, base).href
 }
