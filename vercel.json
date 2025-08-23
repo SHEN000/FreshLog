@@ -17,7 +17,7 @@
   ],
 
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "http://43.199.27.51/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://freshlog-api.ttshow.tw/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
