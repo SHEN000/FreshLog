@@ -102,8 +102,8 @@ const loadRecipeData = async (id) => {
   errorMsg.value = null
 
   try {
-    const res = await axios.get('/api/recipes/findRecipesData', {
-      params: { RecipesId: id }    // ← Swagger 裡參數名稱「RecipesId」
+    const res = await axios.get('/api/recipe/findRecipeData', {
+      params: { recipeId: id }    // ← Swagger 裡參數名稱「RecipesId」
     })
     // 將 data.data 結構賦值給 recipe
     recipe.value = res.data.data
