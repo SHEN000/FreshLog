@@ -1,203 +1,137 @@
 <template>
   <div class="ai-recommendation">
-    <!-- 添加API測試區塊  記得把最後div tag 刪除-->
+    <!-- 主要容器 -->
+    <div class="main-container">
+      <!-- 左側篩選欄 -->
+      <div class="sidebar-container">
+        <FilterSidebar
+          :filters="filters"
+          :priceRange="priceRange"
+          :nutritionFilters="nutritionFilters"
+          :activeNutritionTab="activeNutritionTab"
+          @update-filters="updateFilters"
+          @update-price-range="updatePriceRange"
+          @update-nutrition-filters="updateNutritionFilters"
+          @update-nutrition-tab="updateNutritionTab"
+        />
+      </div>
 
-    <div
-      class="api-test-section"
-      style="
-        background: #f0f8ff;
-        padding: 20px;
-        margin: 20px;
-        border-radius: 8px;
-      "
-    >
-      <h3>🧪 API測試區</h3>
-      <div style="display: flex; gap: 10px; margin-bottom: 10px">
-        <button
-          @click="testFindFoodData('F001')"
-          style="
-            padding: 8px 16px;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-          "
-        >
-          測試高麗菜 (F001)
-        </button>
-        <button
-          @click="testFindFoodData('F002')"
-          style="
-            padding: 8px 16px;
-            background: #2196f3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-          "
-        >
-          測試紅蘿蔔 (F002)
-        </button>
-        <button
-          @click="testGetSortEnums"
-          style="
-            padding: 8px 16px;
-            background: #ff9800;
-            color: white;
-            border: none;
-            border-radius: 4px;
-          "
-        >
-          測試排序選項
-        </button>
-      </div>
-      <div
-        v-if="testResult"
-        style="
-          background: white;
-          padding: 12px;
-          border-radius: 4px;
-          font-family: monospace;
-          font-size: 12px;
-          max-height: 200px;
-          overflow-y: auto;
-        "
-      >
-        <pre>{{ JSON.stringify(testResult, null, 2) }}</pre>
-      </div>
-      <!-- 主要容器 -->
-      <div class="main-container">
-        <!-- 左側篩選欄 -->
-        <div class="sidebar-container">
-          <FilterSidebar
-            :filters="filters"
-            :priceRange="priceRange"
-            :nutritionFilters="nutritionFilters"
-            :activeNutritionTab="activeNutritionTab"
-            @update-filters="updateFilters"
-            @update-price-range="updatePriceRange"
-            @update-nutrition-filters="updateNutritionFilters"
-            @update-nutrition-tab="updateNutritionTab"
-          />
+      <!-- 右側內容區 -->
+      <div class="main-content">
+        <!-- 分類標籤 -->
+        <CategoryTabs
+          :categories="categories"
+          :activeCategory="activeCategory"
+          :sortOptions="sortOptions"
+          :currentSort="currentSort"
+          @set-category="setCategory"
+          @sort-change="handleSortChange"
+        />
+
+        <!-- AI 市場洞察 -->
+        <MarketInsight />
+
+        <!-- 載入狀態 -->
+        <div v-if="isLoading" class="loading-container">
+          <p>🔄 載入中...</p>
         </div>
 
-        <!-- 右側內容區 -->
-        <div class="main-content">
-          <!-- 分類標籤 -->
-          <CategoryTabs
-            :categories="categories"
-            :activeCategory="activeCategory"
-            :sortOptions="sortOptions"
-            :currentSort="currentSort"
-            @set-category="setCategory"
-            @sort-change="handleSortChange"
-          />
+        <!-- 食譜卡片網格 - 調整為2x3布局 -->
+        <div v-else class="recipe-grid">
+          <div
+            class="recipe-card"
+            v-for="dish in paginatedDishes"
+            :key="dish.id"
+          >
+            <!-- 圖片區域  -->
+            <div class="image-container">
+              <div class="image-placeholder">
+                <span class="placeholder-text">🖼️ {{ dish.name }} 🖼️</span>
+              </div>
+              <!-- 評分標籤 -->
+              <div class="rating-badge">★★★</div>
+              <!-- 追蹤狀態 -->
+              <div class="track-status">
+                <span class="track-icon">📍</span>
+                <span>追蹤狀態</span>
+              </div>
+            </div>
 
-          <!-- AI 市場洞察 -->
-          <MarketInsight />
+            <!-- 卡片內容 -->
+            <div class="card-content">
+              <h3 class="dish-name">{{ dish.name }}</h3>
 
-          <!-- 載入狀態 -->
-          <div v-if="isLoading" class="loading-container">
-            <p>載入中...</p>
-          </div>
-
-          <!-- 食譜卡片網格 - 調整為2x3布局 -->
-          <div v-else class="recipe-grid">
-            <div
-              class="recipe-card"
-              v-for="dish in paginatedDishes"
-              :key="dish.id"
-            >
-              <!-- 圖片區域  -->
-              <div class="image-container">
-                <div class="image-placeholder">
-                  <span class="placeholder-text">🖼️ {{ dish.name }} 🖼️</span>
-                </div>
-                <!-- 評分標籤 -->
-                <div class="rating-badge">★★★</div>
-                <!-- 追蹤狀態 -->
-                <div class="track-status">
-                  <span class="track-icon">📍</span>
-                  <span>追蹤狀態</span>
-                </div>
+              <!-- 分類標籤 -->
+              <div class="category-tag" :class="getCardClass(dish.type)">
+                {{ dish.type }}
               </div>
 
-              <!-- 卡片內容 -->
-              <div class="card-content">
-                <h3 class="dish-name">{{ dish.name }}</h3>
+              <!-- 描述 -->
+              <div class="dish-description">
+                {{ getDescription(dish) }}
+              </div>
 
-                <!-- 分類標籤 -->
-                <div class="category-tag" :class="getCardClass(dish.type)">
-                  {{ dish.type }}
-                </div>
+              <!-- 營養標籤 -->
+              <div class="nutrition-tags">
+                <span
+                  v-for="tag in dish.ingredients.slice(0, 2)"
+                  :key="tag"
+                  class="nutrition-tag"
+                >
+                  {{ tag }}
+                </span>
+              </div>
 
-                <!-- 描述 -->
-                <div class="dish-description">
-                  {{ getDescription(dish) }}
-                </div>
-
-                <!-- 營養標籤 -->
-                <div class="nutrition-tags">
-                  <span
-                    v-for="tag in dish.ingredients.slice(0, 2)"
-                    :key="tag"
-                    class="nutrition-tag"
-                  >
-                    {{ tag }}
+              <!-- 價格區域 -->
+              <div class="price-section">
+                <div class="price-info">
+                  <span class="price">NT${{ dish.price }}/台斤</span>
+                  <span class="price-change" :class="getPriceChangeClass()">
+                    {{ getPriceChangeText() }}
                   </span>
                 </div>
-
-                <!-- 價格區域 -->
-                <div class="price-section">
-                  <div class="price-info">
-                    <span class="price">NT${{ dish.price }}/台斤</span>
-                    <span class="price-change" :class="getPriceChangeClass()">
-                      {{ getPriceChangeText() }}
-                    </span>
-                  </div>
-                  <button class="detail-btn">詳細資訊</button>
-                </div>
+                <button class="detail-btn" @click="viewRecipeDetails(dish.id)">
+                  詳細資訊
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 沒有資料時的顯示 -->
-          <div
-            v-if="!isLoading && paginatedDishes.length === 0"
-            class="no-data"
+        <!-- 沒有資料時的顯示 -->
+        <div v-if="!isLoading && paginatedDishes.length === 0" class="no-data">
+          <p>目前沒有符合條件的食譜</p>
+        </div>
+
+        <!-- 分頁控制 - 更新樣式 -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button
+            class="page-btn"
+            :disabled="currentPage === 1"
+            @click="prevPage"
           >
-            <p>目前沒有符合條件的食譜</p>
-          </div>
+            上一頁
+          </button>
 
-          <!-- 分頁控制 - 更新樣式 -->
-          <div v-if="totalPages > 1" class="pagination">
+          <div class="page-numbers">
             <button
-              class="page-btn"
-              :disabled="currentPage === 1"
-              @click="prevPage"
+              v-for="page in displayPages"
+              :key="page"
+              class="page-number"
+              :class="{ active: currentPage === page }"
+              @click="goToPage(page)"
             >
-              上一頁
-            </button>
-
-            <div class="page-numbers">
-              <button
-                v-for="page in displayPages"
-                :key="page"
-                class="page-number"
-                :class="{ active: currentPage === page }"
-                @click="goToPage(page)"
-              >
-                {{ page }}
-              </button>
-            </div>
-
-            <button
-              class="page-btn"
-              :disabled="currentPage === totalPages"
-              @click="nextPage"
-            >
-              下一頁
+              {{ page }}
             </button>
           </div>
+
+          <button
+            class="page-btn"
+            :disabled="currentPage === totalPages"
+            @click="nextPage"
+          >
+            下一頁
+          </button>
         </div>
       </div>
     </div>
@@ -210,131 +144,6 @@
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { foodApi } from "@/data/6424/FoodApi.js";
-
-// 在 AiRecommendation.vue 中加入這個測試函數
-
-const testPostAPIDirectly = async () => {
-  try {
-    console.log("🧪 直接測試 POST API...");
-
-    const testData = {
-      category: "蔬菜類",
-      subCategory: "水果",
-      name: "蘋果",
-      nameEn: "Apple",
-      priceMin: 1,
-      priceMax: 100,
-      tag: "當季含鈣",
-      sort: "price_desc",
-    };
-
-    // 方法 1: 使用 axios 直接測試
-    console.log("📤 測試資料:", testData);
-
-    const response = await axios.post("/api/food/findFoodsList", testData, {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-
-    console.log("✅ 直接 POST 測試成功:", response.data);
-    testResult.value = {
-      success: true,
-      method: "POST",
-      data: response.data,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-  } catch (error) {
-    console.error("❌ 直接 POST 測試失敗:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message,
-    });
-
-    testResult.value = {
-      success: false,
-      method: "POST",
-      error: {
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        fullError: error.response?.data,
-      },
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    // 如果是 403，嘗試檢查是否是 CORS 問題
-    if (error.response?.status === 403) {
-      console.log("🔍 403 錯誤可能原因:");
-      console.log("1. 後端 CORS 設定不允許 POST 請求");
-      console.log("2. 後端需要特殊的 Authentication headers");
-      console.log("3. 後端對 POST 請求有額外的驗證規則");
-      console.log("4. Content-Type 不正確");
-    }
-  }
-};
-
-// 添加測試相關的 ref
-const testResult = ref(null);
-
-// 測試 findFoodData API
-const testFindFoodData = async (foodId) => {
-  try {
-    console.log("🧪 測試 findFoodData API:", foodId);
-    testResult.value = { loading: true, api: "findFoodData", foodId };
-
-    const result = await foodApi.findFoodData(foodId);
-
-    testResult.value = {
-      success: true,
-      api: "findFoodData",
-      foodId,
-      result,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    console.log("✅ findFoodData 測試成功:", result);
-  } catch (error) {
-    testResult.value = {
-      success: false,
-      api: "findFoodData",
-      foodId,
-      error: error.message,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    console.error("❌ findFoodData 測試失敗:", error);
-  }
-};
-
-// 測試 getFoodSortEnums API
-const testGetSortEnums = async () => {
-  try {
-    console.log("🧪 測試 getFoodSortEnums API");
-    testResult.value = { loading: true, api: "getFoodSortEnums" };
-
-    const result = await foodApi.getFoodSortEnums();
-
-    testResult.value = {
-      success: true,
-      api: "getFoodSortEnums",
-      result,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    console.log("✅ getFoodSortEnums 測試成功:", result);
-  } catch (error) {
-    testResult.value = {
-      success: false,
-      api: "getFoodSortEnums",
-      error: error.message,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    console.error("❌ getFoodSortEnums 測試失敗:", error);
-  }
-};
 
 // 引入子元件
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
@@ -378,9 +187,10 @@ const nutritionFilters = reactive({
 // 營養標籤 - 與 FilterSidebar 同步，空字串表示未選取
 const activeNutritionTab = ref("");
 
-// 分類選項
+// 🔧 修正分類選項 - 根據後端實際資料調整
 const categories = [
   { id: "all", name: "全部" },
+  { id: "agricultural", name: "農產品" }, // 新增，基於你的 POSTMAN 結果
   { id: "vegetable", name: "蔬菜" },
   { id: "fruit", name: "水果" },
   { id: "leafy", name: "葉菜類" },
@@ -388,56 +198,83 @@ const categories = [
   { id: "other", name: "其他" },
 ];
 
-// 載入資料
+// 載入資料 - 修正版本
 const loadData = async () => {
   isLoading.value = true;
   try {
-    console.log("開始載入資料...");
+    console.log("🔄 開始載入資料...");
 
     // 載入排序選項
-    const sortResponse = await foodApi.getFoodSortEnums();
-    if (sortResponse && sortResponse.data) {
-      sortOptions.value = sortResponse.data;
+    try {
+      const sortResponse = await foodApi.getFoodSortEnums();
+      if (sortResponse && sortResponse.data) {
+        sortOptions.value = sortResponse.data;
+        console.log("✅ 排序選項載入成功:", sortOptions.value.length, "個選項");
+      }
+    } catch (sortError) {
+      console.warn("⚠️ 排序選項載入失敗:", sortError);
     }
 
-    // 載入食物列表
-    const foodResponse = await foodApi.findFoodsList({
+    // 🔧 修正：使用正確的查詢參數邏輯
+    const foodParams = {
+      // 分類邏輯修正
       category:
         activeCategory.value === "all"
           ? ""
           : getCategoryMapping(activeCategory.value),
-      name: "",
+      subCategory: "", // 先不限制子分類，避免衝突
+      name: "", // 先不限制名稱，讓 API 回傳更多資料
+      nameEn: "", // 先不限制英文名稱
+      priceMin: Math.min(priceRange.value[0], priceRange.value[1]),
+      priceMax: Math.max(priceRange.value[0], priceRange.value[1]),
+      tag: "", // 先不限制標籤，避免過度篩選
       sort: currentSort.value,
-    });
+    };
 
-    if (foodResponse && foodResponse.data) {
+    console.log("📤 修正後的查詢參數:", foodParams);
+    console.log("🎯 當前分類:", activeCategory.value, "→", foodParams.category);
+
+    const foodResponse = await foodApi.findFoodsList(foodParams);
+
+    if (foodResponse && foodResponse.code === "0000" && foodResponse.data) {
       allDishes.value = foodResponse.data.map((item) => ({
         id: item.foodId,
         name: item.name,
-        price: item.price,
+        price: item.price || 50,
         type: item.category,
         ingredients: item.tag
           ? item.tag.split("/").filter((t) => t.trim())
           : ["新鮮", "營養"],
-        description: item.description,
+        description: item.description || `新鮮的${item.name}，營養豐富`,
+        image: item.image,
+        lastModifyDate: item.lastModifyDate,
+        isRecommendation: item.isRecommendation,
+        // 保留原始資料以便除錯
+        _originalData: item,
       }));
-    }
 
-    console.log("載入完成，共", allDishes.value.length, "個項目");
+      console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
+
+      // 顯示載入的資料類型統計
+      const categoryStats = {};
+      allDishes.value.forEach((dish) => {
+        categoryStats[dish.type] = (categoryStats[dish.type] || 0) + 1;
+      });
+      console.log("📊 資料分類統計:", categoryStats);
+    } else {
+      console.warn("⚠️ 食物列表回應格式異常:", foodResponse);
+      allDishes.value = [];
+    }
   } catch (error) {
-    console.error("載入資料失敗:", error);
+    console.error("❌ 載入資料失敗:", error);
+    allDishes.value = [];
   } finally {
     isLoading.value = false;
+    console.log("🏁 資料載入完成，總共", allDishes.value.length, "個項目");
   }
 };
 
-// 應用篩選邏輯
-const applyFilters = () => {
-  // 這個函數會被 computed 取代，但保留以備不時之需
-  console.log("篩選條件更新");
-};
-
-// 分類對應函數
+// 🔧 修正分類對應函數 - 確保邏輯正確
 const getCategoryMapping = (category) => {
   const mapping = {
     vegetable: "蔬菜",
@@ -445,7 +282,11 @@ const getCategoryMapping = (category) => {
     leafy: "葉菜類",
     root: "根莖類",
     other: "其他",
+    // 根據你的 POSTMAN 結果，後端有 "農產品" 分類
+    agricultural: "農產品",
   };
+
+  console.log("🔄 分類對應:", category, "→", mapping[category] || category);
   return mapping[category] || category;
 };
 
@@ -453,11 +294,7 @@ const getCategoryMapping = (category) => {
 const filteredDishes = computed(() => {
   let filtered = [...allDishes.value];
 
-  // 價格篩選
-  filtered = filtered.filter(
-    (dish) =>
-      dish.price >= priceRange.value[0] && dish.price <= priceRange.value[1]
-  );
+  // 本地篩選（不需要重新呼叫 API 的篩選）
 
   // 特色篩選
   if (filters.antioxidant) {
@@ -573,6 +410,7 @@ const getCardClass = (type) => {
     葉菜類: "leafy",
     醃菜品: "pickled",
     根莖類: "root",
+    水果: "fruit",
   };
   return typeMap[type] || "vegetable";
 };
@@ -586,17 +424,19 @@ const getPriceChangeText = () => {
   return Math.random() > 0.5 ? "▲1.5%" : "▼0.2%";
 };
 
-// 事件處理 - 恢復完整的篩選邏輯
-const setCategory = (categoryId) => {
+// 事件處理
+const setCategory = async (categoryId) => {
+  console.log("📂 切換分類:", categoryId);
   activeCategory.value = categoryId;
   currentPage.value = 1;
-  loadData();
+  await loadData(); // 重新載入資料
 };
 
-const handleSortChange = (newSort) => {
+const handleSortChange = async (newSort) => {
+  console.log("🔄 變更排序:", newSort);
   currentSort.value = newSort;
   currentPage.value = 1;
-  loadData();
+  await loadData(); // 重新載入資料
 };
 
 // FilterSidebar 事件處理
@@ -605,9 +445,10 @@ const updateFilters = (newFilters) => {
   currentPage.value = 1; // 重置到第一頁
 };
 
-const updatePriceRange = (newRange) => {
+const updatePriceRange = async (newRange) => {
   priceRange.value = newRange;
   currentPage.value = 1; // 重置到第一頁
+  await loadData(); // 價格篩選需要重新呼叫 API
 };
 
 const updateNutritionFilters = (newFilters) => {
@@ -815,6 +656,11 @@ onMounted(() => {
   color: #f57c00;
 }
 
+.category-tag.fruit {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
 .dish-description {
   font-size: 14px;
   color: #666;
@@ -978,12 +824,6 @@ onMounted(() => {
 
   .main-content {
     order: 1;
-  }
-
-  .category-sort-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
   }
 }
 </style>
