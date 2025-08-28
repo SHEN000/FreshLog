@@ -6,7 +6,7 @@
     </div>
 
     <div class="left">
-      <img :src="veggie.image" alt="蔬菜圖片" class="veggie-image" />
+      <img :src="$img(veggie.image)" alt="蔬菜圖片" class="veggie-image" />
     </div>
 
     <div class="center">
@@ -21,7 +21,7 @@
       <div class="sub-info">{{ veggie.category }} / {{ veggie.usage }}</div>
 
       <div class="price-warning">
-        <div class="price-badge">最新均價：${{ veggie.displayPrice }}/公斤</div>
+        <div class="price-badge">最新均價：${{ veggie.displayPrice }}</div>
       </div>
 
       <!-- 動態警示文字 -->

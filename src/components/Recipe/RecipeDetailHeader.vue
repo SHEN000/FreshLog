@@ -21,7 +21,7 @@
         </span>
       </div>
     </div>
-    <img :src="image" alt="食譜圖片" class="header-image" />
+    <img :src="$img(image)" alt="食譜圖片" class="header-image" />
   </div>
 </template>
 

@@ -8,7 +8,7 @@
       <span class="sep">›</span>
       <RouterLink to="/ai-recommendation" class="crumb">食譜推薦</RouterLink>
       <span class="sep">›</span>
-      <span class="current">{{ recipe.title }}</span>
+      <span class="current">{{ recipe.name }}</span>
     </div>
 
     <div class="recipe-detail">
@@ -21,7 +21,7 @@
       <!-- 左側主欄 -->
       <div class="left-col">
         <div class="block steps">
-          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tags || []" />
+          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tag || []" />
         </div>
         <div class="block season">
           <SeasonalRecommend
@@ -102,8 +102,8 @@ const loadRecipeData = async (id) => {
   errorMsg.value = null
 
   try {
-    const res = await axios.get('/api/recipes/findRecipesData', {
-      params: { RecipesId: id }    // ← Swagger 裡參數名稱「RecipesId」
+    const res = await axios.get('/api/recipe/findRecipeData', {
+      params: { recipeId: id }    // ← Swagger 裡參數名稱「RecipesId」
     })
     // 將 data.data 結構賦值給 recipe
     recipe.value = res.data.data

@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://43.199.27.51',  // 你的後端 API 主機
+        target: 'https://freshlog-api.ttshow.tw',  // 你的後端 API 主機
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'), // 保留 /api 開頭
       },

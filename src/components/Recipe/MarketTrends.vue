@@ -14,20 +14,16 @@
       <div class="trend-list">
         <div v-for="item in trends" :key="item.name" class="trend-row">
           <div class="trend-name">
-            <img :src="item.image" :alt="item.name" class="trend-icon" />
+            <img :src="$img(item.image)" :alt="item.name" class="trend-icon" />
             {{ item.name }}
           </div>
           <div class="trend-value">
-            <span :class="['price', { 'no-change': item.change === '0%' }]">${{ item.displayPrice }}{{ item.unit
-              }}</span>
-            <span class="change" :class="{
-              up: item.trend === '上升',
-              down: item.trend === '下降'
-            }">
-              <!-- 平穩顯示 '-'，上升/下降顯示箭頭 -->
-              {{ item.trend === '上升' ? '↑'
-                : item.trend === '下降' ? '↓'
-                  : '-' }}
+            <span :class="['price', { 'no-change': toNum(item.trend) === 0 }]">
+              ${{ item.displayPrice }}{{ item.unit }}
+            </span>
+
+            <span class="change" :class="{ up: toNum(item.trend) > 0, down: toNum(item.trend) < 0 }">
+              {{ changeText(item.trend) }}
             </span>
           </div>
         </div>
@@ -47,11 +43,7 @@
 
 <script setup>
 defineProps({
-  trends: {
-    type: Array,
-    default: () => []
-  },
-  /** 更新日期 */
+  trends: { type: Array, default: () => [] },
   date: {
     type: String,
     default: () => {
@@ -59,11 +51,34 @@ defineProps({
       return `${d.getMonth() + 1}/${d.getDate()}`
     }
   },
-  /** 省錢提醒文字 */
-  tip: {
-    type: String
-  }
+  tip: { type: String }
 })
+
+const toNum = (v) => {
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') {
+    const m = v.match(/-?\d+(\.\d+)?/)
+    if (m) return Number(m[0])
+    if (/上升/.test(v) || v.startsWith('+')) return 1
+    if (/下降/.test(v) || v.startsWith('-')) return -1
+    return 0
+  }
+  return 0
+}
+
+const changeText = (v) => {
+  const n = toNum(v);                 // 轉成可比較的數字
+  if (n === 0) return '-';            // 無變化
+  const abs = Math.abs(n);
+
+  const looksLikeFraction = typeof v === 'number' ? Math.abs(v) > 0 && Math.abs(v) < 1
+    : (typeof v === 'string' && !v.includes('%') && /^-?0?\.\d+/.test(v));
+  const pct = looksLikeFraction ? (abs * 100) : abs;
+
+  // 補上 %，並加上箭頭
+  return `${n > 0 ? '↑' : '↓'}${Number(pct.toFixed(2)).toString().replace(/\.00$/, '')}%`;
+};
+
 </script>
 
 <style scoped>

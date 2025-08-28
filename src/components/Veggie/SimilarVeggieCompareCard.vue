@@ -10,7 +10,7 @@
         <!-- 左側：icon + 文字 -->
         <div class="item-left">
           <div class="icon-wrapper">
-            <img :src="veg.icon" alt="" />
+            <img :src="$img(veg.image)" alt="" />
           </div>
           <div class="info">
             <div class="name">{{ veg.name }}</div>
@@ -20,15 +20,9 @@
 
         <!-- 右側：價格 + 漲跌箭頭 -->
         <div class="price">
-          ${{ veg.displayPrice }}/公斤
-          <span class="trend" :class="{
-            up: veg.trend === '[上升]',
-            down: veg.trend === '[下降]'
-          }">
-            <!-- 平穩顯示 '-'，上升/下降顯示箭頭 -->
-            {{ veg.trend === '[上升]' ? '↑'
-              : veg.trend === '[下降]' ? '↓'
-                : '-' }}
+          ${{ veg.displayPrice }}
+          <span class="trend" :class="{ up: toNum(veg.trend) > 0, down: toNum(veg.trend) < 0 }">
+            {{ arrow(veg.trend) }}
           </span>
         </div>
       </div>
@@ -43,6 +37,25 @@ const props = defineProps({
     default: () => []
   }
 })
+
+const toNum = (v) => {
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') {
+    // 先抓字串中的數字（例如 "+3.2%", "-1", "0"）
+    const m = v.match(/-?\d+(\.\d+)?/)
+    if (m) return Number(m[0])
+    // 兼容舊格式
+    if (/上升/.test(v) || v.startsWith('+')) return 1
+    if (/下降/.test(v) || v.startsWith('-')) return -1
+    return 0
+  }
+  return 0
+}
+
+const arrow = (v) => {
+  const n = toNum(v)
+  return n > 0 ? '↑' : n < 0 ? '↓' : '-'
+}
 </script>
 
 <style scoped>

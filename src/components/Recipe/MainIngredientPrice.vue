@@ -1,47 +1,71 @@
 <template>
-    <div class="price-card-outer">
-        <div class="price-card-inner">
-            <h3 class="title">主要食材當前價格</h3>
-            <div class="main-row">
-                <div class="money-icon">
-                    <img src="@/assets/icons/money-bag.png" alt="icon" />
-                </div>
-                <div class="info-block">
-                    <div v-for="item in items" :key="item.name" class="main-price-row">
-                        <!-- 食材名稱 -->
-                        <span class="item-name">{{ item.name }}</span>
-                        <!-- 價格數字 -->
-                        <span class="item-price">${{ item.displayPrice }}</span>
-                        <!-- 漲跌顯示 -->
-                        <span class="item-unit">/{{ item.unit }}</span>
-                        <span class="item-change"
-                            :class="{ up: item.trend.startsWith('+'), down: item.trend.startsWith('-') }">
-                            <!-- 根據漲跌顯示箭頭 -->
-                            {{ item.trend.startsWith('+') ? '↑' : '↓' }}
-                            比上週{{ item.trend.startsWith('+') ? '貴' : '便宜' }}
-                            {{ item.trend.replace(/[+-]/, '') }}
-                        </span>
-                    </div>
-                    <!-- <div class="cost-summary">
-                        主要食材預估成本約 <span class="cost-value">${{ cost }}</span>
-                    </div> -->
-                </div>
-            </div>
+  <div class="price-card-outer">
+    <div class="price-card-inner">
+      <h3 class="title">主要食材當前價格</h3>
+      <div class="main-row">
+        <div class="money-icon">
+          <img src="@/assets/icons/money-bag.png" alt="icon" />
         </div>
+
+        <div class="info-block">
+          <div v-for="item in items" :key="item.name" class="main-price-row">
+            <span class="item-name">{{ item.name }}</span>
+            <span class="item-price">${{ item.displayPrice }}</span>
+            <span class="item-unit">/{{ item.unit }}</span>
+
+            <!-- 只有非 0 才顯示 -->
+            <template v-if="trendInfo(item.trend).show">
+              <span class="item-change"
+                    :class="{ up: trendInfo(item.trend).isUp, down: trendInfo(item.trend).isDown }">
+                {{ trendInfo(item.trend).isUp ? '↑' : '↓' }}
+                比上週{{ trendInfo(item.trend).isUp ? '貴' : '便宜' }}
+                {{ trendInfo(item.trend).value }}%
+              </span>
+            </template>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-defineProps({
-    items: {
-        type: Array,
-        default: () => []
-    },
-    cost: {
-        type: [Number, String],
-        default: ''
-    }
+const props = defineProps({
+    items: { type: Array, default: () => [] },
+    cost: { type: [Number, String], default: '' }
 })
+
+/** 將趨勢資訊轉換為顯示格式 */
+function trendInfo(t) {
+  let n = 0
+
+  if (typeof t === 'number') {
+    n = t
+  } else if (typeof t === 'string') {
+    const m = t.match(/-?\d+(\.\d+)?/)
+    if (m) n = Number(m[0])
+    else if (t.includes('上升') || t.trim().startsWith('+')) n = 1
+    else if (t.includes('下降') || t.trim().startsWith('-')) n = -1
+  }
+
+  const abs = Math.abs(n)
+  const looksLikeFraction =
+    (typeof t === 'number' && abs > 0 && abs < 1) ||
+    (typeof t === 'string' && !t.includes('%') && /^-?0?\.\d+/.test(t))
+
+  const pct = looksLikeFraction ? abs * 100 : abs
+  const value = Number(pct.toFixed(2))        // 兩位小數
+                  .toString()
+                  .replace(/\.00$/, '')       // 去掉 .00
+                  .replace(/(\.\d*[1-9])0+$/, '$1') // 去掉多餘 0
+
+  return {
+    show: n !== 0,       // 0 不顯示
+    isUp: n > 0,         // 正數＝上升(變貴)
+    isDown: n < 0,       // 負數＝下降(變便宜)
+    value
+  }
+}
 </script>
 
 <style scoped>
@@ -93,7 +117,6 @@ defineProps({
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 4px;
     flex-shrink: 0;
     box-shadow: 0 2px 8px #eaf7ea;
 }

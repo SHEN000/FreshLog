@@ -27,10 +27,10 @@
           </span>
         </div>
 
-        <img :src="item.channelImage" class="market-img" alt="市場圖片" />
+        <img :src="$img(item.channelImage)" class="market-img" alt="市場圖片" />
 
         <div class="price">
-          NT${{ item.price !== undefined ? item.price : '—' }}/公斤
+          NT${{ item.price !== undefined ? item.price : '—' }}
         </div>
 
         <!-- 品質分數與 CP 值兩條進度條 -->
@@ -45,7 +45,7 @@
           <div class="metric">
             <span class="label">CP值</span>
             <div class="bar-bg">
-              <!-- 填滿比例 = cpValue / maxCp * 100% -->
+              <!-- 填滿比例 = cp / maxCp * 100% -->
               <div class="bar-fill cp" :style="{ width: (item.cp / maxCp) * 100 + '%' }"></div>
             </div>
             <span class="value">
@@ -100,7 +100,7 @@ const sortOptions = [
 // 計算最大 CP 值 (maxCp) , 用於顯示進度條比例
 const maxCp = computed(() => {
   if (!marketCompare.value.length) return 1
-  return Math.max(...marketCompare.value.map(i => i.cpValue))
+  return Math.max(...marketCompare.value.map(i => i.cp))
 })
 
 // 排序後的陣列
@@ -109,7 +109,7 @@ const sortedItems = computed(() => {
 
   return [...marketCompare.value].sort((a, b) => {
     if (sortBy.value === 'cp') {
-      return b.cpValue - a.cpValue
+      return b.cp - a.cp
     }
     if (sortBy.value === 'price') {
       return (a.pricePerKg ?? Infinity) - (b.pricePerKg ?? Infinity)
