@@ -25,8 +25,8 @@
     </div>
 
     <!-- 其他說明文字 先寫死 -->
-    <div class="market-risk">市場風險: 高 (-20.3%)</div>
-    <div class="market-note">近期準備二次收成，價格將再降。建議等待 7-10 天後再購買。</div>
+    <!-- <div class="market-risk">市場風險: 高 (-20.3%)</div>
+    <div class="market-note">近期準備二次收成，價格將再降。建議等待 7-10 天後再購買。</div> -->
   </div>
 </template>
 

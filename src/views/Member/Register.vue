@@ -147,6 +147,9 @@ import { useUserStore } from '@/store/user'
 const userStore = useUserStore()
 const router = useRouter()
 
+// 後端位址
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || ''
+
 // 控制流程階段，1=發送驗證碼，2=進入帳密設定
 const step = ref(1)
 
@@ -156,10 +159,9 @@ const code = ref('')
 const agreed = ref(false)
 const codeSent = ref(false) // 驗證碼是否已寄出
 
-// 倒數計時
-const errorMessage = ref('')
 const countdown = ref(60)
 let timer = null
+const isLoading = ref(false)
 
 // 驗證 Email 格式
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -190,24 +192,26 @@ const isPasswordValid = computed(() => passwordPattern.test(password.value))
 const isConfirmMatch = computed(() => confirmPassword.value === password.value)
 
 // 按鈕可用條件
-const canRequestCode = computed(() => isEmailValid.value)
-const canResendCode = computed(() => step.value === 1)
+const canRequestCode = computed(() => isEmailValid.value && !isLoading.value)
+const canResendCode = computed(() => step.value === 1 && !isLoading.value)
 const canVerifyCode = computed(() =>
   step.value === 1 &&
   code.value.trim().length === 6 &&
-  agreed.value
+  agreed.value &&
+  !isLoading.value
 )
 const canRegister = computed(() =>
   step.value === 2 &&
   isAccountValid.value &&
   isPasswordValid.value &&
-  isConfirmMatch.value
+  isConfirmMatch.value &&
+  !isLoading.value
 )
 
 // 倒數計時
 function startCountdown() {
   clearInterval(timer)
-  countdown.value = 60
+  countdown.value = 300
   timer = setInterval(() => {
     if (countdown.value > 0) countdown.value--
     else clearInterval(timer)
@@ -215,45 +219,121 @@ function startCountdown() {
 }
 onBeforeUnmount(() => clearInterval(timer))
 
-// Step1：發送／重新寄送驗證碼
-function requestCode() {
-  step.value = 1
-  codeSent.value = true  
-  startCountdown()
+async function apiPost(path, { query, body } = {}) {
+  const q = query
+    ? '?' + new URLSearchParams(query).toString()
+    : ''
+  const url = `${API_BASE}${path}${q}`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data?.message || `HTTP ${res.status}`)
+  }
+  return data
 }
 
-function resendCode() {
+// Step1：發送／重新寄送驗證碼
+async function requestCode() {
+  if (!isEmailValid.value) return
+  isLoading.value = true
+  try {
+    await apiPost('/api/user/send-register-code', { query: { email: email.value.trim() } })
+    codeSent.value = true
+    startCountdown()
+  } catch (err) {
+    alert(err.message || '發送驗證碼失敗，請稍後再試')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function resendCode() {
   code.value = ''
-  codeSent.value = true 
-  startCountdown()
+  await requestCode()
 }
 
 // Step1：確認驗證碼成功後進入註冊
-function verifyCode() {
-  clearInterval(timer)
-  step.value = 2
+async function verifyCode() {
+  if (!canVerifyCode.value) return
+  isLoading.value = true
+  try {
+    const resp = await apiPost('/api/user/verify-code', {
+      body: { email: email.value.trim(), code: code.value.trim() }
+    })
+    const codeStr = String(resp?.code ?? '')
+
+    // 後端明確錯誤碼
+    if (codeStr === '6007') {
+      alert(resp?.message || '驗證碼錯誤或已過期')
+      code.value = ''       // 清空再輸入
+      return
+    }
+
+    // 成功條件
+    const success =
+      codeStr === '0004' || codeStr === '200' ||
+      resp?.data === true ||
+      /成功/.test(resp?.message ?? '') || /成功/.test(String(resp?.data ?? ''))
+
+    if (!success) {
+      alert(resp?.message || '驗證失敗')
+      return
+    }
+
+    clearInterval(timer)
+    step.value = 2
+  } catch (err) {
+    alert(err.message || '驗證失敗，請稍後再試')
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// Step2：註冊並跳轉
-function handleRegister() {
+
+// Step2：註冊並跳轉  ->  POST /api/user/register
+async function handleRegister() {
+  if (!canRegister.value) return
   if (password.value !== confirmPassword.value) {
-    errorMessage.value = '密碼與確認密碼不一致'
+    alert('密碼與確認密碼不一致')
     return
   }
-  // 假註冊成功
-  localStorage.setItem('userToken', 'sample-token')
-  userStore.setIsAuthenticated(true)
+  isLoading.value = true
+  try {
+    const resp = await apiPost('/api/user/register', {
+      body: {
+        userName: account.value.trim(),
+        userPassword: password.value,
+        email: email.value.trim()
+      }
+    })
 
-  const redirectPath = localStorage.getItem('redirectAfterLogin')
-  if (redirectPath) {
-    localStorage.removeItem('redirectAfterLogin')
-    router.push(redirectPath)
-  } else {
-    const selectedRole = localStorage.getItem('userRole') || 'consumer'
-    router.push(selectedRole === 'farmer' ? '/farmer/crop-dashboard' : '/veggie')
+    const token = resp?.data?.token
+    if (token) {
+      localStorage.setItem('userToken', token)
+      userStore.setIsAuthenticated(true)
+      const redirectPath = localStorage.getItem('redirectAfterLogin')
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin')
+        router.push(redirectPath)
+      } else {
+        const selectedRole = localStorage.getItem('userRole') || 'consumer'
+        router.push(selectedRole === 'farmer' ? '/farmer/crop-dashboard' : '/veggie')
+      }
+    } else {
+      router.push('/member/login')
+    }
+  } catch (err) {
+    alert(err.message || '註冊失敗，請稍後再試')
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
+
 
 <style scoped>
 /* 整頁背景與置中設定 */

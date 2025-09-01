@@ -4,7 +4,14 @@
     <div class="header-bg" :style="{ background: gradientStyle }"></div>
 
     <div class="header-gradient">
-      <h1 class="header-title">{{ title }}</h1>
+      <!-- 標題 + 收藏 -->
+      <div class="header-title-row">
+        <h1 class="header-title">{{ title }}</h1>
+        <button class="favorite-button" @click="toggleFavorite" aria-label="收藏食譜">
+          <img :src="isFavorite ? redHeart : grayHeart" alt="收藏" class="heart-icon" />
+        </button>
+      </div>
+
       <p class="header-desc">{{ desc }}</p>
       <div class="header-info">
         <span class="info-item">
@@ -27,6 +34,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'  
+import { useUserStore } from '@/store/user'         
+import grayHeart from '@/assets/icons/heart-gray.png' 
+import redHeart from '@/assets/icons/heart-red.png'  
 
 const props = defineProps({
   title: String,
@@ -68,6 +79,35 @@ onUnmounted(() => {
   document.documentElement.style.removeProperty('--recipe-header-gradient-pc')
   document.documentElement.style.removeProperty('--recipe-header-gradient-mobile')
 })
+
+// 收藏：登入門檻 + 本地切換
+const userStore = useUserStore()
+const router = useRouter()
+const route = useRoute()
+
+const isFavorite = ref(false)
+const toggleFavorite = async () => {
+  if (!userStore.isAuthenticated) {
+    localStorage.setItem('redirectAfterLogin', route.fullPath)
+    router.push('/member/login')
+    return
+  }
+  isFavorite.value = !isFavorite.value
+
+  // // 若未來要串 API，在此補上（與蔬菜頁相同）
+  // try {
+  //   await fetch('/api/recipe/favorite/toggle', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Authorization: `Bearer ${localStorage.getItem('userToken')}`
+  //     },
+  //     body: JSON.stringify({ recipeId: props.id, favorite: isFavorite.value })
+  //   })
+  // } catch (e) {
+  //   isFavorite.value = !isFavorite.value // 回滾
+  // }
+}
 </script>
 
 <style scoped>
@@ -96,7 +136,8 @@ onUnmounted(() => {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--recipe-header-gradient-pc); /* default PC 漸層 */
+  background: var(--recipe-header-gradient-pc);
+  /* default PC 漸層 */
   z-index: 1;
 }
 
@@ -110,16 +151,27 @@ onUnmounted(() => {
   background: transparent;
   color: #fff;
   position: relative;
-  z-index: 2;   /* 確保文字在元素之上 */
+  z-index: 2;
+  /* 確保文字在元素之上 */
 }
 
-/* 標題字體 */
+/* 標題本體：移除下邊距、可截斷 */
 .header-title {
-  font-size: 2.4rem;
-  font-weight: bold;
-  margin-bottom: 12px;
-  letter-spacing: 2px;
-  font-size: 32px;
+  margin: 0;                  /* 移除下邊距，避免造成不對齊 */
+  line-height: 1.2;
+  min-width: 0;               /* 讓 ellipsis 生效 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;    /* 長標題以 … 截斷 */
+}
+
+/* 標題 + 收藏：同列且垂直置中 */
+.header-title-row {
+  display: flex;
+  align-items: center;   /* 與蔬菜內頁一致：垂直置中 */
+  gap: 8px;
+  margin-bottom: 12px;   /* 原本 h1 的下間距移到這裡 */
+  flex-wrap: nowrap;     /* 避免愛心被擠到下一行 */
 }
 
 /* 描述文字 */
@@ -155,9 +207,35 @@ onUnmounted(() => {
   min-width: 250px;
   max-width: 400px;
   position: relative;
-  z-index: 0;  /* 圖片最底層 */
+  z-index: 0;
+  /* 圖片最底層 */
   border-top-right-radius: 24px;
   border-bottom-right-radius: 24px;
+}
+
+/* 收藏按鈕（與 VeggieMainInfoCard 一致：白色圓底、灰框） */
+.favorite-button {
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 50%;
+  padding: 4px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-button:hover {
+  border-color: #aaa;
+}
+
+/* 心形 icon 尺寸一致 */
+.heart-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* 手機版樣式調整 */
@@ -166,10 +244,12 @@ onUnmounted(() => {
     flex-direction: column;
     border-radius: 16px;
   }
+
   .header-gradient {
     padding: 24px 16px;
     border-radius: 0;
   }
+
   .header-image {
     border-radius: 0 0 16px 16px;
     min-width: 120px;
@@ -177,9 +257,14 @@ onUnmounted(() => {
     height: 180px;
   }
 
-    /* 漸層改為上下方向 */
+  /* 漸層改為上下方向 */
   .header-container::before {
-    background: var(--recipe-header-gradient-mobile); /* mobile 漸層 */
+    background: var(--recipe-header-gradient-mobile);
+    /* mobile 漸層 */
+  }
+
+  .header-title-row {
+    gap: 8px;
   }
 }
 </style>

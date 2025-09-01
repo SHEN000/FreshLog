@@ -18,7 +18,7 @@
         </button>
       </div>
 
-      <div class="sub-info">{{ veggie.category }} / {{ veggie.usage }}</div>
+      <div class="sub-info">{{ veggie.cookingSuggestions }}</div>
 
       <div class="price-warning">
         <div class="price-badge">最新均價：${{ veggie.displayPrice }}</div>
@@ -47,6 +47,8 @@
 <script setup>
 import { ref, computed, toRefs } from 'vue'
 import { priceTrendData } from '@/data/priceTrendData.js'
+import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '@/store/user' 
 
 // 收藏按鈕的灰心與紅心
 import grayHeart from '@/assets/icons/heart-gray.png'
@@ -57,6 +59,11 @@ const props = defineProps({
 })
 
 const { veggie } = toRefs(props)
+
+// 存取登入狀態與路由
+const userStore = useUserStore()
+const router = useRouter()
+const route = useRoute()
 
 // 把數據日期字串轉成 YYYY/MM/DD
 const formattedDate = computed(() => {
@@ -71,8 +78,29 @@ const formattedDate = computed(() => {
 
 // 收藏狀態與切換
 const isFavorite = ref(false)
-const toggleFavorite = () => {
+const toggleFavorite = async () => {
+  // ★ 未登入就先導到登入頁，並記住回跳路徑
+  if (!userStore.isAuthenticated) {
+    localStorage.setItem('redirectAfterLogin', route.fullPath)
+    // 這裡你也可以換成你專案實際的登入路由
+    router.push('/member/login')
+    return
+  }
+
+  // 已登入才允許切換收藏（之後可在這裡串接後端 API）
   isFavorite.value = !isFavorite.value
+
+  // // 範例：若未來要串 API，可在此補上
+  // try {
+  //   await fetch('/api/favorite/toggle', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('userToken')}` },
+  //     body: JSON.stringify({ veggieId: veggie.value.id, favorite: isFavorite.value }),
+  //   })
+  // } catch (e) {
+  //   // 若失敗可回滾
+  //   isFavorite.value = !isFavorite.value
+  // }
 }
 
 // 取 30 天趨勢資料
@@ -166,7 +194,7 @@ const adviceText = computed(() => {
 
 /* 收藏按鈕樣式 */
 .favorite-button {
-  background: none;
+  background: #fff; 
   border: 1.5px solid #ddd;
   border-radius: 50%;
   padding: 4px;
@@ -176,6 +204,10 @@ const adviceText = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.favorite-button:hover {
+  border-color: #aaa;
 }
 
 /* 收藏圖示 */
