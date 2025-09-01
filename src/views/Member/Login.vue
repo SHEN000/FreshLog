@@ -93,7 +93,7 @@ const showPassword = ref(false)
 const captcha = ref('')
 const captchaImgUrl = ref('')
 const captchaError = ref('')
-const captchaImgWidth = ref('150px')  // 可以自由調整圖片寬度
+const captchaImgWidth = ref('110px')  // 可以自由調整圖片寬度
 
 // 後端位址
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || ''
@@ -352,7 +352,7 @@ h1 {
 .captcha-row { display: flex; align-items: center; gap: 10px; }
 
 .captcha-input {
-  flex: 0 0 210px;
+  flex: 0 0 160px;
   /* max-width: 210px; */
 }
 
