@@ -241,7 +241,19 @@ async function requestCode() {
   if (!isEmailValid.value) return
   isLoading.value = true
   try {
-    await apiPost('/api/user/send-register-code', { query: { email: email.value.trim() } })
+    const resp = await apiPost('/api/user/send-register-code', {
+      query: { email: email.value.trim() }
+    })
+
+    const biz = String(resp?.code ?? '')
+
+    // 已註冊的信箱（你的後端回 6006）
+    if (biz === '6006') {
+      alert(resp?.message || '電子郵件已被註冊，請改用其他信箱或直接登入')
+      return  // 不進入倒數、不顯示輸入驗證碼
+    }
+
+    // 其他情況視為成功：開始倒數、顯示輸入驗證碼區塊
     codeSent.value = true
     startCountdown()
   } catch (err) {
@@ -293,7 +305,6 @@ async function verifyCode() {
   }
 }
 
-
 // Step2：註冊並跳轉  ->  POST /api/user/register
 async function handleRegister() {
   if (!canRegister.value) return
@@ -311,6 +322,7 @@ async function handleRegister() {
       }
     })
 
+    // 若後端有回 token → 直接視為登入
     const token = resp?.data?.token
     if (token) {
       localStorage.setItem('userToken', token)
@@ -323,9 +335,18 @@ async function handleRegister() {
         const selectedRole = localStorage.getItem('userRole') || 'consumer'
         router.push(selectedRole === 'farmer' ? '/farmer/crop-dashboard' : '/veggie')
       }
-    } else {
-      router.push('/member/login')
+      return
     }
+
+    const biz = String(resp?.code ?? '')
+    if (biz === '6003') {
+      alert(resp?.message || '註冊成功')
+      router.push('/member/login')  // 完成註冊導去登入
+      return
+    }
+
+    // 其他非預期回應
+    alert(resp?.message || '註冊結果不明，請稍後再試')
   } catch (err) {
     alert(err.message || '註冊失敗，請稍後再試')
   } finally {
