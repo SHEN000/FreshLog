@@ -4,6 +4,14 @@ import Home from "../views/Home.vue";
 const routes = [
   { path: "/", name: "Home", component: Home }, // 首頁
   { path: "/select-role", component: () => import("@/views/RoleSelect.vue") }, // 選擇角色頁
+
+  // 食譜列表頁面
+  {
+    path: "/recipes",
+    name: "RecipeList",
+    component: () => import("@/views/Consumer/RecipeListPage.vue"),
+  },
+
   {
     path: "/veggie",
     component: () => import("@/views/Consumer/VeggieInfo.vue"),

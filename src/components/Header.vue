@@ -19,12 +19,21 @@
           class="nav-item"
           >首頁</RouterLink
         >
+
+        <RouterLink
+          v-if="isConsumer"
+          to="/recipes"
+          :class="{ active: isActive('/recipes') }"
+          class="nav-item"
+          >食譜列表</RouterLink
+        >
+
         <RouterLink
           v-if="isConsumer"
           to="/veggie"
           :class="{ active: isActive('/veggie') }"
           class="nav-item"
-          >食譜列表</RouterLink
+          >蔬菜資訊</RouterLink
         >
         <RouterLink
           v-if="isConsumer"
@@ -47,7 +56,8 @@
           class="nav-item"
           >食譜內頁</RouterLink
         >
-        <!-- <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink> -->
+
+        <!-- 農民相關連結 -->
         <RouterLink
           v-if="isFarmer"
           to="/"
@@ -99,6 +109,16 @@
         class="nav-item"
         >首頁</RouterLink
       >
+
+      <!--手機版食譜列表連結 -->
+      <RouterLink
+        v-if="isConsumer"
+        to="/recipes"
+        :class="{ active: isActive('/recipes') }"
+        class="nav-item"
+        >食譜列表</RouterLink
+      >
+
       <RouterLink
         v-if="isConsumer"
         to="/veggie"
@@ -134,6 +154,8 @@
         class="nav-item"
         >食安資訊</RouterLink
       >
+
+      <!-- 農民相關連結 -->
       <RouterLink
         v-if="isFarmer"
         to="/"
