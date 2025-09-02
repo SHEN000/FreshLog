@@ -9,18 +9,14 @@ const routes = [
     component: () => import("@/views/Consumer/VeggieInfo.vue"),
   }, // 蔬菜列表
   {
-    path: '/veggie',
-    redirect: '/veggie/001'
+    path: "/veggie",
+    redirect: "/veggie/001",
   }, // 蔬菜列表預設
   {
-    path: '/veggie/:id',
-    name: 'VeggieInfo',
-    component: () => import('@/views/Consumer/VeggieInfoPage.vue')
-  }, // 蔬菜內頁
-  {
-    path: "/foodsafety",
-    component: () => import("@/views/Consumer/FoodSafetyList.vue"),
-  }, // 食安列表
+    path: "/veggie/:id",
+    name: "VeggieInfo",
+    component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
+  },
   {
     path: "/foodsafety/:id",
     component: () => import("@/views/Consumer/FoodSafetyDetail.vue"),
@@ -58,9 +54,9 @@ const routes = [
     component: () => import("@/views/Consumer/AiRecommendation.vue"),
   }, // AI 智慧推薦
   {
-    path: '/ai-recommendation/:id',
-    name: 'RecipeDetail',
-    component: () => import('@/views/Consumer/RecipeDetail.vue')
+    path: "/ai-recommendation/:id",
+    name: "RecipeDetail",
+    component: () => import("@/views/Consumer/RecipeDetail.vue"),
   }, // 食譜內頁
 ];
 

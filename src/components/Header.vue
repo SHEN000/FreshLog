@@ -12,18 +12,64 @@
       <h1 class="site-title mobile-only">食價登錄</h1>
 
       <div v-if="!isMobile" class="nav-links">
-        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">蔬菜內頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation/R001" :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
-        <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
+        <RouterLink
+          v-if="isConsumer"
+          to="/"
+          :class="{ active: isActive('/') }"
+          class="nav-item"
+          >首頁</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/veggie"
+          :class="{ active: isActive('/veggie') }"
+          class="nav-item"
+          >食譜列表</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/veggie/F001"
+          :class="{ active: isActive('/veggie/F001') }"
+          class="nav-item"
+          >蔬菜內頁</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/ai-recommendation"
+          :class="{ active: isActive('/ai-recommendation') }"
+          class="nav-item"
+          >AI智慧推薦</RouterLink
+        >
+        <RouterLink
+          v-if="isConsumer"
+          to="/ai-recommendation/R001"
+          :class="{ active: isActive('/ai-recommendation/R001') }"
+          class="nav-item"
+          >食譜內頁</RouterLink
+        >
+        <!-- <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink> -->
+        <RouterLink
+          v-if="isFarmer"
+          to="/"
+          :class="{ active: isActive('/') }"
+          class="nav-item"
+          >首頁</RouterLink
+        >
+        <RouterLink
+          v-if="isFarmer"
+          to="/farmer/crop-dashboard"
+          :class="{ active: isActive('/farmer/crop-dashboard') }"
+          class="nav-item"
+          >農民儀表板</RouterLink
+        >
       </div>
 
       <div class="search-container desktop-only">
-        <input type="text" placeholder="搜尋蔬果名稱、類別或營養成分..." class="search-input" />
+        <input
+          type="text"
+          placeholder="搜尋蔬果名稱、類別或營養成分..."
+          class="search-input"
+        />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </div>
 
@@ -32,7 +78,9 @@
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </button>
 
-      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button">註冊/登入</RouterLink>
+      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button"
+        >註冊/登入</RouterLink
+      >
       <RouterLink v-else to="/member/profile" class="profile-button">
         <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
         <span>個人中心</span>
@@ -44,14 +92,62 @@
 
     <!-- 手機版展開選單 -->
     <div class="mobile-dropdown" v-if="showMenu && isMobile">
-        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie" :class="{ active: isActive('/veggie') }" class="nav-item">蔬菜資訊</RouterLink>
-        <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">蔬菜內頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }" class="nav-item">AI 智慧推薦</RouterLink>
-        <RouterLink v-if="isConsumer" to="/ai-recommendation/R001" :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
-        <RouterLink v-if="isConsumer" to="/foodsafety" :class="{ active: isActive('/foodsafety') }" class="nav-item">食安資訊</RouterLink>
-        <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }" class="nav-item">農民儀表板</RouterLink>
+      <RouterLink
+        v-if="isConsumer"
+        to="/"
+        :class="{ active: isActive('/') }"
+        class="nav-item"
+        >首頁</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggie"
+        :class="{ active: isActive('/veggie') }"
+        class="nav-item"
+        >蔬菜資訊</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggie/F001"
+        :class="{ active: isActive('/veggie/F001') }"
+        class="nav-item"
+        >蔬菜內頁</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/ai-recommendation"
+        :class="{ active: isActive('/ai-recommendation') }"
+        class="nav-item"
+        >AI 智慧推薦</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/ai-recommendation/R001"
+        :class="{ active: isActive('/ai-recommendation/R001') }"
+        class="nav-item"
+        >食譜內頁</RouterLink
+      >
+      <RouterLink
+        v-if="isConsumer"
+        to="/foodsafety"
+        :class="{ active: isActive('/foodsafety') }"
+        class="nav-item"
+        >食安資訊</RouterLink
+      >
+      <RouterLink
+        v-if="isFarmer"
+        to="/"
+        :class="{ active: isActive('/') }"
+        class="nav-item"
+        >首頁</RouterLink
+      >
+      <RouterLink
+        v-if="isFarmer"
+        to="/farmer/crop-dashboard"
+        :class="{ active: isActive('/farmer/crop-dashboard') }"
+        class="nav-item"
+        >農民儀表板</RouterLink
+      >
     </div>
   </header>
 </template>
@@ -74,8 +170,12 @@ const isFarmer = computed(() => userRole.value === "farmer");
 const showMenu = ref(false);
 const isMobile = ref(window.innerWidth <= 768);
 
-const toggleMenu = () => { showMenu.value = !showMenu.value; };
-const closeMenu = () => { showMenu.value = false; };
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value;
+};
+const closeMenu = () => {
+  showMenu.value = false;
+};
 
 const isActive = (path) => route.path === path;
 
@@ -84,16 +184,21 @@ const handleResize = () => {
 };
 
 const handleClickOutside = (event) => {
-  const menu = document.querySelector('.mobile-dropdown');
-  const button = document.querySelector('.menu-icon');
-  if (menu && !menu.contains(event.target) && button && !button.contains(event.target)) {
+  const menu = document.querySelector(".mobile-dropdown");
+  const button = document.querySelector(".menu-icon");
+  if (
+    menu &&
+    !menu.contains(event.target) &&
+    button &&
+    !button.contains(event.target)
+  ) {
     showMenu.value = false;
   }
 };
 
 onMounted(() => {
   window.addEventListener("resize", handleResize);
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
   router.afterEach(closeMenu);
 
   // 監聽點擊外部關閉選單
@@ -107,7 +212,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
 });
 </script>
 
@@ -320,8 +425,12 @@ onBeforeUnmount(() => {
   /* 可以依需要調整寬度 */
 }
 
-.desktop-only { display: flex; }
-.mobile-only  { display: none; }
+.desktop-only {
+  display: flex;
+}
+.mobile-only {
+  display: none;
+}
 
 @media (max-width: 768px) {
   /* 隱藏桌面元素 */
