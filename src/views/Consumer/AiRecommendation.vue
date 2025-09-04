@@ -45,9 +45,11 @@
           >
             <!-- 圖片區域  -->
             <div class="image-container">
-              <div class="image-placeholder">
-                <span class="placeholder-text">🖼️ {{ dish.name }} 🖼️</span>
-              </div>
+              <img
+                :src="$img(dish.image)"
+                :alt="dish.name"
+                class="dish-image"
+              />
               <!-- 評分標籤 -->
               <div class="rating-badge">★★★</div>
               <!-- 追蹤狀態 -->
@@ -198,7 +200,7 @@ const categories = [
   { id: "other", name: "其他" },
 ];
 
-// 載入資料 - 修正版本
+// 載入資料
 const loadData = async () => {
   isLoading.value = true;
   try {
@@ -215,7 +217,6 @@ const loadData = async () => {
       console.warn("⚠️ 排序選項載入失敗:", sortError);
     }
 
-    // 🔧 修正：使用正確的查詢參數邏輯
     const foodParams = {
       // 分類邏輯修正
       category:
@@ -274,7 +275,7 @@ const loadData = async () => {
   }
 };
 
-// 🔧 修正分類對應函數 - 確保邏輯正確
+// 🔧 修正分類對應函數
 const getCategoryMapping = (category) => {
   const mapping = {
     vegetable: "蔬菜",
@@ -282,7 +283,6 @@ const getCategoryMapping = (category) => {
     leafy: "葉菜類",
     root: "根莖類",
     other: "其他",
-    // 根據你的 POSTMAN 結果，後端有 "農產品" 分類
     agricultural: "農產品",
   };
 

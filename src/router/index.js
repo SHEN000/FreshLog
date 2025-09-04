@@ -10,11 +10,6 @@ const routes = [
     path: "/recipes",
     name: "RecipeList",
     component: () => import("@/views/Consumer/RecipeListPage.vue"),
-  },
-
-  {
-    path: "/veggie",
-    component: () => import("@/views/Consumer/VeggieInfo.vue"),
   }, // 蔬菜列表
   {
     path: "/veggie",

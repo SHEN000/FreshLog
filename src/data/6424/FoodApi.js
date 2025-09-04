@@ -2,13 +2,12 @@ import apiClient from "./Api";
 
 export const foodApi = {
   /**
-   * 查詢食品列表 - 最終修正版
+   * 查詢食品列表
    */
   findFoodsList: async (params = {}) => {
     try {
-      console.log("🌐 呼叫真實 API (POST) - findFoodsList", params);
+      console.log("🌐 呼叫API- findFoodsList", params);
 
-      // 使用寬鬆的查詢條件，避免參數衝突
       const requestBody = {
         category: params.category || "",
         subCategory: params.subCategory || "",
@@ -34,52 +33,25 @@ export const foodApi = {
         }
       );
 
-      console.log("✅ API 回應:", {
-        code: response.data?.code,
-        message: response.data?.message,
-        dataCount: response.data?.data?.length || 0,
-      });
+      console.log("✅ API 回應:", response.data);
 
       // 處理成功回應
       if (response.data?.code === "0000") {
         if (response.data.data && response.data.data.length > 0) {
+          // 檢查每個項目的圖片資料
+          response.data.data.forEach((item) => {
+            console.log(`📊 ${item.name} 圖片資料:`, {
+              image: item.image,
+              hasImage: !!item.image,
+              imageType: typeof item.image,
+            });
+          });
+
           console.log("🎉 成功取得真實資料:", response.data.data.length, "筆");
           return response.data;
         } else {
           console.log("⚠️ API 回傳空資料，使用 Mock 資料");
-          return {
-            code: "0000",
-            message: "搜尋成功 (展示資料)",
-            data: [
-              {
-                foodId: "DEMO001",
-                name: "展示用高麗菜",
-                category: "蔬菜",
-                price: 50,
-                tag: "當季/新鮮/維生素C",
-                description: "展示用新鮮高麗菜",
-                isRecommendation: true,
-              },
-              {
-                foodId: "DEMO002",
-                name: "展示用紅蘿蔔",
-                category: "蔬菜",
-                price: 35,
-                tag: "護眼/抗氧化/維生素A",
-                description: "展示用有機紅蘿蔔",
-                isRecommendation: true,
-              },
-              {
-                foodId: "DEMO003",
-                name: "展示用菠菜",
-                category: "葉菜類",
-                price: 45,
-                tag: "補鐵/葉酸/營養",
-                description: "展示用新鮮菠菜",
-                isRecommendation: true,
-              },
-            ],
-          };
+          return getMockData();
         }
       } else {
         throw new Error(
@@ -89,66 +61,53 @@ export const foodApi = {
     } catch (error) {
       console.error("❌ API 呼叫失敗:", error.message);
       console.log("🎭 使用 Mock 資料展示功能");
+      return getMockData();
+    }
+  },
 
+  /**
+   * 取得單一食品資料 - 加強圖片處理
+   */
+  findFoodData: async (foodId) => {
+    try {
+      console.log("🌐 取得食品詳情:", foodId);
+
+      const response = await apiClient.get("/food/findFoodData", {
+        params: { foodId },
+      });
+
+      console.log("✅ 食品詳情完整回應:", response.data);
+
+      // 特別檢查圖片資料
+      if (response.data?.data?.image) {
+        console.log("🖼️ 圖片資料:", {
+          image: response.data.data.image,
+          imageLength: response.data.data.image.length,
+          isBase64: response.data.data.image.startsWith("data:image/"),
+          isUrl: response.data.data.image.startsWith("http"),
+          isPath: response.data.data.image.startsWith("/"),
+        });
+      } else {
+        console.log("❌ 沒有找到圖片資料");
+      }
+
+      return response.data;
+    } catch (error) {
+      console.warn("⚠️ 食品詳情失敗，使用預設:", error.message);
       return {
         code: "0000",
-        message: "搜尋成功 (Mock 資料)",
-        data: [
-          {
-            foodId: "MOCK001",
-            name: "測試高麗菜",
-            category: "蔬菜",
-            price: 50,
-            tag: "當季/新鮮/維生素C",
-            description: "測試用新鮮高麗菜，富含維生素C",
-            isRecommendation: true,
-          },
-          {
-            foodId: "MOCK002",
-            name: "測試紅蘿蔔",
-            category: "蔬菜",
-            price: 35,
-            tag: "護眼/抗氧化/維生素A",
-            description: "測試用有機紅蘿蔔，護眼明目",
-            isRecommendation: true,
-          },
-          {
-            foodId: "MOCK003",
-            name: "測試菠菜",
-            category: "葉菜類",
-            price: 45,
-            tag: "補鐵/葉酸/營養",
-            description: "測試用新鮮菠菜，鐵質豐富",
-            isRecommendation: true,
-          },
-          {
-            foodId: "MOCK004",
-            name: "測試青花菜",
-            category: "蔬菜",
-            price: 60,
-            tag: "抗氧化/維生素C/超級食物",
-            description: "測試用新鮮青花菜，營養豐富",
-            isRecommendation: true,
-          },
-          {
-            foodId: "MOCK005",
-            name: "測試白蘿蔔",
-            category: "根莖類",
-            price: 25,
-            tag: "清熱/利水/消化",
-            description: "測試用白蘿蔔，清熱利水",
-            isRecommendation: false,
-          },
-          {
-            foodId: "MOCK006",
-            name: "測試小白菜",
-            category: "葉菜類",
-            price: 30,
-            tag: "當季/新鮮/維生素C",
-            description: "測試用新鮮小白菜，口感清脆",
-            isRecommendation: true,
-          },
-        ],
+        message: "Success (Mock)",
+        data: {
+          foodId: foodId,
+          name: "測試食品",
+          category: "蔬菜",
+          price: 50,
+          tag: "當季/新鮮",
+          description: "測試用食品資料",
+          // 模擬圖片路徑
+          image: "/images/test-veggie.jpg",
+          isRecommendation: true,
+        },
       };
     }
   },
@@ -177,35 +136,46 @@ export const foodApi = {
       };
     }
   },
-
-  /**
-   * 取得單一食品資料
-   */
-  findFoodData: async (foodId) => {
-    try {
-      console.log("🌐 取得食品詳情:", foodId);
-      const response = await apiClient.get("/food/findFoodData", {
-        params: { foodId },
-      });
-      console.log("✅ 食品詳情成功:", response.data);
-      return response.data;
-    } catch (error) {
-      console.warn("⚠️ 食品詳情失敗，使用預設:", error.message);
-      return {
-        code: "0000",
-        message: "Success (Mock)",
-        data: {
-          foodId: foodId,
-          name: "測試食品",
-          category: "蔬菜",
-          price: 50,
-          tag: "當季/新鮮",
-          description: "測試用食品資料",
-          isRecommendation: true,
-        },
-      };
-    }
-  },
 };
+
+// Mock 資料函數
+function getMockData() {
+  return {
+    code: "0000",
+    message: "搜尋成功 (Mock 資料)",
+    data: [
+      {
+        foodId: "MOCK001",
+        name: "測試高麗菜",
+        category: "蔬菜",
+        price: 50,
+        tag: "當季/新鮮/維生素C",
+        description: "測試用新鮮高麗菜，富含維生素C",
+        image: "/images/test-cabbage.jpg", // 模擬圖片路徑
+        isRecommendation: true,
+      },
+      {
+        foodId: "MOCK002",
+        name: "測試紅蘿蔔",
+        category: "蔬菜",
+        price: 35,
+        tag: "護眼/抗氧化/維生素A",
+        description: "測試用有機紅蘿蔔，護眼明目",
+        image: "/images/test-carrot.jpg",
+        isRecommendation: true,
+      },
+      {
+        foodId: "MOCK003",
+        name: "測試菠菜",
+        category: "葉菜類",
+        price: 45,
+        tag: "補鐵/葉酸/營養",
+        description: "測試用新鮮菠菜，鐵質豐富",
+        image: "/images/test-spinach.jpg",
+        isRecommendation: true,
+      },
+    ],
+  };
+}
 
 export default foodApi;

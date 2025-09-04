@@ -3,8 +3,8 @@ import axios from "axios";
 const apiClient = axios.create({
   baseURL:
     import.meta.env.MODE === "development"
-      ? "/api" // 開發環境：使用代理
-      : "https://freshlog-api.ttshow.tw/api", // 生產環境：直連新的 API 基礎 URL
+      ? "/api" // 使用代理
+      : "https://freshlog-api.ttshow.tw/api",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -17,7 +17,7 @@ if (import.meta.env.MODE === "development") {
     console.log(
       "📤 API Request:",
       config.method?.toUpperCase(),
-      config.baseURL + config.url, // 顯示完整 URL 以便除錯
+      config.baseURL + config.url, // 顯示完整 URL
       config.data || config.params
     );
     return config;

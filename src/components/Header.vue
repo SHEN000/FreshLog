@@ -30,13 +30,6 @@
 
         <RouterLink
           v-if="isConsumer"
-          to="/veggie"
-          :class="{ active: isActive('/veggie') }"
-          class="nav-item"
-          >蔬菜資訊</RouterLink
-        >
-        <RouterLink
-          v-if="isConsumer"
           to="/veggie/F001"
           :class="{ active: isActive('/veggie/F001') }"
           class="nav-item"
