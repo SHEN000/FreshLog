@@ -47,8 +47,7 @@
 
             <!-- 可以調整寬度 -->
             <img :src="captchaImgUrl" class="captcha-img" alt="驗證碼" title="看不清？點擊更換" @click="loadCaptcha"
-              draggable="false" :style="{ width: captchaImgWidth }" 
-            />
+              draggable="false" :style="{ width: captchaImgWidth }" />
           </div>
           <p v-if="captchaError" class="captcha-error">{{ captchaError }}</p>
         </div>
@@ -96,21 +95,21 @@ const captchaError = ref('')
 const captchaImgWidth = ref('110px')  // 可以自由調整圖片寬度
 
 // 後端位址
-const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || ''
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+/* 基本 fetch helpers */
 async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`, { credentials: 'include' })
-  // 可能回 JSON 或影像資料，這裡先讓呼叫端判斷
-  return res
+  return fetch(`${API_BASE}${path}`, { credentials: 'include' })
 }
 async function apiPost(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     credentials: 'include',
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   })
-  const data = await res.json().catch(() => ({}))
+  const text = await res.text()
+  const data = text ? JSON.parse(text) : {}
   if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
   return data
 }
@@ -149,23 +148,22 @@ async function loadCaptcha() {
 }
 onMounted(loadCaptcha)
 
-/* 三欄皆必填（不變） */
+/* 三欄皆必填 */
 const canSubmit = computed(() =>
   account.value.trim() !== '' &&
   password.value.trim() !== '' &&
   captcha.value.trim() !== ''
 )
 
-/** 串接登入（Swagger: POST /api/user/login）
- *  Body: { userName, userPassword, captcha }
- *  回傳：data.token / data.userId / data.userName
- */
+function saveToken(raw) {
+  if (!raw) return
+  // 只存原始 JWT，不要加 Bearer
+  localStorage.setItem('userToken', String(raw))
+}
+
+/* 串接登入 */
 async function handleLogin() {
-  if (!account.value.trim() || !password.value.trim()) return
-  if (!captcha.value.trim()) {
-    captchaError.value = '請輸入驗證碼'
-    return
-  }
+  if (!canSubmit.value) return
   captchaError.value = ''
 
   try {
@@ -175,23 +173,34 @@ async function handleLogin() {
       captcha: captcha.value.trim(),
     })
 
-    // 若後端以 code 表示結果（即使 HTTP 200），在這裡攔
+    // 有些後端會用 biz code 表示結果（即使 HTTP 200）
     const bizCode = `${resp?.code ?? ''}`
-    const bizOk =
-      !bizCode ||                
-      bizCode === '6001' ||       
-      /^2/.test(bizCode) ||       
-      resp?.success === true
+    const bizOk = !bizCode || bizCode === '6001' || /^2/.test(bizCode) || resp?.success === true
+    if (!bizOk) throw new Error(resp?.message || '登入失敗')
 
-    if (!bizOk) {
-      throw new Error(resp?.message || '登入失敗')
+    // 取回 token / userId / userName（兩種欄位都相容）
+    const token = resp?.data?.token ?? resp?.token
+    if (!token) throw new Error('登入回應缺少 token')
+
+    // 用 store 寫入，會同步 isAuthenticated
+    userStore.setToken(String(token))
+
+    const uid = resp?.data?.userId ?? resp?.userId
+    const uName = resp?.data?.userName ?? resp?.userName
+
+    // 存使用者資訊（收藏 API 會用到 userId）
+    if (uid != null) {
+      localStorage.setItem('userId', String(uid))
+      if (typeof userStore.setUserId === 'function') userStore.setUserId(uid)
+      else userStore.userId = uid
+    }
+    if (uName) {
+      localStorage.setItem('userName', String(uName))
+      if (typeof userStore.setUserName === 'function') userStore.setUserName(uName)
+      else userStore.userName = uName
     }
 
-    const token = resp?.data?.token || resp?.token
-    if (!token) throw new Error(resp?.message || '登入回應缺少 token')
-
-    // 登入後流程
-    localStorage.setItem('userToken', token)
+    // 標記已登入 & 回跳
     const selectedRole = localStorage.getItem('userRole') || 'consumer'
     userStore.setUserRole(selectedRole)
     userStore.setIsAuthenticated(true)
@@ -204,7 +213,6 @@ async function handleLogin() {
       router.push(selectedRole === 'farmer' ? '/farmer/crop-dashboard' : '/veggie')
     }
   } catch (err) {
-    // 以 alert 顯示錯誤，並刷新驗證碼
     alert(err.message || '登入失敗，請重試')
     captcha.value = ''
     await loadCaptcha()
@@ -215,10 +223,10 @@ async function handleLogin() {
 <style scoped>
 /* 整頁背景與置中設定 */
 .auth-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 50px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 0;
 }
 
 /* 卡片容器樣式 */
@@ -349,7 +357,11 @@ h1 {
 }
 
 /* 驗證碼輸入框樣式 */
-.captcha-row { display: flex; align-items: center; gap: 10px; }
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .captcha-input {
   flex: 0 0 160px;
@@ -357,7 +369,8 @@ h1 {
 }
 
 .captcha-img {
-  height: 44px;  /* 保持與輸入框一致的高度 */
+  height: 44px;
+  /* 保持與輸入框一致的高度 */
   border-radius: 6px;
   box-shadow: 0 0 0 2px #2e7d32 inset;
   background: #fff;
@@ -472,11 +485,15 @@ h1 {
 /* 手機版一致留白（避免貼邊） */
 @media (max-width: 768px) {
   .auth-page {
-    padding: 20px 0;     /* 兩頁一致 */
+    padding: 20px 0;
+    /* 兩頁一致 */
   }
+
   .auth-card {
-    padding: 32px;       /* 手機內距稍小一點看起來更緊湊 */
-    width: calc(100% - 48px); /* 更嚴謹，確保左右各 24px */
+    padding: 32px;
+    /* 手機內距稍小一點看起來更緊湊 */
+    width: calc(100% - 48px);
+    /* 更嚴謹，確保左右各 24px */
   }
 }
 </style>

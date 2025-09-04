@@ -33,13 +33,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'  
 import { useUserStore } from '@/store/user'         
 import grayHeart from '@/assets/icons/heart-gray.png' 
 import redHeart from '@/assets/icons/heart-red.png'  
 
 const props = defineProps({
+  id: [String, Number], 
   title: String,
   desc: String,
   image: String,
@@ -80,33 +81,133 @@ onUnmounted(() => {
   document.documentElement.style.removeProperty('--recipe-header-gradient-mobile')
 })
 
-// 收藏：登入門檻 + 本地切換
+/* 收藏*/
 const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
+function getAuthHeader() {
+  const raw = localStorage.getItem('userToken') || ''
+  return raw ? `Bearer ${raw.replace(/^Bearer\s+/, '')}` : ''
+}
+function getUserId() {
+  return userStore.userId || Number(localStorage.getItem('userId')) || null
+}
+function getRecipeId() {
+  return props.id
+      ?? route.params.id
+      ?? route.query.recipeId
+      ?? (route.path.match(/\/recipe\/([^/?#]+)/)?.[1])
+      ?? null
+}
+async function apiFetch(method, path, { query, body } = {}) {
+  const q = query ? `?${new URLSearchParams(query).toString()}` : ''
+  const url = `${API_BASE}${path}${q}`
+
+  const headers = new Headers()
+  headers.set('Accept', 'application/json')
+  if (body) headers.set('Content-Type', 'application/json')
+
+  const auth = getAuthHeader()
+  if (auth) {
+    headers.set('Authorization', auth)
+    headers.set('token',      auth.replace(/^Bearer\s+/, ''))
+    headers.set('X-Auth-Token', auth.replace(/^Bearer\s+/, ''))
+  }
+
+  const res  = await fetch(url, { method, headers, credentials: 'include', body: body ? JSON.stringify(body) : undefined })
+  const text = await res.text()
+  const data = text ? JSON.parse(text) : {}
+  if (!res.ok) {
+    const err = new Error(data?.message || `HTTP ${res.status}`)
+    err.status = res.status
+    throw err
+  }
+  return data
+}
+
+/* 呼叫食譜收藏的端點 */
+const favAdd    = (recipeId, userId) => apiFetch('POST',   `/api/memberUser/favorites/recipe/${encodeURIComponent(recipeId)}`, { query: { userId } })
+const favRemove = (recipeId, userId) => apiFetch('DELETE', `/api/memberUser/favorites/recipe/${encodeURIComponent(recipeId)}`, { query: { userId } })
+
+/* 回傳碼判斷 */
+const CODE_OK          = new Set(['0000', '0', 0])
+const CODE_ALREADY_FAV = '2001'
+const CODE_NOT_FOUND   = '2002'
+const addFavOK    = (r) => CODE_OK.has(String(r?.code ?? '')) || String(r?.code ?? '') === CODE_ALREADY_FAV || /success|成功|ok/i.test(String(r?.message ?? ''))
+const removeFavOK = (r) => CODE_OK.has(String(r?.code ?? '')) || String(r?.code ?? '') === CODE_NOT_FOUND   || /success|成功|ok|移除|刪除/i.test(String(r?.message ?? ''))
+
+/* 用「清單」端點同步收藏狀態（可跨裝置） */
+async function favStatus(recipeId, userId) {
+  const resp = await apiFetch('GET', '/api/memberUser/favorites/recipe', { query: { userId } })
+  const raw  = resp?.data?.items ?? resp?.data ?? resp?.items ?? []
+  const list = Array.isArray(raw) ? raw : []
+  return list.some(it => {
+    if (typeof it === 'string') return it === String(recipeId)
+    const v = it?.recipeId ?? it?.value ?? it?.id
+    return String(v) === String(recipeId)
+  })
+}
+
+/* 狀態 + 防重點擊 */
 const isFavorite = ref(false)
-const toggleFavorite = async () => {
+const favBusy    = ref(false)
+
+/* 初次掛載與登入/路由改變時，同步伺服器收藏狀態 */
+async function syncFavoriteFromServer() {
+  if (!userStore.isAuthenticated) return
+  const uid = getUserId()
+  const rid = getRecipeId()
+  if (!uid || !rid) return
+  const exists = await favStatus(rid, uid)
+  if (exists === true)  isFavorite.value = true
+  if (exists === false) isFavorite.value = false
+}
+onMounted(syncFavoriteFromServer)
+watch([() => userStore.isAuthenticated, () => route.fullPath, () => props.id], syncFavoriteFromServer)
+
+/* 點擊切換 */
+async function toggleFavorite() {
   if (!userStore.isAuthenticated) {
     localStorage.setItem('redirectAfterLogin', route.fullPath)
     router.push('/member/login')
     return
   }
-  isFavorite.value = !isFavorite.value
+  if (favBusy.value) return
+  favBusy.value = true
 
-  // // 若未來要串 API，在此補上（與蔬菜頁相同）
-  // try {
-  //   await fetch('/api/recipe/favorite/toggle', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       Authorization: `Bearer ${localStorage.getItem('userToken')}`
-  //     },
-  //     body: JSON.stringify({ recipeId: props.id, favorite: isFavorite.value })
-  //   })
-  // } catch (e) {
-  //   isFavorite.value = !isFavorite.value // 回滾
-  // }
+  const uid  = getUserId()
+  const rid  = getRecipeId()
+  if (!uid)  { alert('找不到使用者資訊，請重新登入後再試。'); favBusy.value = false; router.push('/member/login'); return }
+  if (!rid)  { alert('找不到食譜 ID，無法收藏。'); favBusy.value = false; return }
+
+  const prev = isFavorite.value
+  isFavorite.value = !prev
+
+  try {
+    if (!prev) {
+      const resp = await favAdd(rid, uid)
+      if (!addFavOK(resp)) throw new Error(resp?.message || '加入收藏失敗')
+      isFavorite.value = true
+    } else {
+      const resp = await favRemove(rid, uid)
+      if (!removeFavOK(resp)) throw new Error(resp?.message || '移除收藏失敗')
+      isFavorite.value = false
+    }
+  } catch (err) {
+    isFavorite.value = prev
+    if (err?.status === 401) {
+      alert('請先登入再使用收藏功能')
+      localStorage.setItem('redirectAfterLogin', route.fullPath)
+      router.push('/member/login')
+    } else {
+      alert(err?.message || '操作失敗，請稍後再試')
+    }
+  } finally {
+    favBusy.value = false
+  }
 }
 </script>
 

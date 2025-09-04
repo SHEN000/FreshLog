@@ -10,8 +10,8 @@ const routes = [
   }, // 蔬菜列表
   {
     path: '/veggie',
-    redirect: '/veggie/001'
-  }, // 蔬菜列表預設
+    redirect: '/veggie/F001'
+  }, // 蔬菜預設
   {
     path: '/veggie/:id',
     name: 'VeggieInfo',
