@@ -1,4 +1,43 @@
-import apiClient from "./Api";
+import axios from "axios";
+// import apiClient from "./Api"; // 暫時不使用，直接創建新的客戶端
+
+// 🔧 直接創建正確的 API 客戶端，避免環境變數問題
+const correctApiClient = axios.create({
+  baseURL: "https://freshlog-api.ttshow.tw/api",
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// 添加請求攔截器來確認網址
+correctApiClient.interceptors.request.use((config) => {
+  console.log(
+    "📤 API Request:",
+    config.method?.toUpperCase(),
+    config.baseURL + config.url
+  );
+  return config;
+});
+
+correctApiClient.interceptors.response.use(
+  (response) => {
+    console.log(
+      "📥 API Response:",
+      response.status,
+      response.config.baseURL + response.config.url
+    );
+    return response;
+  },
+  (error) => {
+    console.error("❌ API Error:", {
+      status: error.response?.status,
+      url: error.config?.baseURL + error.config?.url,
+      message: error.response?.data?.message || error.message,
+    });
+    return Promise.reject(error);
+  }
+);
 
 export const foodApi = {
   /**
@@ -21,7 +60,8 @@ export const foodApi = {
 
       console.log("📤 查詢參數:", requestBody);
 
-      const response = await apiClient.post(
+      // 🔧 使用修正後的 API 客戶端
+      const response = await correctApiClient.post(
         "/food/findFoodsList",
         requestBody,
         {
@@ -72,7 +112,8 @@ export const foodApi = {
     try {
       console.log("🌐 取得食品詳情:", foodId);
 
-      const response = await apiClient.get("/food/findFoodData", {
+      // 🔧 使用修正後的 API 客戶端
+      const response = await correctApiClient.get("/food/findFoodData", {
         params: { foodId },
       });
 
@@ -118,7 +159,10 @@ export const foodApi = {
   getFoodSortEnums: async () => {
     try {
       console.log("🌐 取得排序選項");
-      const response = await apiClient.get("/food/getFoodSortEnums");
+
+      // 🔧 使用修正後的 API 客戶端
+      const response = await correctApiClient.get("/food/getFoodSortEnums");
+
       console.log("✅ 排序選項成功:", response.data);
       return response.data;
     } catch (error) {
