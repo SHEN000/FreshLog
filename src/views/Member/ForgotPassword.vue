@@ -106,12 +106,14 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
-
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// 控制流程階段，：1=Email, 2=驗證碼, 3=修改密碼
+//後端位址 
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || ''
+
+// 流程：1=Email, 2=驗證碼, 3=修改密碼 
 const step = ref(1)
 
 // 欄位綁定
@@ -120,28 +122,23 @@ const code = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 
-// Email 格式驗證
+// Email 格式
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const isEmailValid = computed(() => emailPattern.test(email.value.trim()))
 
-// 驗證碼長度6
+// 驗證碼長度 6
 const isCodeValid = computed(() => code.value.trim().length === 6)
 
 // 密碼顯示切換
 const showNew = ref(false)
 const showConfirm = ref(false)
 
-// 密碼限制：至少 8 字元，含英文與數字，允許特殊符號
+// 密碼規則：至少 8 位含英數
 const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
-const isPasswordValid = computed(() =>
-    passwordPattern.test(newPassword.value)
-)
+const isPasswordValid = computed(() => passwordPattern.test(newPassword.value))
 
-// 確認密碼需與 newPassword 相同
-const isConfirmMatch = computed(() =>
-    confirmPassword.value === newPassword.value
-)
-
+// 確認密碼需相同
+const isConfirmMatch = computed(() => confirmPassword.value === newPassword.value)
 
 // 倒數計時
 const countdown = ref(60)
@@ -149,68 +146,126 @@ let timer = null
 
 // 按鈕可用條件
 const canRequestCode = computed(() => isEmailValid.value)
-const canVerifyCode = computed(() => isCodeValid.value)
-const canResend = computed(() => step.value === 2)
-const canReset = computed(() =>
-    isPasswordValid.value &&
-    isConfirmMatch.value
-)
+const canVerifyCode  = computed(() => isCodeValid.value)
+const canResend      = computed(() => step.value === 2)
+const canReset       = computed(() => isPasswordValid.value && isConfirmMatch.value)
 
-// 倒數計時啟動函式
+// 啟動 5 分鐘倒數
 function startCountdown() {
-    countdown.value = 60
-    clearInterval(timer)
-    timer = setInterval(() => {
-        if (countdown.value > 0) {
-            countdown.value--
-        } else {
-            clearInterval(timer)
-        }
-    }, 1000)
+  countdown.value = 300
+  clearInterval(timer)
+  timer = setInterval(() => {
+    if (countdown.value > 0) countdown.value--
+    else clearInterval(timer)
+  }, 1000)
 }
+onBeforeUnmount(() => clearInterval(timer))
 
-// 請求驗證碼
-function requestCode() {
-    // TODO: 呼叫「取得驗證碼」API...
+// 呼叫 API（POST/PUT）
+async function apiFetch(method, path, { query, body } = {}) {
+  const q = query ? `?${new URLSearchParams(query).toString()}` : ''
+  const url = `${API_BASE}${path}${q}`
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
+  return data
+}
+const apiPost = (path, opt) => apiFetch('POST', path, opt)
+const apiPut  = (path, opt) => apiFetch('PUT',  path, opt)
+
+// ── 1) 取得驗證碼
+async function requestCode() {
+  if (!isEmailValid.value) return
+  try {
+    await apiPost('/api/user/send-code', { query: { email: email.value.trim() } })
+    // 成功 → 進入 step 2 並開始倒數
     step.value = 2
     startCountdown()
+  } catch (err) {
+    console.error(err)
+    alert(err.message || '驗證碼寄送失敗，請稍後再試。')
+  }
 }
 
-// 重新寄送驗證碼
-function resendCode() {
-    // TODO: 呼叫「重新寄送」API...
+// ── 重新寄送
+async function resendCode() {
+  try {
+    await apiPost('/api/user/send-code', { query: { email: email.value.trim() } })
     code.value = ''
-    countdown.value = 60
     startCountdown()
+  } catch (err) {
+    console.error(err)
+    alert(err.message || '重新寄送失敗，請稍後再試。')
+  }
 }
 
-// 驗證碼確認
-function verifyCode() {
-    // TODO: 驗證 code
-    // 成功後：
+// ── 2) 驗證碼確認
+async function verifyCode() {
+  if (!canVerifyCode.value) return
+  try {
+    const resp = await apiPost('/api/user/verify-code', {
+      body: { email: email.value.trim(), code: code.value.trim() }
+    })
+    // 後端錯誤例：{ code: "6007", message: "驗證碼錯誤或無效" }（HTTP 200）
+    const bizCode = `${resp?.code ?? ''}`
+    if (bizCode === '6007') {
+      alert(resp?.message || '驗證碼錯誤或已過期')
+      return
+    }
+    // 驗證成功 → 進入 step 3
     clearInterval(timer)
     step.value = 3
+  } catch (err) {
+    console.error(err)
+    alert(err.message || '驗證失敗，請稍後再試。')
+  }
 }
 
-// 重設密碼，並顯示提示後導回登入
+// ── 3) 重設密碼
 async function resetPassword() {
-    try {
-        // TODO: 呼叫「重設密碼」API，await API 回傳
-        // 假設 API 成功：
-        alert('密碼重設成功！請重新登入。')
-        router.push('/member/login')
-    } catch (err) {
-        // API 失敗時可顯示錯誤
-        console.error(err)
-        alert('重設失敗，請稍後再試。')
+  try {
+    const resp = await apiPut('/api/user/forgetPassword', {
+      query: {
+        email: email.value.trim(),
+        newPassword: newPassword.value
+      }
+    })
+
+    // ── 邏輯判斷（後端錯誤也用 200 回來） ──
+    const bizCode = `${resp?.code ?? ''}`
+
+    const bizOk =
+      bizCode === '6100' ||               
+      /^2/.test(bizCode) ||            
+      resp?.code === 'OK' || resp?.success === true || resp?.data === true
+
+    // 特別處理 404：「資料不存在」
+    if (bizCode === '404') {
+      alert(resp?.message || '資料不存在或信箱未註冊')
+      return
     }
+
+    if (!bizOk) {
+      // 其他非成功碼，一律視為失敗
+      alert(resp?.message || '重設失敗，請稍後再試。')
+      return
+    }
+
+    // 成功才提示並跳轉
+    alert('密碼重設成功！請重新登入。')
+    router.push('/member/login')
+  } catch (err) {
+    console.error(err)
+    alert(err.message || '重設失敗，請稍後再試。')
+  }
 }
 
-// 離開頁面前清除計時器
-onBeforeUnmount(() => {
-    clearInterval(timer)
-})
 </script>
+
 
 <style scoped>
 .auth-page {

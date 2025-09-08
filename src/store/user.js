@@ -1,43 +1,67 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 
-// 定義名為 'user' 的 Pinia 狀態管理 store
 export const useUserStore = defineStore('user', {
   state: () => ({
-    // 根據 localStorage 判斷是否登入（是否有 token）
-    // !! 轉成布林值
+    // 只存「原始 JWT」，不要加 'Bearer '
+    token: localStorage.getItem('userToken') || '',
     isAuthenticated: !!localStorage.getItem('userToken'),
-    // 使用者角色，預設為 consumer
+
     userRole: localStorage.getItem('userRole') || 'consumer',
-    // 使用者詳細資訊，初始為空物件
-    userInfo: {}
+    userId: Number(localStorage.getItem('userId')) || null,
+    userName: localStorage.getItem('userName') || '',
+    userInfo: {},
   }),
+
+  getters: {
+    // 需要時才組 Authorization header
+    authHeader: (s) => (s.token ? `Bearer ${s.token.replace(/^Bearer\s+/, '')}` : ''),
+  },
+
   actions: {
-    // 設定登入狀態
-    setIsAuthenticated(status) {
-      this.isAuthenticated = status;
-      if (status) {
-        // 登入時寫入 token
-        localStorage.setItem('userToken', 'sample-token');
+    // 唯一能改 token 的地方
+    setToken(token) {
+      this.token = token || ''
+      this.isAuthenticated = !!this.token
+      if (this.token) {
+        localStorage.setItem('userToken', this.token)
       } else {
-        // 登出時移除 token
-        localStorage.removeItem('userToken');
+        localStorage.removeItem('userToken')
       }
     },
-    // 設定使用者角色，並同步至 localStorage
+
+    setIsAuthenticated(status) {
+      this.isAuthenticated = !!status
+      if (!status) this.setToken('')
+    },
+
     setUserRole(role) {
-      this.userRole = role;
-      localStorage.setItem('userRole', role);
+      this.userRole = role
+      localStorage.setItem('userRole', role)
     },
-    // 儲存使用者個人資料
+
+    setUserId(id) {
+      this.userId = id ?? null
+      if (id == null) localStorage.removeItem('userId')
+      else localStorage.setItem('userId', String(id))
+    },
+
+    setUserName(name) {
+      this.userName = name || ''
+      if (!name) localStorage.removeItem('userName')
+      else localStorage.setItem('userName', String(name))
+    },
+
     setUserInfo(info) {
-      this.userInfo = info;
+      this.userInfo = info || {}
     },
-     // 新增 logout：呼叫 setIsAuthenticated(false) 並清掉 username/userInfo
+
     logout() {
-      this.setIsAuthenticated(false)
+      this.setToken('')
+      this.setUserId(null)
+      this.setUserName('')
       this.userInfo = {}
-      // 如果有存在 localStorage 的 username，要清就清：
-      localStorage.removeItem('username')
-    }
-  }
-});
+      // 如需一起清角色可開啟下一行
+      // localStorage.removeItem('userRole')
+    },
+  },
+})

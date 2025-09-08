@@ -37,6 +37,21 @@
           </div>
         </div>
 
+        <!-- 驗證碼：圖片在輸入框外側 -->
+        <div class="form-group">
+          <div class="captcha-row">
+            <div class="input-container captcha-input">
+              <input type="text" v-model="captcha" placeholder="輸入驗證碼" maxlength="6"
+                @keydown.enter.prevent="handleLogin" />
+            </div>
+
+            <!-- 可以調整寬度 -->
+            <img :src="captchaImgUrl" class="captcha-img" alt="驗證碼" title="看不清？點擊更換" @click="loadCaptcha"
+              draggable="false" :style="{ width: captchaImgWidth }" />
+          </div>
+          <p v-if="captchaError" class="captcha-error">{{ captchaError }}</p>
+        </div>
+
         <div class="extra-options">
           <label><input type="checkbox" /> 保持登入狀態</label>
           <RouterLink to="/member/forgot-password" class="forgot">忘記密碼？</RouterLink>
@@ -62,57 +77,148 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/store/user' // 使用 Pinia 管理登入狀態與角色
+import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
-
-// 建立 router 實例以便導頁
 const router = useRouter()
 
-// 雙向綁定：帳號、密碼
-const password = ref('')
 const account = ref('')
-
-// 控制密碼顯示／隱藏
+const password = ref('')
 const showPassword = ref(false)
 
+/* 驗證碼 */
+const captcha = ref('')
+const captchaImgUrl = ref('')
+const captchaError = ref('')
+const captchaImgWidth = ref('110px')  // 可以自由調整圖片寬度
 
-// 按鈕啟用條件：帳號 & 密碼都有輸入
-const canSubmit = computed(() => {
-  return account.value.trim() !== '' && password.value.trim() !== ''
-})
+// 後端位址
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-// 登入邏輯
-function handleLogin() {
-  // 假登入流程
+/* 基本 fetch helpers */
+async function apiGet(path) {
+  return fetch(`${API_BASE}${path}`, { credentials: 'include' })
+}
+async function apiPost(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  })
+  const text = await res.text()
+  const data = text ? JSON.parse(text) : {}
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
+  return data
+}
 
-  // 存入模擬 Token 至 localStorage
-  localStorage.setItem('userToken', 'sample-token');
+/** 取得驗證碼（Swagger: GET /api/captcha/auth/captcha） */
+async function loadCaptcha() {
+  try {
+    captchaError.value = ''
+    const res = await apiGet('/api/captcha/auth/captcha')
 
-  // 儲存使用者角色（若尚未選擇，預設為 consumer）
-  const selectedRole = localStorage.getItem('userRole') || 'consumer';
-  userStore.setUserRole(selectedRole);
+    const ct = res.headers.get('content-type') || ''
+    if (ct.includes('application/json')) {
+      // 多數後端會回 { data: "<base64>" } 或 { captcha: "<base64>" } …
+      const json = await res.json()
+      const b64 =
+        json?.data ||
+        json?.captcha ||
+        json?.image ||
+        json?.base64 ||
+        Object.values(json).find(v => typeof v === 'string')
 
-  // 更新 Pinia 狀態為已登入
-  userStore.setIsAuthenticated(true);
-
-  // 導頁：若之前有記錄欲導向頁面就前往，否則依角色跳首頁
-  const redirectPath = localStorage.getItem('redirectAfterLogin');
-  if (redirectPath) {
-    localStorage.removeItem('redirectAfterLogin');
-    router.push(redirectPath);
-  } else {
-    if (selectedRole === 'farmer') {
-      router.push('/farmer/crop-dashboard'); // 導向農民首頁
+      if (!b64) throw new Error('驗證碼格式不正確')
+      captchaImgUrl.value = b64.startsWith('data:image')
+        ? b64
+        : `data:image/png;base64,${b64}`
     } else {
-      router.push('/veggie'); // 導向消費者首頁
+      // 若直接回圖片（少見），轉為 blob URL 顯示
+      const blob = await res.blob()
+      captchaImgUrl.value = URL.createObjectURL(blob)
     }
+  } catch (e) {
+    console.error(e)
+    captchaImgUrl.value = ''
+    captchaError.value = '驗證碼載入失敗，請點圖重新載入'
+  }
+}
+onMounted(loadCaptcha)
+
+/* 三欄皆必填 */
+const canSubmit = computed(() =>
+  account.value.trim() !== '' &&
+  password.value.trim() !== '' &&
+  captcha.value.trim() !== ''
+)
+
+function saveToken(raw) {
+  if (!raw) return
+  // 只存原始 JWT，不要加 Bearer
+  localStorage.setItem('userToken', String(raw))
+}
+
+/* 串接登入 */
+async function handleLogin() {
+  if (!canSubmit.value) return
+  captchaError.value = ''
+
+  try {
+    const resp = await apiPost('/api/user/login', {
+      userName: account.value.trim(),
+      userPassword: password.value,
+      captcha: captcha.value.trim(),
+    })
+
+    // 有些後端會用 biz code 表示結果（即使 HTTP 200）
+    const bizCode = `${resp?.code ?? ''}`
+    const bizOk = !bizCode || bizCode === '6001' || /^2/.test(bizCode) || resp?.success === true
+    if (!bizOk) throw new Error(resp?.message || '登入失敗')
+
+    // 取回 token / userId / userName（兩種欄位都相容）
+    const token = resp?.data?.token ?? resp?.token
+    if (!token) throw new Error('登入回應缺少 token')
+
+    // 用 store 寫入，會同步 isAuthenticated
+    userStore.setToken(String(token))
+
+    const uid = resp?.data?.userId ?? resp?.userId
+    const uName = resp?.data?.userName ?? resp?.userName
+
+    // 存使用者資訊（收藏 API 會用到 userId）
+    if (uid != null) {
+      localStorage.setItem('userId', String(uid))
+      if (typeof userStore.setUserId === 'function') userStore.setUserId(uid)
+      else userStore.userId = uid
+    }
+    if (uName) {
+      localStorage.setItem('userName', String(uName))
+      if (typeof userStore.setUserName === 'function') userStore.setUserName(uName)
+      else userStore.userName = uName
+    }
+
+    // 標記已登入 & 回跳
+    const selectedRole = localStorage.getItem('userRole') || 'consumer'
+    userStore.setUserRole(selectedRole)
+    userStore.setIsAuthenticated(true)
+
+    const redirectPath = localStorage.getItem('redirectAfterLogin')
+    if (redirectPath) {
+      localStorage.removeItem('redirectAfterLogin')
+      router.push(redirectPath)
+    } else {
+      router.push(selectedRole === 'farmer' ? '/farmer/crop-dashboard' : '/veggie')
+    }
+  } catch (err) {
+    alert(err.message || '登入失敗，請重試')
+    captcha.value = ''
+    await loadCaptcha()
   }
 }
 </script>
-
 
 <style scoped>
 /* 整頁背景與置中設定 */
@@ -120,12 +226,12 @@ function handleLogin() {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 50px 0px;
+  padding: 50px 0;
 }
 
 /* 卡片容器樣式 */
 .auth-card {
-  background: white;
+  background: #fff;
   padding: 32px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -149,7 +255,6 @@ h1 {
   margin: 0;
 }
 
-/* 上方切換分頁樣式 */
 .tabs {
   display: flex;
   justify-content: center;
@@ -161,13 +266,13 @@ h1 {
   padding: 6px 20px;
   border: none;
   background: transparent;
-  border-radius: 10px 10px 0px 0px;
+  border-radius: 10px 10px 0 0;
   font-size: 16px;
   font-weight: bold;
   color: #333;
   position: relative;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: .3s;
   text-decoration: none;
 }
 
@@ -175,7 +280,6 @@ h1 {
   content: none;
 }
 
-/* 登入分頁為 active 狀態 */
 .tab.active {
   background-color: #e6f4ec;
   color: #2e7d32;
@@ -193,12 +297,12 @@ h1 {
   border-radius: 2px;
 }
 
-/* 表單群組間距 */
+/* 表單群組 */
 .form-group {
   margin-bottom: 30px;
 }
 
-/* 共用 input 樣式 */
+/* 共用 input */
 .input-container {
   position: relative;
   width: 100%;
@@ -252,14 +356,36 @@ h1 {
   opacity: 1;
 }
 
-label {
-  font-size: 14px;
-  margin-bottom: 4px;
-  display: inline-block;
-  color: #000;
+/* 驗證碼輸入框樣式 */
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* 保持登入 & 忘記密碼區 */
+.captcha-input {
+  flex: 0 0 160px;
+  /* max-width: 210px; */
+}
+
+.captcha-img {
+  height: 44px;
+  /* 保持與輸入框一致的高度 */
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px #2e7d32 inset;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.captcha-error {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  color: #b91c1c;
+  text-align: left;
+}
+
+/* 保持登入 & 忘記密碼 */
 .extra-options {
   display: flex;
   justify-content: space-between;
@@ -273,7 +399,7 @@ label {
   align-items: center;
   margin: 0;
   gap: 6px;
-  white-space: nowrap; /* 防止換行 */
+  white-space: nowrap;
 }
 
 .forgot {
@@ -295,7 +421,6 @@ label {
   margin-bottom: 10px;
 }
 
-/* 按鈕不可用時：灰底、不可點 */
 .submit-btn:disabled {
   background-color: #BDBDBD;
   cursor: not-allowed;
@@ -318,7 +443,7 @@ label {
   cursor: pointer;
   font-weight: bold;
   color: #2e7d32;
-  transition: background-color 0.2s ease;
+  transition: background-color .2s;
   font-size: 16px;
 }
 
@@ -341,10 +466,8 @@ label {
 
 .join-text {
   font-size: 13px;
-  margin-top: 16px;
-  color: #000;
-  font-weight: 500;
   margin-top: 10px;
+  color: #000;
   font-weight: bold;
 }
 
@@ -358,10 +481,19 @@ label {
   margin: 20px 0 10px;
 }
 
-/* 響應式切換 */
+
+/* 手機版一致留白（避免貼邊） */
 @media (max-width: 768px) {
   .auth-page {
-    padding: 20px 0px;
+    padding: 20px 0;
+    /* 兩頁一致 */
+  }
+
+  .auth-card {
+    padding: 32px;
+    /* 手機內距稍小一點看起來更緊湊 */
+    width: calc(100% - 48px);
+    /* 更嚴謹，確保左右各 24px */
   }
 }
 </style>
