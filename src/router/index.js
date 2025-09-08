@@ -13,7 +13,7 @@ const routes = [
   }, // 蔬菜列表
   {
     path: "/veggie",
-    redirect: "/veggie/001",
+    redirect: "/veggie/F001",
   }, // 蔬菜列表預設
   {
     path: "/veggie/:id",
