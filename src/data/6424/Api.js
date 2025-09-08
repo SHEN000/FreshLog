@@ -3,8 +3,8 @@ import axios from "axios";
 const apiClient = axios.create({
   baseURL:
     import.meta.env.MODE === "development"
-      ? "/api" // 開發環境：使用代理
-      : "http://43.199.27.51/api", // 生產環境：直連
+      ? "/api" // 使用代理
+      : "https://freshlog-api.ttshow.tw/api",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -17,7 +17,7 @@ if (import.meta.env.MODE === "development") {
     console.log(
       "📤 API Request:",
       config.method?.toUpperCase(),
-      config.url,
+      config.baseURL + config.url, // 顯示完整 URL
       config.data || config.params
     );
     return config;
@@ -28,7 +28,7 @@ if (import.meta.env.MODE === "development") {
       console.log(
         "📥 API Response:",
         response.status,
-        response.config.url,
+        response.config.baseURL + response.config.url, // 顯示完整 URL
         response.data
       );
       return response;
@@ -36,8 +36,9 @@ if (import.meta.env.MODE === "development") {
     (error) => {
       console.error("❌ API Error:", {
         status: error.response?.status,
-        url: error.config?.url,
+        url: error.config?.baseURL + error.config?.url,
         message: error.response?.data?.message || error.message,
+        fullError: error.response?.data || error.message,
       });
       return Promise.reject(error);
     }

@@ -1,125 +1,13 @@
 import apiClient from "./Api";
 
-// Mock 資料（擴充版）
-const mockFoodsList = {
-  code: "8008",
-  message: "Success",
-  data: [
-    {
-      foodId: "F001",
-      name: "高麗菜",
-      category: "蔬菜",
-      price: 50,
-      tag: "當季/新鮮/營養",
-      description: "新鮮高麗菜，富含維生素C",
-      image: "/images/cabbage.jpg",
-      lastModifyDate: "2025-01-15",
-      isRecommendation: true,
-    },
-    {
-      foodId: "F002",
-      name: "紅蘿蔔",
-      category: "蔬菜",
-      price: 35,
-      tag: "護眼/抗氧化/維生素A",
-      description: "有機紅蘿蔔，護眼明目",
-      image: "/images/carrot.jpg",
-      lastModifyDate: "2025-01-14",
-      isRecommendation: false,
-    },
-    {
-      foodId: "F003",
-      name: "菠菜",
-      category: "葉菜類",
-      price: 45,
-      tag: "補鐵/葉酸/營養",
-      description: "新鮮菠菜，鐵質豐富",
-      image: "/images/spinach.jpg",
-      lastModifyDate: "2025-01-13",
-      isRecommendation: true,
-    },
-    {
-      foodId: "F004",
-      name: "青花菜",
-      category: "蔬菜",
-      price: 60,
-      tag: "抗氧化/維生素C/營養",
-      description: "新鮮青花菜，營養豐富",
-      image: "/images/broccoli.jpg",
-      lastModifyDate: "2025-01-12",
-      isRecommendation: true,
-    },
-    {
-      foodId: "F005",
-      name: "白蘿蔔",
-      category: "根莖類",
-      price: 25,
-      tag: "清熱/利水/營養",
-      description: "白蘿蔔，清熱利水",
-      image: "/images/radish.jpg",
-      lastModifyDate: "2025-01-11",
-      isRecommendation: false,
-    },
-    {
-      foodId: "F006",
-      name: "小白菜",
-      category: "葉菜類",
-      price: 30,
-      tag: "當季/新鮮/維生素C",
-      description: "新鮮小白菜，口感清脆",
-      image: "/images/pakchoi.jpg",
-      lastModifyDate: "2025-01-10",
-      isRecommendation: true,
-    },
-    {
-      foodId: "F007",
-      name: "蘋果",
-      category: "水果",
-      price: 80,
-      tag: "進口/新鮮/維生素",
-      description: "進口蘋果，香甜可口",
-      image: "/images/apple.jpg",
-      lastModifyDate: "2025-01-09",
-      isRecommendation: false,
-    },
-    {
-      foodId: "F008",
-      name: "番茄",
-      category: "水果",
-      price: 55,
-      tag: "當季/茄紅素/營養",
-      description: "新鮮番茄，富含茄紅素",
-      image: "/images/tomato.jpg",
-      lastModifyDate: "2025-01-08",
-      isRecommendation: true,
-    },
-  ],
-};
-
-// Mock 排序選項
-const mockSortEnums = {
-  code: "8000",
-  message: "Success",
-  data: [
-    { code: "seasonal", label: "產季由近到遠" },
-    { code: "price_asc", label: "價格由低到高" },
-    { code: "price_desc", label: "價格由高到低" },
-    { code: "name_asc", label: "名稱 A-Z" },
-    { code: "name_desc", label: "名稱 Z-A" },
-    { code: "popular", label: "熱門度" },
-    { code: "nutrition", label: "營養價值" },
-  ],
-};
-
 export const foodApi = {
   /**
-   * 查詢食品列表 - POST 方法偵錯版
+   * 查詢食品列表
    */
   findFoodsList: async (params = {}) => {
     try {
-      console.log("🌐 嘗試呼叫真實 API (POST) - findFoodsList", params);
+      console.log("🌐 呼叫API- findFoodsList", params);
 
-      // 建構 POST request body
       const requestBody = {
         category: params.category || "",
         subCategory: params.subCategory || "",
@@ -131,10 +19,8 @@ export const foodApi = {
         sort: params.sort || "price_desc",
       };
 
-      console.log("📤 準備發送的 Request Body:", requestBody);
-      console.log("📡 API Client baseURL:", apiClient.defaults.baseURL);
+      console.log("📤 查詢參數:", requestBody);
 
-      // 使用 POST 方法，並加入更多偵錯資訊
       const response = await apiClient.post(
         "/food/findFoodsList",
         requestBody,
@@ -142,118 +28,154 @@ export const foodApi = {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            // 如果需要的話，可以加入更多 headers
           },
-          timeout: 10000, // 10秒超時
+          timeout: 15000,
         }
       );
 
-      console.log("✅ 真實 API (POST) 成功:", response.data);
-      return response.data;
+      console.log("✅ API 回應:", response.data);
+
+      // 處理成功回應
+      if (response.data?.code === "0000") {
+        if (response.data.data && response.data.data.length > 0) {
+          // 檢查每個項目的圖片資料
+          response.data.data.forEach((item) => {
+            console.log(`📊 ${item.name} 圖片資料:`, {
+              image: item.image,
+              hasImage: !!item.image,
+              imageType: typeof item.image,
+            });
+          });
+
+          console.log("🎉 成功取得真實資料:", response.data.data.length, "筆");
+          return response.data;
+        } else {
+          console.log("⚠️ API 回傳空資料，使用 Mock 資料");
+          return getMockData();
+        }
+      } else {
+        throw new Error(
+          `API 回應錯誤: ${response.data?.message || "未知錯誤"}`
+        );
+      }
     } catch (error) {
-      // 更詳細的錯誤資訊
-      console.error("❌ POST API 詳細錯誤資訊:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          baseURL: error.config?.baseURL,
-          data: error.config?.data,
-          headers: error.config?.headers,
-        },
-        message: error.message,
-      });
-
-      console.warn(
-        "⚠️ 真實 API 失敗，使用 Mock 資料:",
-        error.response?.status,
-        error.message
-      );
-
-      // 其余 Mock 邏輯保持不變...
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      let filteredData = [...mockFoodsList.data];
-
-      // ... 原有的篩選邏輯保持不變
-
-      return {
-        code: "8008",
-        message: "Success (Mock Data)",
-        data: filteredData,
-      };
+      console.error("❌ API 呼叫失敗:", error.message);
+      console.log("🎭 使用 Mock 資料展示功能");
+      return getMockData();
     }
   },
 
   /**
-   * 取得食品排序下拉選單
-   */
-  getFoodSortEnums: async () => {
-    try {
-      console.log("🌐 使用真實API - getFoodSortEnums");
-      const response = await apiClient.get("/food/getFoodSortEnums");
-      console.log("✅ 排序選項API成功:", response.data);
-      return response.data;
-    } catch (error) {
-      console.warn("⚠️ 排序選項API失敗，使用Mock:", error.response?.status);
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      console.log("🎭 使用Mock排序選項");
-      return mockSortEnums;
-    }
-  },
-
-  /**
-   * 取得單一食品詳細資料
+   * 取得單一食品資料 - 加強圖片處理
    */
   findFoodData: async (foodId) => {
     try {
-      console.log("🌐 使用真實API - findFoodData:", foodId);
+      console.log("🌐 取得食品詳情:", foodId);
+
       const response = await apiClient.get("/food/findFoodData", {
-        params: { foodId: foodId },
+        params: { foodId },
       });
-      console.log("✅ 食品詳情API成功:", response.data);
+
+      console.log("✅ 食品詳情完整回應:", response.data);
+
+      // 特別檢查圖片資料
+      if (response.data?.data?.image) {
+        console.log("🖼️ 圖片資料:", {
+          image: response.data.data.image,
+          imageLength: response.data.data.image.length,
+          isBase64: response.data.data.image.startsWith("data:image/"),
+          isUrl: response.data.data.image.startsWith("http"),
+          isPath: response.data.data.image.startsWith("/"),
+        });
+      } else {
+        console.log("❌ 沒有找到圖片資料");
+      }
+
       return response.data;
     } catch (error) {
-      console.warn("⚠️ 食品詳情API失敗，使用Mock:", error.response?.status);
-      // mock data
-      // 模擬延遲
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      // 從Mock資料中找對應的食品
-      const mockFood = mockFoodsList.data.find(
-        (item) => item.foodId === foodId
-      );
-
-      console.log("🎭 使用Mock食品詳情:", mockFood?.name || "未找到");
-
+      console.warn("⚠️ 食品詳情失敗，使用預設:", error.message);
       return {
-        code: "8000",
-        message: "Success (Mock Data)",
-        data: mockFood || mockFoodsList.data[0],
+        code: "0000",
+        message: "Success (Mock)",
+        data: {
+          foodId: foodId,
+          name: "測試食品",
+          category: "蔬菜",
+          price: 50,
+          tag: "當季/新鮮",
+          description: "測試用食品資料",
+          // 模擬圖片路徑
+          image: "/images/test-veggie.jpg",
+          isRecommendation: true,
+        },
       };
     }
   },
 
   /**
-   * 測試API連接狀態
+   * 取得排序選項
    */
-  testConnection: async () => {
+  getFoodSortEnums: async () => {
     try {
-      console.log("🧪 測試API連接...");
+      console.log("🌐 取得排序選項");
       const response = await apiClient.get("/food/getFoodSortEnums");
-      console.log("✅ API連接正常");
-      return { success: true, message: "API連接正常" };
+      console.log("✅ 排序選項成功:", response.data);
+      return response.data;
     } catch (error) {
-      console.error("❌ API連接失敗:", error.message);
+      console.warn("⚠️ 排序選項失敗，使用預設:", error.message);
       return {
-        success: false,
-        message: `API連接失敗: ${error.response?.status || error.message}`,
+        code: "0000",
+        message: "Success",
+        data: [
+          { code: "price_desc", label: "價格高到低" },
+          { code: "price_asc", label: "價格低到高" },
+          { code: "seasonal", label: "產季由近到遠" },
+          { code: "name_asc", label: "名稱 A-Z" },
+          { code: "name_desc", label: "名稱 Z-A" },
+        ],
       };
     }
   },
 };
+
+// Mock 資料函數
+function getMockData() {
+  return {
+    code: "0000",
+    message: "搜尋成功 (Mock 資料)",
+    data: [
+      {
+        foodId: "MOCK001",
+        name: "測試高麗菜",
+        category: "蔬菜",
+        price: 50,
+        tag: "當季/新鮮/維生素C",
+        description: "測試用新鮮高麗菜，富含維生素C",
+        image: "/images/test-cabbage.jpg", // 模擬圖片路徑
+        isRecommendation: true,
+      },
+      {
+        foodId: "MOCK002",
+        name: "測試紅蘿蔔",
+        category: "蔬菜",
+        price: 35,
+        tag: "護眼/抗氧化/維生素A",
+        description: "測試用有機紅蘿蔔，護眼明目",
+        image: "/images/test-carrot.jpg",
+        isRecommendation: true,
+      },
+      {
+        foodId: "MOCK003",
+        name: "測試菠菜",
+        category: "葉菜類",
+        price: 45,
+        tag: "補鐵/葉酸/營養",
+        description: "測試用新鮮菠菜，鐵質豐富",
+        image: "/images/test-spinach.jpg",
+        isRecommendation: true,
+      },
+    ],
+  };
+}
 
 export default foodApi;

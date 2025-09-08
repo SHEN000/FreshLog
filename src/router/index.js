@@ -4,9 +4,12 @@ import Home from "../views/Home.vue";
 const routes = [
   { path: "/", name: "Home", component: Home }, // 首頁
   { path: "/select-role", component: () => import("@/views/RoleSelect.vue") }, // 選擇角色頁
+
+  // 食譜列表頁面
   {
-    path: "/veggie",
-    component: () => import("@/views/Consumer/VeggieInfo.vue"),
+    path: "/recipes",
+    name: "RecipeList",
+    component: () => import("@/views/Consumer/RecipeListPage.vue"),
   }, // 蔬菜列表
   {
     path: '/veggie',
@@ -21,7 +24,7 @@ const routes = [
     path: "/foodsafety",
     component: () => import("@/views/Consumer/FoodSafetyList.vue"),
   }, // 食安列表
-  {
+
     path: "/foodsafety/:id",
     component: () => import("@/views/Consumer/FoodSafetyDetail.vue"),
   }, // 食安內頁
@@ -58,9 +61,9 @@ const routes = [
     component: () => import("@/views/Consumer/AiRecommendation.vue"),
   }, // AI 智慧推薦
   {
-    path: '/ai-recommendation/:id',
-    name: 'RecipeDetail',
-    component: () => import('@/views/Consumer/RecipeDetail.vue')
+    path: "/ai-recommendation/:id",
+    name: "RecipeDetail",
+    component: () => import("@/views/Consumer/RecipeDetail.vue"),
   }, // 食譜內頁
 ];
 

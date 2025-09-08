@@ -5,8 +5,10 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
 使用說明 在 bash 環境下執行
-npm install d3 //安裝 d3.js
-npm run dev //開啟測試網頁
+npm install d3 //安裝 d3.js \n
+
+npm run dev //開啟測試網頁 \n
+
 r + enter //reload 網頁
 
 部屬測試
