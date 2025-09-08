@@ -21,10 +21,6 @@ const routes = [
     component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
   }, // 蔬菜內頁
   {
-    path: "/foodsafety",
-    component: () => import("@/views/Consumer/FoodSafetyList.vue"),
-  }, // 食安列表
-  {
     path: "/foodsafety/:id",
     component: () => import("@/views/Consumer/FoodSafetyDetail.vue"),
   }, // 食安內頁

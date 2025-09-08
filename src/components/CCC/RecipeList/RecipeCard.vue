@@ -5,10 +5,25 @@
 
     <!-- 圖片區域 -->
     <div class="image-container">
+      <!-- 載入狀態 -->
+      <div v-if="imageLoading" class="image-loading">
+        <span>載入中...</span>
+      </div>
+
+      <!-- 錯誤狀態 -->
+      <div v-else-if="imageErrorCount > maxRetries" class="image-error">
+        <span>🖼️</span>
+        <span>圖片載入失敗</span>
+        <small>{{ recipe.name }}</small>
+      </div>
+
+      <!-- 正常圖片 -->
       <img
+        v-else
         :src="$img(recipe.image)"
         :alt="recipe.name"
         class="recipe-image"
+        @load="handleImageLoad"
         @error="handleImageError"
       />
     </div>
@@ -50,6 +65,7 @@
 </template>
 
 <script setup>
+import { ref, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 const props = defineProps({
@@ -61,15 +77,63 @@ const props = defineProps({
 
 const router = useRouter();
 
+// 圖片狀態管理
+const imageLoading = ref(true);
+const imageErrorCount = ref(0);
+const maxRetries = 3;
+const retryDelay = 20000; // 20秒
+let retryTimeout = null;
+
 // 前往詳情頁
 const goToDetail = () => {
   router.push(`/ai-recommendation/${props.recipe.id}`);
 };
 
-// 處理圖片載入錯誤
+// 圖片載入成功
+const handleImageLoad = () => {
+  imageLoading.value = false;
+  imageErrorCount.value = 0; // 重置錯誤計數
+  console.log(`✅ 圖片載入成功: ${props.recipe.name}`);
+};
+
+// 處理圖片載入錯誤 - 改良版
 const handleImageError = (event) => {
-  console.log("圖片載入失敗，使用預設圖片:", props.recipe.name);
-  event.target.src = "/images/placeholder/recipe-placeholder.jpg";
+  const img = event.target;
+  const currentSrc = img.src;
+
+  imageLoading.value = false;
+
+  // 避免無限迴圈：如果已經是預設圖片，就不再重試
+  if (currentSrc.includes("/images/placeholder/recipe-placeholder.jpg")) {
+    console.warn(`🖼️ 預設圖片也載入失敗: ${props.recipe.name}`);
+    imageErrorCount.value = maxRetries + 1; // 直接設為超過上限
+    return;
+  }
+
+  imageErrorCount.value++;
+  console.log(
+    `🔄 圖片載入失敗 (第${imageErrorCount.value}次): ${props.recipe.name}`
+  );
+
+  // 如果超過最大重試次數，停止重試
+  if (imageErrorCount.value > maxRetries) {
+    console.error(
+      `❌ 圖片載入失敗超過${maxRetries}次，停止重試: ${props.recipe.name}`
+    );
+    return;
+  }
+
+  // 清除之前的重試計時器
+  if (retryTimeout) {
+    clearTimeout(retryTimeout);
+  }
+
+  // 設置20秒後重試預設圖片
+  retryTimeout = setTimeout(() => {
+    console.log(`🔄 20秒後重試載入預設圖片: ${props.recipe.name}`);
+    imageLoading.value = true;
+    img.src = "/images/placeholder/recipe-placeholder.jpg";
+  }, retryDelay);
 };
 
 // 取得標籤樣式類別
@@ -84,6 +148,13 @@ const getTagClass = (tag) => {
   };
   return tagClassMap[tag] || "tag-default";
 };
+
+// 清理計時器
+onUnmounted(() => {
+  if (retryTimeout) {
+    clearTimeout(retryTimeout);
+  }
+});
 </script>
 
 <style scoped>
@@ -95,10 +166,8 @@ const getTagClass = (tag) => {
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
-  /* 🔧 關鍵修正：移除固定高度，讓內容自然撐開 */
   display: flex;
   flex-direction: column;
-  /* 🔧 避免內容溢出 */
   min-height: 0;
 }
 
@@ -121,11 +190,50 @@ const getTagClass = (tag) => {
 }
 
 .image-container {
-  /* 🔧 固定圖片高度，避免影響整體布局 */
   height: 200px;
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 14px;
+}
+
+.image-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  border: 2px dashed #ccc;
+  color: #999;
+  text-align: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.image-error span:first-child {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.image-error small {
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.7;
 }
 
 .recipe-image {
@@ -144,7 +252,6 @@ const getTagClass = (tag) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* 🔧 確保內容區域有最小高度 */
   min-height: 200px;
 }
 
@@ -154,7 +261,6 @@ const getTagClass = (tag) => {
   color: #333;
   margin-bottom: 8px;
   line-height: 1.4;
-  /* 🔧 限制標題行數，避免過長 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -167,7 +273,6 @@ const getTagClass = (tag) => {
   line-height: 1.5;
   margin-bottom: 16px;
   flex: 1;
-  /* 🔧 限制描述行數，避免過長 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -179,7 +284,6 @@ const getTagClass = (tag) => {
   justify-content: space-between;
   margin-bottom: 16px;
   font-size: 13px;
-  /* 🔧 避免換行 */
   flex-wrap: nowrap;
 }
 
@@ -209,7 +313,6 @@ const getTagClass = (tag) => {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: auto;
-  /* 🔧 限制標籤區域高度 */
   max-height: 60px;
   overflow: hidden;
 }
