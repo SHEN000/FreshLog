@@ -1,4 +1,3 @@
-// src/data/6424/RecipeListData.js
 export const recipeListData = [
   {
     id: 1,
