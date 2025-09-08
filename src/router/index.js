@@ -12,10 +12,6 @@ const routes = [
     component: () => import("@/views/Consumer/RecipeListPage.vue"),
   }, // 蔬菜列表
   {
-    path: "/veggie",
-    redirect: "/veggie/F001",
-  }, // 蔬菜預設
-  {
     path: "/veggie/:id",
     name: "VeggieInfo",
     component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
