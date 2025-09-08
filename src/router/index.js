@@ -19,7 +19,7 @@ const routes = [
     path: "/veggie/:id",
     name: "VeggieInfo",
     component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
-  },
+  }, // 蔬菜內頁
   {
     path: "/foodsafety/:id",
     component: () => import("@/views/Consumer/FoodSafetyDetail.vue"),
