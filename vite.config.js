@@ -7,16 +7,17 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)), // 路徑別名
+      "@": fileURLToPath(new URL("./src", import.meta.url)), // 路徑別名
     },
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'https://freshlog-api.ttshow.tw',  // 你的後端 API 主機
+      "/api": {
+        target: "https://freshlog-api.ttshow.tw", // 你的後端 API 主機
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api'), // 保留 /api 開頭
+        secure: true, // test
+        rewrite: (path) => path.replace(/^\/api/, "/api"), // 保留 /api 開頭
       },
     },
   },
-})
+});
