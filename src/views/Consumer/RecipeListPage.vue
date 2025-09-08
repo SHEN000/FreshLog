@@ -110,7 +110,7 @@ import {
 } from "@/data/6424/RecipeListData/RecipeListData.js";
 
 // 🔧 修正：使用您設定的正確路徑
-import RecipeFilterSidebar from "@/components/CCC/RecipeList/RecipeSidebar.vue";
+import RecipeFilterSidebar from "@/components/CCC/RecipeList/RecipeSideBar.vue";
 import RecipeCategoryTags from "@/components/CCC/RecipeList/RecipeCategoryTags.vue";
 import RecipeCard from "@/components/CCC/RecipeList/RecipeCard.vue";
 import AIRecommendationSection from "@/components/CCC/RecipeList/Recommendation.vue";
