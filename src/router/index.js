@@ -14,7 +14,7 @@ const routes = [
   {
     path: "/veggie",
     redirect: "/veggie/F001",
-  }, // 蔬菜列表預設
+  }, // 蔬菜預設
   {
     path: "/veggie/:id",
     name: "VeggieInfo",
