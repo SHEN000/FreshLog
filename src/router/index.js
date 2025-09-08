@@ -12,11 +12,6 @@ const routes = [
     component: () => import("@/views/Consumer/RecipeListPage.vue"),
   }, // 蔬菜列表
   {
-    path: "/veggie/:id",
-    name: "VeggieInfo",
-    component: () => import("@/views/Consumer/VeggieInfoPage.vue"),
-  }, // 蔬菜內頁
-  {
     path: "/foodsafety/:id",
     component: () => import("@/views/Consumer/FoodSafetyDetail.vue"),
   }, // 食安內頁
