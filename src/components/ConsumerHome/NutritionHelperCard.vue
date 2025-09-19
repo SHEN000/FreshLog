@@ -7,8 +7,9 @@
             <!-- 搜尋區 -->
             <div class="searchbar">
                 <div class="searchbox" ref="searchWrap">
-                    <input v-model.trim="keyword" type="text" class="search-input" placeholder="輸入蔬果名稱" @input="onType"
-                        @keydown.enter.prevent="search" aria-label="輸入蔬果名稱" />
+                    <input v-model="keyword" type="text" class="search-input" placeholder="輸入蔬果名稱" @input="onType"
+                        @compositionstart="onCompStart" @compositionend="onCompEnd" @keydown.down.prevent="move(1)"
+                        @keydown.up.prevent="move(-1)" @keydown.enter.prevent="onEnter" aria-label="輸入蔬果名稱" />
                     <button class="icon-btn" @click="search" aria-label="查詢">
                         <img :src="magnifierIcon" class="icon-img" alt="" />
                     </button>
@@ -16,7 +17,8 @@
                     <!-- 同時顯示 name 與 aliases 的命中項 -->
                     <ul v-if="showDropdown" class="dropdown" role="listbox">
                         <li v-for="(s, i) in suggestions" :key="s.label + '@' + s.prod.name + i" class="dropdown-item"
-                            role="option" @click="apply(s.prod, s.label)">
+                            :class="{ active: i === activeIndex }" role="option"
+                            @mousedown.prevent="apply(s.prod, s.label)" @mouseenter="activeIndex = i">
                             {{ s.label }}
                         </li>
                         <li v-if="!suggestions.length" class="dropdown-empty">沒有相符項目</li>
@@ -62,12 +64,15 @@ import magnifierIcon from '@/assets/magnifier-icon.png'
 
 const keyword = ref('')
 const selected = ref(null)
-const chosenName = ref('')   // 顯示在輸入框下方的名稱（點到哪個就顯示哪個字）
+const chosenName = ref('') 
 const errorMsg = ref('')
 const searchWrap = ref(null)
 const dropdownOpen = ref(false)
 
-const norm = s => (s || '').toString().toLowerCase().replace(/\s+/g, '')
+const isComposing = ref(false)  
+const activeIndex = ref(-1)  
+
+const norm = s => (s || '').toString().toLowerCase().replace(/\s+/g, '').trim()
 
 function matchProduce(kw) {
     const key = norm(kw)
@@ -86,7 +91,7 @@ const suggestions = computed(() => {
     for (const p of produceNutrition) {
         // 正式名稱命中
         if (norm(p.name).includes(key)) out.push({ prod: p, label: p.name, isAlias: false })
-        // 別名命中（逐一加入）
+        // 別名命中
         for (const a of (p.aliases || [])) {
             if (norm(a).includes(key)) out.push({ prod: p, label: a, isAlias: true })
         }
@@ -101,14 +106,25 @@ const suggestions = computed(() => {
 })
 
 const showDropdown = computed(() => dropdownOpen.value && keyword.value.length > 0)
-
-function onType() {
+function onType(e) {
+    if (e && e.target) keyword.value = e.target.value
     errorMsg.value = ''
     dropdownOpen.value = true
+    activeIndex.value = suggestions.value.length ? 0 : -1
 }
+function onCompStart() {
+    isComposing.value = true
+}
+function onCompEnd(e) {
+    isComposing.value = false
+    keyword.value = e.target.value
+    dropdownOpen.value = true
+    activeIndex.value = suggestions.value.length ? 0 : -1
+}
+
 function apply(prod, label) {
     selected.value = prod
-    chosenName.value = label     // 直接帶入點擊的那個字（可能是別名）
+    chosenName.value = label     // 直接帶入點擊的那個字
     keyword.value = ''           // 清空輸入
     dropdownOpen.value = false
     errorMsg.value = ''
@@ -124,7 +140,9 @@ function search() {
     } else {
         selected.value = null
         chosenName.value = ''
-        errorMsg.value = `找不到「${keyword.value}」的蔬果資料，請換個關鍵字。`
+        if (keyword.value) {
+            errorMsg.value = `找不到「${keyword.value}」的蔬果資料，請換個關鍵字。`
+        }
     }
 }
 
@@ -238,6 +256,7 @@ const display = computed(() => {
     list-style: none;
 }
 
+.dropdown-item.active,
 .dropdown-item:hover {
     background: #f4f7f5;
 }
