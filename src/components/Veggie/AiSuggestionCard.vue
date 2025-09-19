@@ -1,173 +1,75 @@
 <template>
-  <div class="ai-suggestion-card">
-
+  <div class="ai-suggestion-card" v-if="displayList.length">
     <div class="suggestion-section">
       <h2 class="card-title">AI智慧推薦</h2>
     </div>
 
-    <div class="suggestion-section">
+    <div
+      v-for="(it, idx) in displayList"
+      :key="idx"
+      class="suggestion-section"
+    >
       <div class="icon">
-        <img src="@/assets/icons/timing.png" alt="最佳購買時機" />
+        <img :src="iconByIndex(idx)" :alt="it.title" />
       </div>
       <div class="info">
-        <h3>最佳購買時機</h3>
-        <p>{{ aiSuggestion.bestBuyTiming || '暫無建議' }}</p>
+        <!-- 冒號前：標題 -->
+        <h3>{{ it.title }}</h3>
+        <!-- 冒號後：內容 -->
+        <p>
+          <span v-for="(line, i) in it.desc.split('\n')" :key="i">
+            {{ line }}<br v-if="i < it.desc.split('\n').length - 1" />
+          </span>
+        </p>
       </div>
-    </div>
-
-    <div class="suggestion-section">
-      <div class="icon">
-        <img src="@/assets/icons/alternative.png" alt="同等替代選擇" />
-      </div>
-      <div class="info">
-        <h3>同等替代選擇</h3>
-        <p>{{ aiSuggestion.alternative || '暫無建議' }}</p>
-      </div>
-    </div>
-
-    <div class="suggestion-section">
-      <div class="icon">
-        <img src="@/assets/icons/location.png" alt="最佳購買地點" />
-      </div>
-      <div class="info">
-        <h3>最佳購買地點</h3>
-        <p>{{ aiSuggestion.bestMarket || '暫無建議' }}</p>
-      </div>
-    </div>
-
-    <div class="notice-section">
-      <p>均價超跌通知</p>
-      <div class="notification-setting">
-        <label class="switch">
-          <input type="checkbox" :checked="isNotificationOn" @change="handleNotificationToggle" />
-          <span class="slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <div class="price-edit-row">
-      <div class="price-setting">
-        設定理想價格:
-        <!-- 若有設定則顯示價錢，否則顯示「未設定」 -->
-        <span v-if="idealPrice !== null">${{ idealPrice }}/公斤</span>
-        <span v-else>未設定</span>
-      </div>
-      <button class="edit-button" @click="onEditClick">修改</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/store/user'
+import { computed } from 'vue'
+import timingIcon from '@/assets/icons/timing.png'
+import alternativeIcon from '@/assets/icons/alternative.png'
+import locationIcon from '@/assets/icons/location.png'
 
-// 建立 router 以供跳轉登入使用
-const router = useRouter()
-// 取得使用者登入狀態
-const userStore = useUserStore()
-
-// 從父元件接收 aiSuggestion 物件
-const { aiSuggestion = {} } = defineProps({
-  aiSuggestion: { type: Object, default: () => ({}) }
+const props = defineProps({
+  // 可吃字串化陣列（你 API 的格式），或直接是陣列
+  aiSuggestion: { type: [String, Array], default: () => '[]' }
 })
 
-// localStorage 的 key
-const STORAGE_NOTIFY_KEY = 'notify_over_drop'
-const STORAGE_IDEAL_KEY = 'ideal_price'
-
-// 均價超跌通知 開關 狀態
-const isNotificationOn = ref(false)
-
-// 如果已登入，從 localStorage 讀取使用者之前的設定
-if (userStore.isAuthenticated) {
-  try {
-    isNotificationOn.value = JSON.parse(localStorage.getItem(STORAGE_NOTIFY_KEY)) === true
-  } catch {
-    isNotificationOn.value = false
-  }
+/** 用冒號切分（支援全形/半形） */
+const splitText = (text = '') => {
+  const parts = String(text).split(/[:：]/)
+  const title = (parts[0] || '').trim()
+  const desc  = parts.slice(1).join('：').trim()
+  return { title, desc }
 }
 
-// 監聽登入狀態改變，同步更新開關狀態
-watch(
-  () => userStore.isAuthenticated,
-  loggedIn => {
-    if (loggedIn) {
-      try {
-        isNotificationOn.value = JSON.parse(localStorage.getItem(STORAGE_NOTIFY_KEY)) === true
-      } catch {
-        isNotificationOn.value = false
-      }
-      // 若登出，則關閉通知
-    } else {
-      isNotificationOn.value = false
+/** 把「字串化陣列」→ 陣列 */
+const rawList = computed(() => {
+  if (Array.isArray(props.aiSuggestion)) return props.aiSuggestion
+  if (typeof props.aiSuggestion === 'string') {
+    try {
+      const arr = JSON.parse(props.aiSuggestion)
+      return Array.isArray(arr) ? arr : []
+    } catch {
+      return props.aiSuggestion.split(/\r?\n/).filter(Boolean)
     }
   }
+  return []
+})
+
+/** 只取前三筆，且需有內容才顯示 */
+const displayList = computed(() =>
+  rawList.value
+    .map(s => splitText(s))
+    .filter(x => x.title || x.desc)
+    .slice(0, 3)
 )
 
-// 處理通知開關切換
-function handleNotificationToggle(event) {
-  // 未登入則跳轉到登入頁，並強制切回關閉
-  if (!userStore.isAuthenticated) {
-    router.push('/member/login')
-    isNotificationOn.value = false
-    return
-  }
-  // 已登入則更新並存入 localStorage
-  const val = event.target.checked
-  isNotificationOn.value = val
-  localStorage.setItem(STORAGE_NOTIFY_KEY, JSON.stringify(val))
-  // TODO: 同步後端 API 呼叫
-}
-
-// 理想價格 狀態
-const idealPrice = ref(null)
-
-// 登入時，從 localStorage 讀取之前的理想價格
-if (userStore.isAuthenticated) {
-  const saved = localStorage.getItem(STORAGE_IDEAL_KEY)
-  const num = saved !== null ? parseFloat(saved) : NaN
-  idealPrice.value = !isNaN(num) ? num : null
-}
-
-// 監聽登入狀態改變，同步更新理想價格狀態
-watch(
-  () => userStore.isAuthenticated,
-  loggedIn => {
-    if (loggedIn) {
-      const saved = localStorage.getItem(STORAGE_IDEAL_KEY)
-      const num = saved !== null ? parseFloat(saved) : NaN
-      idealPrice.value = !isNaN(num) ? num : null
-    } else {
-      idealPrice.value = null
-    }
-  }
-)
-
-// 「修改」按鈕 點擊邏輯
-function onEditClick() {
-  // 未登入則跳轉登入頁
-  if (!userStore.isAuthenticated) {
-    router.push('/member/login')
-    return
-  }
-  // 已登入則 prompt 輸入新價格
-  const input = prompt(
-    '請輸入理想價格（元/公斤）',
-    idealPrice.value != null ? idealPrice.value : ''
-  )
-  if (input == null) return // 使用者取消
-  const num = Number(input)
-  if (!isNaN(num) && num >= 0) {
-    const round = Math.round(num * 100) / 100
-    idealPrice.value = round
-    // 儲存到 localStorage
-    localStorage.setItem(STORAGE_IDEAL_KEY, round.toString())
-    // TODO: 同步後端 API 呼叫
-  } else {
-    alert('請輸入有效的數字。')
-  }
-}
+/** icon 固定依序顯示 */
+const icons = [timingIcon, alternativeIcon, locationIcon]
+const iconByIndex = (i) => icons[i] || icons[icons.length - 1]
 </script>
 
 <style scoped>

@@ -1,22 +1,15 @@
 <template>
-  <div class="storage-card" v-if="hasTips">
+  <div class="storage-card" v-if="tipsList.length">
     <div class="header">
       <h2 class="title">保存與烹飪技巧</h2>
     </div>
 
-    <!-- 網格 -->
     <div class="tips-grid">
-      <div v-for="(tip, key) in storageTips" :key="key" class="tip-item">
-        <!-- 提示項目的標頭：icon + 小標題 -->
-        <div class="tip-header">
-          <img :src="icons[key]" alt="" class="tip-icon" />
-          <span class="tip-title">{{ tip.title }}</span>
-        </div>
+      <div v-for="(tip, i) in tipsList" :key="i" class="tip-item">
+        <div class="tip-title">{{ tip.title }}</div>
         <div class="tip-content">
-          <span v-for="(line, i) in tip.content.split('\n')" :key="i">
-            {{ line }}
-            <!-- 除了最後一行之外，每行後都插入 <br> 換行 -->
-            <br v-if="i < tip.content.split('\n').length - 1" />
+          <span v-for="(line, j) in tip.desc.split('\n')" :key="j">
+            {{ line }}<br v-if="j < tip.desc.split('\n').length - 1" />
           </span>
         </div>
       </div>
@@ -25,44 +18,42 @@
 </template>
 
 <script setup>
-// import { veggieMockData } from '@/data/mockVeggieData.js'
 import { computed } from 'vue'
 
-// 引入 icon 圖片
-import snowflakeIcon from '@/assets/icons/snowflake.png'
-import flameIcon from '@/assets/icons/flame.png'
-import recycleIcon from '@/assets/icons/recycle.png'
-import clockIcon from '@/assets/icons/clock.png'
-
 const props = defineProps({
-  storageTips: { type: Object, default: () => ({}) }
+  /** 後端可能回：物件（tipOne..）、陣列、或字串化陣列 */
+  storageTips: { type: [Object, Array, String], default: () => ({}) }
 })
 
-// 建立 key 到 icon 的對應表
-const icons = {
-  method: snowflakeIcon,  // 保存方式
-  cooking: flameIcon,     // 烹飪技巧
-  waste: recycleIcon,     // 減少浪費
-  bestBefore: clockIcon,  // 最佳食用期限
+/** 與 RecipeSteps.vue 相同：用冒號切分 */
+const splitText = (text = '') => {
+  const parts = String(text).split(/[:：]/)
+  const title = (parts[0] || '').trim()
+  const desc = parts.slice(1).join('：').trim()
+  return { title, desc }
 }
 
-// 判斷是否至少有一筆「title 或 content」有字
-const hasTips = computed(() => {
-  const obj = props.storageTips || {}
-  return Object.values(obj).some(t =>
-    t &&
-    (t.title?.trim()?.length > 0 || t.content?.trim()?.length > 0)
-  )
-})
+/** 統一轉陣列 */
+const toArray = (input) => {
+  if (Array.isArray(input)) return input
+  if (typeof input === 'string') {
+    try {
+      const j = JSON.parse(input)
+      if (Array.isArray(j)) return j
+    } catch (_) {}
+    return input.split(/\r?\n/).filter(Boolean)
+  }
+  if (input && typeof input === 'object') {
+    return Object.values(input).filter(Boolean)
+  }
+  return []
+}
 
-// 僅保留有內容的項目供渲染
-const filteredTips = computed(() => {
-  const entries = Object.entries(props.storageTips || {})
-  return entries
-    .filter(([_, t]) =>
-      t && (t.title?.trim()?.length > 0 || t.content?.trim()?.length > 0)
-    )
-    .map(([key, t]) => ({ key, ...t }))
+/** 過濾出有內容的項目 */
+const tipsList = computed(() => {
+  return toArray(props.storageTips)
+    .map(s => splitText(s))
+    .filter(t => t.title || t.desc)
 })
 </script>
 
