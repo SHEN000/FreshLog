@@ -85,7 +85,7 @@
         >註冊/登入</RouterLink
       >
       <RouterLink v-else to="/member/profile" class="profile-button">
-        <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
+        <img :src="userIcon" alt="user" class="auth-icon" />
         <span>個人中心</span>
       </RouterLink>
 
@@ -172,6 +172,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
 import magnifierIcon from "@/assets/magnifier-icon.png";
+import userIcon from "@/assets/user-icon-white.png";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -354,35 +355,23 @@ onBeforeUnmount(() => {
 .profile-button {
   display: inline-flex;
   align-items: center;
-  /* 垂直置中 */
   justify-content: center;
-  /* 水平置中 */
-
   gap: 8px;
-  /* icon和文字之間的距離 */
-
   background-color: #2e7d32;
   color: white;
-
   padding: 8px 20px;
   border-radius: 9999px;
-  /* 超圓角 */
-
   font-size: 14px;
   font-weight: 500;
-
   text-decoration: none;
   transition: background-color 0.3s ease;
   border: none;
   cursor: pointer;
-
-  min-width: 80px;
-  /* 按鈕最小寬度 */
+  min-width: 120px;
 }
 
 .profile-button:hover {
   background-color: #27682b;
-  /* hover時再深一點 */
 }
 
 .auth-icon {
