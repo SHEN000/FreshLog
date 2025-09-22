@@ -77,24 +77,114 @@
       </div>
 
       <!-- 手機搜尋icon -->
-      <button class="mobile-search-btn mobile-only">
+      <button class="mobile-search-btn mobile-only" @click="toggleMobileSearch">
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </button>
 
-      <RouterLink v-if="!isLoggedIn" to="/member/login" class="auth-button"
-        >註冊/登入</RouterLink
+      <!-- 手機搜尋 -->
+      <div
+        v-if="isMobile && mobileSearchMode"
+        class="search-container mobile-only mobile-search"
+        role="search"
+        ref="searchWrap"
       >
-      <RouterLink v-else to="/member/profile" class="profile-button">
-        <img :src="userIcon" alt="user" class="auth-icon" />
+        <input
+          ref="mobileSearchInputRef"
+          v-model="keyword"
+          type="text"
+          class="search-input"
+          placeholder="搜尋蔬果或食譜名稱 ...."
+          @focus="onFocus"
+          @input="onType"
+          @compositionstart="onCompStart"
+          @compositionend="onCompEnd"
+          @keydown.down.prevent="move(1)"
+          @keydown.up.prevent="move(-1)"
+          @keydown.enter.prevent="onEnter"
+          aria-label="站內搜尋(手機)"
+        />
+        <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
+        <button
+          class="mobile-clear-btn"
+          @click="closeMobileSearch"
+          aria-label="關閉搜尋"
+        >
+          ✕
+        </button>
+
+        <!-- 下拉清單（手機） -->
+        <ul v-if="showDropdown" class="search-dd" role="listbox">
+          <template v-if="suggestions.veggies.length">
+            <li class="search-dd__group">蔬果</li>
+            <li
+              v-for="(s, i) in suggestions.veggies"
+              :key="'m-veg@' + s.id + i"
+              class="search-dd__item"
+              :class="{ active: i === activeIndex }"
+              role="option"
+              @mousedown.prevent="applyAndGo(s, 'veggie')"
+              @mouseenter="activeIndex = i"
+            >
+              {{ s.label }}
+            </li>
+          </template>
+
+          <li
+            v-if="suggestions.veggies.length && suggestions.recipes.length"
+            class="search-dd__divider"
+          ></li>
+
+          <template v-if="suggestions.recipes.length">
+            <li class="search-dd__group">食譜</li>
+            <li
+              v-for="(s, i) in suggestions.recipes"
+              :key="'m-rec@' + s.id + i"
+              class="search-dd__item"
+              :class="{
+                active: i + suggestions.veggies.length === activeIndex,
+              }"
+              role="option"
+              @mousedown.prevent="applyAndGo(s, 'recipe')"
+              @mouseenter="activeIndex = i + suggestions.veggies.length"
+            >
+              {{ s.label }}
+            </li>
+          </template>
+
+          <li v-if="!flatList.length" class="search-dd__empty">沒有相符項目</li>
+        </ul>
+      </div>
+
+      <RouterLink
+        v-if="!isLoggedIn && !(isMobile && mobileSearchMode)"
+        to="/member/login"
+        class="auth-button"
+        >註冊/登入
+      </RouterLink>
+      <RouterLink
+        v-else-if="!(isMobile && mobileSearchMode)"
+        to="/member/profile"
+        class="profile-button"
+      >
+        <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
         <span>個人中心</span>
       </RouterLink>
 
       <!-- 手機版三條線 -->
-      <button class="menu-icon mobile-only" @click="toggleMenu">☰</button>
+      <button
+        v-if="!mobileSearchMode"
+        class="menu-icon mobile-only"
+        @click="toggleMenu"
+      >
+        ☰
+      </button>
     </div>
 
     <!-- 手機版展開選單 -->
-    <div class="mobile-dropdown" v-if="showMenu && isMobile">
+    <div
+      class="mobile-dropdown"
+      v-if="showMenu && isMobile && !mobileSearchMode"
+    >
       <RouterLink
         v-if="isConsumer"
         to="/"
@@ -103,36 +193,31 @@
         >首頁</RouterLink
       >
 
-      <!--手機版食譜列表連結 -->
-      <RouterLink
-        v-if="isConsumer"
-        to="/recipes"
-        :class="{ active: isActive('/recipes') }"
-        class="nav-item"
-        >食譜列表</RouterLink
-      >
-
-      <RouterLink
-        v-if="isConsumer"
-        to="/veggie"
-        :class="{ active: isActive('/veggie') }"
-        class="nav-item"
-        >蔬菜資訊</RouterLink
-      >
-      <RouterLink
-        v-if="isConsumer"
-        to="/veggie/F001"
-        :class="{ active: isActive('/veggie/F001') }"
-        class="nav-item"
-        >蔬菜內頁</RouterLink
-      >
       <RouterLink
         v-if="isConsumer"
         to="/ai-recommendation"
         :class="{ active: isActive('/ai-recommendation') }"
         class="nav-item"
-        >AI 智慧推薦</RouterLink
+        >蔬菜列表</RouterLink
       >
+
+      <RouterLink
+        v-if="isConsumer"
+        to="/veggie/F001"
+        :class="{ active: isActive('/veggie/F001') }"
+        class="nav-item"
+      >
+        蔬菜內頁</RouterLink
+      >
+
+      <RouterLink
+        v-if="isConsumer"
+        to="/recipes"
+        :class="{ active: isActive('/recipes') }"
+        class="nav-item"
+        >食譜列表
+      </RouterLink>
+
       <RouterLink
         v-if="isConsumer"
         to="/ai-recommendation/R001"
@@ -140,55 +225,96 @@
         class="nav-item"
         >食譜內頁</RouterLink
       >
-      <RouterLink
-        v-if="isConsumer"
-        to="/foodsafety"
-        :class="{ active: isActive('/foodsafety') }"
-        class="nav-item"
-        >食安資訊</RouterLink
-      >
 
       <!-- 農民相關連結 -->
-      <RouterLink
-        v-if="isFarmer"
-        to="/"
-        :class="{ active: isActive('/') }"
-        class="nav-item"
-        >首頁</RouterLink
-      >
-      <RouterLink
-        v-if="isFarmer"
-        to="/farmer/crop-dashboard"
-        :class="{ active: isActive('/farmer/crop-dashboard') }"
-        class="nav-item"
-        >農民儀表板</RouterLink
-      >
+      <!-- <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
+      <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
+        class="nav-item">農民儀表板</RouterLink> -->
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
 import magnifierIcon from "@/assets/magnifier-icon.png";
-import userIcon from "@/assets/user-icon-white.png";
+import indexData from "@/data/searchIndex.js";
 
 const userStore = useUserStore();
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
 
 const isLoggedIn = computed(() => userStore.isAuthenticated);
 const userRole = computed(() => userStore.userRole);
 const isConsumer = computed(() => userRole.value === "consumer");
 const isFarmer = computed(() => userRole.value === "farmer");
 
+// 手機搜尋模式 + 關鍵字 + ref
+const mobileSearchMode = ref(false);
+const mobileKeyword = ref("");
+const mobileSearchInputRef = ref(null);
+
 const showMenu = ref(false);
 const isMobile = ref(window.innerWidth <= 768);
+
+/** 共同 keyword：桌機與手機都用同一個字串 */
+const keyword = ref("");
+/** 下拉清單狀態 */
+const searchWrap = ref(null);
+const dropdownOpen = ref(false);
+const isComposing = ref(false);
+const activeIndex = ref(-1);
+
+const norm = (s) =>
+  (s || "").toString().toLowerCase().replace(/\s+/g, "").trim();
+
+/** 建立建議清單（蔬果在上、食譜在下） */
+const suggestions = computed(() => {
+  const key = norm(keyword.value);
+  if (!key) return { veggies: [], recipes: [] };
+
+  const seen = new Set();
+
+  const v = indexData.veggies
+    .flatMap((vg) => {
+      const hits = norm(vg.name).includes(key)
+        ? [vg.name]
+        : (vg.aliases || []).filter((a) => norm(a).includes(key));
+      return hits.map((label) => ({ id: vg.id, label, type: "veggie" }));
+    })
+    .filter((s) => !seen.has(s.label) && (seen.add(s.label), true));
+
+  const r = indexData.recipes
+    .flatMap((rc) => {
+      const hits = norm(rc.name).includes(key)
+        ? [rc.name]
+        : (rc.aliases || []).filter((a) => norm(a).includes(key));
+      return hits.map((label) => ({ id: rc.id, label, type: "recipe" }));
+    })
+    .filter((s) => !seen.has(s.label) && (seen.add(s.label), true));
+
+  return {
+    veggies: v.slice(0, 5),
+    recipes: r.slice(0, 5),
+  };
+});
+
+/** 平展清單 */
+const flatList = computed(() => [
+  ...suggestions.value.veggies,
+  ...suggestions.value.recipes,
+]);
+
+/** 是否顯示下拉 */
+const showDropdown = computed(
+  () => dropdownOpen.value && keyword.value.length > 0
+);
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
 };
+
 const closeMenu = () => {
   showMenu.value = false;
 };
@@ -212,18 +338,80 @@ const handleClickOutside = (event) => {
   }
 };
 
+// 手機搜尋相關函數
+const toggleMobileSearch = () => {
+  mobileSearchMode.value = !mobileSearchMode.value;
+  if (mobileSearchMode.value) {
+    nextTick(() => {
+      mobileSearchInputRef.value?.focus();
+    });
+  } else {
+    keyword.value = "";
+  }
+};
+
+const closeMobileSearch = () => {
+  mobileSearchMode.value = false;
+  keyword.value = "";
+  dropdownOpen.value = false;
+};
+
+const onFocus = () => {
+  dropdownOpen.value = true;
+};
+
+const onType = () => {
+  if (!isComposing.value) {
+    dropdownOpen.value = true;
+    activeIndex.value = -1;
+  }
+};
+
+const onCompStart = () => {
+  isComposing.value = true;
+};
+
+const onCompEnd = () => {
+  isComposing.value = false;
+  onType();
+};
+
+const move = (direction) => {
+  const total = flatList.value.length;
+  if (total === 0) return;
+
+  activeIndex.value = Math.max(
+    0,
+    Math.min(total - 1, activeIndex.value + direction)
+  );
+};
+
+const onEnter = () => {
+  if (activeIndex.value >= 0 && flatList.value[activeIndex.value]) {
+    const item = flatList.value[activeIndex.value];
+    applyAndGo(item, item.type);
+  }
+};
+
+const applyAndGo = (item, type) => {
+  keyword.value = "";
+  dropdownOpen.value = false;
+
+  if (type === "veggie") {
+    router.push(`/veggie/${item.id}`);
+  } else if (type === "recipe") {
+    router.push(`/ai-recommendation/${item.id}`);
+  }
+
+  if (mobileSearchMode.value) {
+    closeMobileSearch();
+  }
+};
+
 onMounted(() => {
   window.addEventListener("resize", handleResize);
   document.addEventListener("click", handleClickOutside);
   router.afterEach(closeMenu);
-
-  // 監聽點擊外部關閉選單
-  document.addEventListener("click", handleClickOutside);
-
-  // 每次路徑跳轉後自動關閉選單
-  router.afterEach(() => {
-    closeMenu();
-  });
 });
 
 onBeforeUnmount(() => {
@@ -237,13 +425,9 @@ onBeforeUnmount(() => {
   width: 100%;
   background-color: #ffffff;
   padding: 10px 0;
-
   position: sticky;
-  /* 固定Header */
   top: 0;
-  /* 從視窗頂端0px的位置開始黏住 */
   z-index: 1000;
-  /* 讓它蓋在其他內容上面，不會被擋住 */
 }
 
 .header-inner {
@@ -255,42 +439,29 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   padding: 0 12px;
   gap: 10px;
-  /* 每個項目間距都一致 */
   box-sizing: border-box;
 }
 
-/* 左側 LOGO + 標題 */
-.logo-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* LOGO 圖片大小固定 */
 .logo img {
   width: 48px;
   height: 40px;
 }
 
-/* 網站標題樣式 */
 .site-title {
   font-size: 22px;
   font-weight: bold;
   color: #2e7d32;
 }
 
-/* 搜尋框樣式 */
 .search-container {
   display: flex;
   align-items: center;
   background: #ffffff;
   border: 1px solid #ccc;
   border-radius: 9999px;
-  /* 超大圓角 */
   padding: 4px 12px;
   width: 100%;
   max-width: 280px;
-  /* 可以依需求調整 */
   box-sizing: border-box;
   position: relative;
 }
@@ -304,31 +475,19 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
-/* 放大鏡icon設定 */
 .search-icon {
   width: 16px;
-  /* 圖片大小 */
   height: 16px;
   margin-left: 8px;
-  /* 與輸入框之間的距離 */
 }
 
-/* PC版主選單連結列 */
 .nav-links {
   display: flex;
   gap: 10px;
   flex-grow: 1;
   justify-content: center;
-  /* 置中排列 */
-
-  @media (max-width: 768px) {
-    .nav-links {
-      display: none;
-    }
-  }
 }
 
-/* 共用導覽項目樣式 */
 .nav-item {
   text-decoration: none;
   color: #333;
@@ -338,20 +497,11 @@ onBeforeUnmount(() => {
   transition: background-color 0.3s ease;
 }
 
-/* 滑鼠移入或目前頁面：背景變淡灰 */
 .nav-item:hover,
 .nav-item.active {
   background-color: #f0f0f0;
 }
 
-/* 搜尋、下拉、會員區 */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* 會員中心樣式 */
 .profile-button {
   display: inline-flex;
   align-items: center;
@@ -379,7 +529,6 @@ onBeforeUnmount(() => {
   height: 20px;
 }
 
-/* 登入按鈕樣式 */
 .auth-button {
   background-color: #2e7d32;
   color: white;
@@ -394,7 +543,6 @@ onBeforeUnmount(() => {
   background-color: #2e7d32;
 }
 
-/* 三條線 icon 按鈕 */
 .menu-icon {
   background: none;
   border: none;
@@ -403,7 +551,6 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-/* 手機版 dropdown 選單 */
 .mobile-dropdown {
   position: absolute;
   top: 60px;
@@ -422,68 +569,126 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
-.region-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 100px;
-  /* 可以依需要調整寬度 */
-}
-
 .desktop-only {
   display: flex;
 }
+
 .mobile-only {
   display: none;
 }
 
+.mobile-search-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mobile-clear-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  color: #666;
+}
+
+.mobile-search {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: white;
+  border-bottom: 1px solid #ccc;
+}
+
+/* 搜尋下拉清單樣式 */
+.search-dd {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1002;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-dd__group {
+  background: #f5f5f5;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+}
+
+.search-dd__item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-dd__item:hover,
+.search-dd__item.active {
+  background: #f0f8ff;
+}
+
+.search-dd__divider {
+  height: 1px;
+  background: #ddd;
+  margin: 4px 0;
+}
+
+.search-dd__empty {
+  padding: 10px 12px;
+  color: #999;
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
-  /* 隱藏桌面元素 */
   .desktop-only {
     display: none !important;
   }
-  /* 顯示手機元素 */
+
   .mobile-only {
     display: inline-flex !important;
     align-items: center;
   }
 
-  /* 隱藏桌面版 nav-links、搜尋框 */
   .nav-links,
-  .search-container {
+  .search-container:not(.mobile-search) {
     display: none !important;
   }
 
-  /* 手機版：從左到右原始排列 */
   .header-inner {
     justify-content: flex-start !important;
     padding: 0 12px !important;
     gap: 10px !important;
   }
 
-  /* 手機 LOGO 縮小 */
   .logo img {
     width: 36px !important;
     height: auto !important;
   }
 
-  /* 手機標題字型 */
   .site-title.mobile-only {
     font-size: 18px !important;
     margin: 0 !important;
   }
 
-  /* 手機：將放大鏡按鈕往右群組推 */
   .mobile-search-btn {
-    background: none;
-    border: none;
-    padding: 0;
     margin-left: auto;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
   }
 
-  /* 手機 註冊/登入 & 會員中心 按鈕 */
   .auth-button.mobile-only,
   .profile-button.mobile-only {
     padding: 6px 12px !important;
@@ -491,7 +696,6 @@ onBeforeUnmount(() => {
     margin-left: 8px;
   }
 
-  /* 手機 三條線 */
   .menu-icon.mobile-only {
     font-size: 24px !important;
     margin-left: 8px;
