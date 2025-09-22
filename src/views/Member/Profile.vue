@@ -217,7 +217,7 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/user.js";
 
 // 引入模組化元件
-import Favorites from "./6424/Favorites.vue";
+import Favorites from "./6424/favorites.vue";
 import VeggieFav from "./6424/VeggieFav.vue";
 
 const router = useRouter();
