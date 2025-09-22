@@ -15,3 +15,4 @@ export default {
     { id: 'R005', name: '芒果冰' }
   ]
 }
+
