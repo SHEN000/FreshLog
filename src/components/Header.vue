@@ -60,11 +60,6 @@
           class="nav-item"
           >食譜內頁</RouterLink
         >
-
-        <!-- 農民相關連結 -->
-        <!-- <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-        <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-          class="nav-item">農民儀表板</RouterLink> -->
       </div>
 
       <!-- 桌機搜尋 -->
@@ -138,7 +133,6 @@
       </button>
 
       <!-- 手機搜尋 -->
-
       <div
         v-if="isMobile && mobileSearchMode"
         class="search-container mobile-only mobile-search"
@@ -282,11 +276,6 @@
         class="nav-item"
         >食譜內頁</RouterLink
       >
-
-      <!-- 農民相關連結 -->
-      <!-- <RouterLink v-if="isFarmer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
-      <RouterLink v-if="isFarmer" to="/farmer/crop-dashboard" :class="{ active: isActive('/farmer/crop-dashboard') }"
-        class="nav-item">農民儀表板</RouterLink> -->
     </div>
   </header>
 </template>
@@ -309,7 +298,6 @@ const isFarmer = computed(() => userRole.value === "farmer");
 
 // 手機搜尋模式 + 關鍵字 + ref
 const mobileSearchMode = ref(false);
-const mobileKeyword = ref("");
 const mobileSearchInputRef = ref(null);
 
 const showMenu = ref(false);
@@ -390,11 +378,13 @@ function onCompEnd(e) {
   dropdownOpen.value = true;
   activeIndex.value = flatList.value.length ? 0 : -1;
 }
+
 function move(step) {
   const n = flatList.value.length;
   if (!n) return;
   activeIndex.value = (activeIndex.value + step + n) % n;
 }
+
 function onEnter() {
   if (activeIndex.value < 0) return;
   const item = flatList.value[activeIndex.value];
@@ -419,8 +409,6 @@ function onClickOutside(e) {
   if (!searchWrap.value) return;
   if (!searchWrap.value.contains(e.target)) dropdownOpen.value = false;
 }
-onMounted(() => document.addEventListener("click", onClickOutside));
-onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 
 /* 開啟/關閉手機搜尋 */
 const openMobileSearch = async () => {
@@ -432,6 +420,7 @@ const openMobileSearch = async () => {
   const el = mobileSearchInputRef.value;
   if (el) el.focus();
 };
+
 const closeMobileSearch = () => {
   mobileSearchMode.value = false;
   keyword.value = "";
@@ -452,7 +441,6 @@ const handleResize = () => {
   isMobile.value = window.innerWidth <= 768;
   if (!isMobile.value) {
     mobileSearchMode.value = false;
-    mobileKeyword.value = "";
   }
 };
 
@@ -469,77 +457,8 @@ const handleClickOutside = (event) => {
   }
 };
 
-// 手機搜尋相關函數
-const toggleMobileSearch = () => {
-  mobileSearchMode.value = !mobileSearchMode.value;
-  if (mobileSearchMode.value) {
-    nextTick(() => {
-      mobileSearchInputRef.value?.focus();
-    });
-  } else {
-    keyword.value = "";
-  }
-};
-
-const closeMobileSearch = () => {
-  mobileSearchMode.value = false;
-  keyword.value = "";
-  dropdownOpen.value = false;
-};
-
-const onFocus = () => {
-  dropdownOpen.value = true;
-};
-
-const onType = () => {
-  if (!isComposing.value) {
-    dropdownOpen.value = true;
-    activeIndex.value = -1;
-  }
-};
-
-const onCompStart = () => {
-  isComposing.value = true;
-};
-
-const onCompEnd = () => {
-  isComposing.value = false;
-  onType();
-};
-
-const move = (direction) => {
-  const total = flatList.value.length;
-  if (total === 0) return;
-
-  activeIndex.value = Math.max(
-    0,
-    Math.min(total - 1, activeIndex.value + direction)
-  );
-};
-
-const onEnter = () => {
-  if (activeIndex.value >= 0 && flatList.value[activeIndex.value]) {
-    const item = flatList.value[activeIndex.value];
-    applyAndGo(item, item.type);
-  }
-};
-
-const applyAndGo = (item, type) => {
-  keyword.value = "";
-  dropdownOpen.value = false;
-
-  if (type === "veggie") {
-    router.push(`/veggie/${item.id}`);
-  } else if (type === "recipe") {
-    router.push(`/ai-recommendation/${item.id}`);
-  }
-
-  if (mobileSearchMode.value) {
-    closeMobileSearch();
-  }
-};
-
 onMounted(() => {
+  document.addEventListener("click", onClickOutside);
   window.addEventListener("resize", handleResize);
   document.addEventListener("click", handleClickOutside);
   router.afterEach(closeMenu);
@@ -552,6 +471,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  document.removeEventListener("click", onClickOutside);
   window.removeEventListener("resize", handleResize);
   document.removeEventListener("click", handleClickOutside);
 });
@@ -598,7 +518,6 @@ onBeforeUnmount(() => {
   border-radius: 9999px;
   padding: 4px 12px;
   width: 100%;
-
   max-width: 260px;
   box-sizing: border-box;
   position: relative;
@@ -623,14 +542,7 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 20px;
   flex-grow: 1;
-
   justify-content: left;
-
-  @media (max-width: 768px) {
-    .nav-links {
-      display: none;
-    }
-  }
 }
 
 .nav-item {
@@ -656,14 +568,12 @@ onBeforeUnmount(() => {
   color: white;
   padding: 8px 20px;
   border-radius: 9999px;
-
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
   transition: background-color 0.3s ease;
   border: none;
   cursor: pointer;
-
   min-width: 80px;
 }
 
@@ -714,12 +624,6 @@ onBeforeUnmount(() => {
 .mobile-dropdown a.active {
   background-color: #e0e0e0;
   border-radius: 4px;
-}
-
-.region-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 100px;
 }
 
 .desktop-only {
@@ -878,13 +782,11 @@ onBeforeUnmount(() => {
   }
 
   /* 隱藏桌面元素 */
-
   .desktop-only {
     display: none !important;
   }
 
   /* 顯示手機元素 */
-
   .mobile-only {
     display: inline-flex !important;
     align-items: center;
@@ -896,7 +798,6 @@ onBeforeUnmount(() => {
   }
 
   /* 手機 LOGO 縮小 */
-
   .logo img {
     width: 36px !important;
     height: auto !important;
