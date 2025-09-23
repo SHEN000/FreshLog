@@ -6,7 +6,7 @@
         <h2 class="title">精選食譜推薦</h2>
       </div>
       <!-- 先連結到一般食譜列表頁面 , 之後再改成篩選過的列表頁 -->
-      <router-link to="/ai-recommendation" class="view-more">查看更多</router-link>
+      <router-link to="/recipes" class="view-more">查看更多</router-link>
     </div>
 
     <div class="cards">

@@ -1,9 +1,6 @@
 <template>
   <header class="header">
-    <div
-      class="header-inner"
-      :class="{ searching: isMobile && mobileSearchMode }"
-    >
+    <div class="header-inner" :class="{ searching: isMobile && mobileSearchMode }">
       <RouterLink to="/" class="logo">
         <img src="/logo.png" alt="logo" />
       </RouterLink>
@@ -12,109 +9,52 @@
       <h1 class="site-title desktop-only">食價登錄&nbsp;&nbsp;FreshLog</h1>
 
       <!-- 手機標題（當進入搜尋模式時可隱藏，這裡用 CSS 控制） -->
-      <h1
-        class="site-title mobile-only"
-        :class="{ 'hidden-when-search': mobileSearchMode }"
-      >
+      <h1 class="site-title mobile-only" :class="{ 'hidden-when-search': mobileSearchMode }">
         食價登錄
       </h1>
 
       <div v-if="!isMobile" class="nav-links">
-        <RouterLink
-          v-if="isConsumer"
-          to="/"
-          :class="{ active: isActive('/') }"
-          class="nav-item"
-          >首頁</RouterLink
-        >
+        <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
 
-        <RouterLink
-          v-if="isConsumer"
-          to="/ai-recommendation"
-          :class="{ active: isActive('/ai-recommendation') }"
-          class="nav-item"
-          >蔬菜列表</RouterLink
-        >
+        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+          class="nav-item">蔬菜列表</RouterLink>
 
-        <RouterLink
-          v-if="isConsumer"
-          to="/veggie/F001"
-          :class="{ active: isActive('/veggie/F001') }"
-          class="nav-item"
-        >
-          蔬菜內頁</RouterLink
-        >
+        <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
+          蔬菜內頁</RouterLink>
 
-        <RouterLink
-          v-if="isConsumer"
-          to="/recipes"
-          :class="{ active: isActive('/recipes') }"
-          class="nav-item"
-          >食譜列表
+        <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">食譜列表
         </RouterLink>
 
-        <RouterLink
-          v-if="isConsumer"
-          to="/ai-recommendation/R001"
-          :class="{ active: isActive('/ai-recommendation/R001') }"
-          class="nav-item"
-          >食譜內頁</RouterLink
-        >
+        <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
+          :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
       </div>
 
       <!-- 桌機搜尋 -->
       <div class="search-container desktop-only" ref="searchWrap">
-        <input
-          v-model="keyword"
-          type="text"
-          placeholder="搜尋蔬果或食譜名稱 ...."
-          class="search-input"
-          @focus="onFocus"
-          @input="onType"
-          @compositionstart="onCompStart"
-          @compositionend="onCompEnd"
-          @keydown.down.prevent="move(1)"
-          @keydown.up.prevent="move(-1)"
-          @keydown.enter.prevent="onEnter"
-          aria-label="站內搜尋"
-        />
+        <input v-model="keyword" type="text" placeholder="搜尋蔬果或食譜名稱 ...." class="search-input" @focus="onFocus"
+          @input="onType" @compositionstart="onCompStart" @compositionend="onCompEnd" @keydown.down.prevent="move(1)"
+          @keydown.up.prevent="move(-1)" @keydown.enter.prevent="onEnter" aria-label="站內搜尋" />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
 
         <!-- 下拉清單（桌機） -->
         <ul v-if="showDropdown" class="search-dd" role="listbox">
           <template v-if="suggestions.veggies.length">
             <li class="search-dd__group">蔬果</li>
-            <li
-              v-for="(s, i) in suggestions.veggies"
-              :key="'veg@' + s.id + i"
-              class="search-dd__item"
-              :class="{ active: i === activeIndex }"
-              role="option"
-              @mousedown.prevent="applyAndGo(s, 'veggie')"
-              @mouseenter="activeIndex = i"
-            >
+            <li v-for="(s, i) in suggestions.veggies" :key="'veg@' + s.id + i" class="search-dd__item"
+              :class="{ active: i === activeIndex }" role="option" @mousedown.prevent="applyAndGo(s, 'veggie')"
+              @mouseenter="activeIndex = i">
               {{ s.label }}
             </li>
           </template>
 
-          <li
-            v-if="suggestions.veggies.length && suggestions.recipes.length"
-            class="search-dd__divider"
-          ></li>
+          <li v-if="suggestions.veggies.length && suggestions.recipes.length" class="search-dd__divider"></li>
 
           <template v-if="suggestions.recipes.length">
             <li class="search-dd__group">食譜</li>
-            <li
-              v-for="(s, i) in suggestions.recipes"
-              :key="'rec@' + s.id + i"
-              class="search-dd__item"
-              :class="{
-                active: i + suggestions.veggies.length === activeIndex,
-              }"
-              role="option"
-              @mousedown.prevent="applyAndGo(s, 'recipe')"
-              @mouseenter="activeIndex = i + suggestions.veggies.length"
-            >
+            <li v-for="(s, i) in suggestions.recipes" :key="'rec@' + s.id + i" class="search-dd__item" :class="{
+              active: i + suggestions.veggies.length === activeIndex,
+            }" role="option" @mousedown.prevent="applyAndGo(s, 'recipe')"
+              @mouseenter="activeIndex = i + suggestions.veggies.length">
               {{ s.label }}
             </li>
           </template>
@@ -124,42 +64,19 @@
       </div>
 
       <!-- 手機搜尋icon，點擊開啟搜尋模式 -->
-      <button
-        class="mobile-search-btn mobile-only"
-        @click="openMobileSearch"
-        v-if="!mobileSearchMode"
-      >
+      <button class="mobile-search-btn mobile-only" @click="openMobileSearch" v-if="!mobileSearchMode">
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
       </button>
 
       <!-- 手機搜尋 -->
-      <div
-        v-if="isMobile && mobileSearchMode"
-        class="search-container mobile-only mobile-search"
-        role="search"
-        ref="searchWrap"
-      >
-        <input
-          ref="mobileSearchInputRef"
-          v-model="keyword"
-          type="text"
-          class="search-input"
-          placeholder="搜尋蔬果或食譜名稱 ...."
-          @focus="onFocus"
-          @input="onType"
-          @compositionstart="onCompStart"
-          @compositionend="onCompEnd"
-          @keydown.down.prevent="move(1)"
-          @keydown.up.prevent="move(-1)"
-          @keydown.enter.prevent="onEnter"
-          aria-label="站內搜尋(手機)"
-        />
+      <div v-if="isMobile && mobileSearchMode" class="search-container mobile-only mobile-search" role="search"
+        ref="searchWrap">
+        <input ref="mobileSearchInputRef" v-model="keyword" type="text" class="search-input"
+          placeholder="搜尋蔬果或食譜名稱 ...." @focus="onFocus" @input="onType" @compositionstart="onCompStart"
+          @compositionend="onCompEnd" @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)"
+          @keydown.enter.prevent="onEnter" aria-label="站內搜尋(手機)" />
         <img :src="magnifierIcon" class="search-icon" alt="搜尋" />
-        <button
-          class="mobile-clear-btn"
-          @click="closeMobileSearch"
-          aria-label="關閉搜尋"
-        >
+        <button class="mobile-clear-btn" @click="closeMobileSearch" aria-label="關閉搜尋">
           ✕
         </button>
 
@@ -167,37 +84,21 @@
         <ul v-if="showDropdown" class="search-dd" role="listbox">
           <template v-if="suggestions.veggies.length">
             <li class="search-dd__group">蔬果</li>
-            <li
-              v-for="(s, i) in suggestions.veggies"
-              :key="'m-veg@' + s.id + i"
-              class="search-dd__item"
-              :class="{ active: i === activeIndex }"
-              role="option"
-              @mousedown.prevent="applyAndGo(s, 'veggie')"
-              @mouseenter="activeIndex = i"
-            >
+            <li v-for="(s, i) in suggestions.veggies" :key="'m-veg@' + s.id + i" class="search-dd__item"
+              :class="{ active: i === activeIndex }" role="option" @mousedown.prevent="applyAndGo(s, 'veggie')"
+              @mouseenter="activeIndex = i">
               {{ s.label }}
             </li>
           </template>
 
-          <li
-            v-if="suggestions.veggies.length && suggestions.recipes.length"
-            class="search-dd__divider"
-          ></li>
+          <li v-if="suggestions.veggies.length && suggestions.recipes.length" class="search-dd__divider"></li>
 
           <template v-if="suggestions.recipes.length">
             <li class="search-dd__group">食譜</li>
-            <li
-              v-for="(s, i) in suggestions.recipes"
-              :key="'m-rec@' + s.id + i"
-              class="search-dd__item"
-              :class="{
-                active: i + suggestions.veggies.length === activeIndex,
-              }"
-              role="option"
-              @mousedown.prevent="applyAndGo(s, 'recipe')"
-              @mouseenter="activeIndex = i + suggestions.veggies.length"
-            >
+            <li v-for="(s, i) in suggestions.recipes" :key="'m-rec@' + s.id + i" class="search-dd__item" :class="{
+              active: i + suggestions.veggies.length === activeIndex,
+            }" role="option" @mousedown.prevent="applyAndGo(s, 'recipe')"
+              @mouseenter="activeIndex = i + suggestions.veggies.length">
               {{ s.label }}
             </li>
           </template>
@@ -206,76 +107,34 @@
         </ul>
       </div>
 
-      <RouterLink
-        v-if="!isLoggedIn && !(isMobile && mobileSearchMode)"
-        to="/member/login"
-        class="auth-button"
-        >註冊/登入
+      <RouterLink v-if="!isLoggedIn && !(isMobile && mobileSearchMode)" to="/member/login" class="auth-button">註冊/登入
       </RouterLink>
-      <RouterLink
-        v-else-if="!(isMobile && mobileSearchMode)"
-        to="/member/profile"
-        class="profile-button"
-      >
+      <RouterLink v-else-if="!(isMobile && mobileSearchMode)" to="/member/profile" class="profile-button">
         <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
         <span>個人中心</span>
       </RouterLink>
 
       <!-- 手機版三條線 -->
-      <button
-        v-if="!mobileSearchMode"
-        class="menu-icon mobile-only"
-        @click="toggleMenu"
-      >
+      <button v-if="!mobileSearchMode" class="menu-icon mobile-only" @click="toggleMenu">
         ☰
       </button>
     </div>
 
     <!-- 手機版展開選單 -->
-    <div
-      class="mobile-dropdown"
-      v-if="showMenu && isMobile && !mobileSearchMode"
-    >
-      <RouterLink
-        v-if="isConsumer"
-        to="/"
-        :class="{ active: isActive('/') }"
-        class="nav-item"
-        >首頁</RouterLink
-      >
+    <div class="mobile-dropdown" v-if="showMenu && isMobile && !mobileSearchMode">
+      <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
 
-      <RouterLink
-        v-if="isConsumer"
-        to="/ai-recommendation"
-        :class="{ active: isActive('/ai-recommendation') }"
-        class="nav-item"
-        >蔬菜列表</RouterLink
-      >
+      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+        class="nav-item">蔬菜列表</RouterLink>
 
-      <RouterLink
-        v-if="isConsumer"
-        to="/veggie/F001"
-        :class="{ active: isActive('/veggie/F001') }"
-        class="nav-item"
-      >
-        蔬菜內頁</RouterLink
-      >
+      <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
+        蔬菜內頁</RouterLink>
 
-      <RouterLink
-        v-if="isConsumer"
-        to="/recipes"
-        :class="{ active: isActive('/recipes') }"
-        class="nav-item"
-        >食譜列表
+      <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">食譜列表
       </RouterLink>
 
-      <RouterLink
-        v-if="isConsumer"
-        to="/ai-recommendation/R001"
-        :class="{ active: isActive('/ai-recommendation/R001') }"
-        class="nav-item"
-        >食譜內頁</RouterLink
-      >
+      <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
+        :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
     </div>
   </header>
 </template>
@@ -669,6 +528,7 @@ onBeforeUnmount(() => {
   padding: 10px 12px;
   cursor: pointer;
 }
+
 .search-dd__item:hover,
 .search-dd__item.active {
   background: #f4f7f5;
@@ -759,9 +619,7 @@ onBeforeUnmount(() => {
   }
 
   /* X 按下的觸覺反饋 */
-  .header-inner.searching
-    .search-container.mobile-search
-    .mobile-clear-btn:active {
+  .header-inner.searching .search-container.mobile-search .mobile-clear-btn:active {
     background: rgba(0, 0, 0, 0.06);
   }
 
@@ -809,7 +667,13 @@ onBeforeUnmount(() => {
   }
 
   .mobile-search-btn {
+    background: none;
+    border: none;
+    padding: 0;
     margin-left: auto;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
   }
 
   .auth-button.mobile-only,
