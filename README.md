@@ -12,8 +12,4 @@ npm run dev //開啟測試網頁
 r + enter //reload 網頁
 
 部屬測試
-<<<<<<< HEAD
-
-=======
 部屬測試v2
->>>>>>> YouHua
