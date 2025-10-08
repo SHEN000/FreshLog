@@ -145,7 +145,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { foodApi } from "@/data/6424/FoodApi.js";
+import { foodApi } from "@/api/food.js";
 
 // 引入子元件
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
@@ -240,34 +240,33 @@ const loadData = async () => {
     }
 
     // ===== 2. 準備查詢參數 =====
+    // Request Body 參數
+    const filterParams = {
+      category:
+        activeCategory.value !== "all"
+          ? String(getCategoryMapping(activeCategory.value))
+          : null,
+      subCategory: null,
+      name: null,
+      nameEn: null,
+      priceMin: Number(Math.min(priceRange.value[0], priceRange.value[1])) || 0,
+      priceMax:
+        Number(Math.max(priceRange.value[0], priceRange.value[1])) || 1000,
+      tag: null,
+      sort: String(currentSort.value || "PRICE_DESC").trim(), // Body 的 sort (enum)
+    };
 
-    // 🆕 修正:根據分類決定查詢參數
-    const filterParams = {};
-
-    // 只有在選擇特定分類時才加入 category
-    if (activeCategory.value !== "all") {
-      filterParams.category = String(getCategoryMapping(activeCategory.value));
-      console.log("📂 指定分類查詢:", filterParams.category);
-    } else {
-      console.log("📂 查詢所有分類 (不帶 category 參數)");
-    }
-
-    // 其他參數
-    filterParams.subCategory = "";
-    filterParams.name = "";
-    filterParams.nameEn = "";
-    filterParams.priceMin =
-      Number(Math.min(priceRange.value[0], priceRange.value[1])) || 0;
-    filterParams.priceMax =
-      Number(Math.max(priceRange.value[0], priceRange.value[1])) || 1000;
-    filterParams.tag = "";
-    filterParams.sort = String(currentSort.value || "PRICE_DESC").trim();
-
+    // Query Parameters（分頁參數）
     const paginationParams = {
       pageNo: 0,
       pageSize: 20,
-      sort: "price,desc",
     };
+
+    if (filterParams.category) {
+      console.log("📂 指定分類查詢:", filterParams.category);
+    } else {
+      console.log("📂 查詢所有分類 (category: null)");
+    }
 
     console.log("========================================");
     console.log("📤 Request Body (filterParams):");
@@ -310,7 +309,6 @@ const loadData = async () => {
     console.log("========================================");
 
     // ===== 4. 處理回應 =====
-    // 🔍 支援多種可能的資料格式
     let foodList = null;
     let responseData = null;
 
@@ -372,14 +370,14 @@ const loadData = async () => {
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
-        // 🆕 統計分類分布
+        // 統計分類分布
         const categoryStats = {};
         allDishes.value.forEach((dish) => {
           categoryStats[dish.type] = (categoryStats[dish.type] || 0) + 1;
         });
         console.log("📊 分類統計:", categoryStats);
 
-        // 🆕 顯示前 3 筆資料
+        // 前 3 筆資料
         console.log("📋 前 3 筆資料預覽:");
         allDishes.value.slice(0, 3).forEach((dish, index) => {
           console.log(
@@ -416,7 +414,7 @@ const loadData = async () => {
 
     allDishes.value = [];
 
-    // 友善錯誤提示
+    // 錯誤提示
     if (!error.response) {
       console.error("💥 網絡連接錯誤");
     } else if (error.response.status === 500) {

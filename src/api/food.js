@@ -34,24 +34,23 @@ export const foodApi = {
    *   }
    * }
    */
+  // src/api/food.js
   findFoodsList(params = {}, pagination = {}) {
-    // 預設的篩選條件
+    // 🔧 預設值改用 null
     const defaultParams = {
-      category: "",
-      subCategory: "",
-      name: "",
-      nameEn: "",
-      priceMin: 1,
-      priceMax: 1000,
-      tag: "",
-      sort: "PRICE_DESC",
+      category: null,
+      subCategory: null,
+      name: null,
+      nameEn: null,
+      priceMin: 0, // number 型別
+      priceMax: 1000, // number 型別
+      tag: null,
+      sort: "PRICE_DESC", // Body 的 sort (enum 值)
     };
 
-    // 預設的分頁參數
     const defaultPagination = {
       pageNo: 0,
       pageSize: 20,
-      sort: "price,desc",
     };
 
     return request.post(
