@@ -234,7 +234,7 @@ const allSubCategories = ref([]);
 // 注意：這些 subCategory 必須與後端 API 回傳的子分類名稱完全一致
 const mainCategories = [
   { id: "all", name: "全部", subCategory: null },
-  { id: "vegetable", name: "蔬菜", subCategory: null },
+  { id: "vegetable", name: "蔬菜", subCategory: "蔬菜" },
   { id: "fruit", name: "水果", subCategory: "水果" },
   { id: "leafy", name: "葉菜類", subCategory: "葉菜類" },
   { id: "root", name: "根莖類", subCategory: "根莖類" },
@@ -285,16 +285,49 @@ const loadData = async () => {
         const subCatResponse = await foodApi.getFoodSubCategories("");
 
         console.log("📂 getFoodSubCategories API 完整回應:", subCatResponse);
-        console.log("📂 子分類 data:", subCatResponse.data);
+        // normalize various possible response shapes into an array of strings
+        let subCats = [];
 
-        if (subCatResponse.data?.code === "0000" && subCatResponse.data?.data) {
-          allSubCategories.value = subCatResponse.data.data;
-          console.log(
-            "✅ 子分類載入成功:",
-            allSubCategories.value.length,
-            "個"
-          );
-          console.log("📋 完整子分類列表:", allSubCategories.value);
+        // case A: response.data is array
+        if (Array.isArray(subCatResponse?.data)) {
+          subCats = subCatResponse.data;
+        }
+
+        // case B: response.data.data is array (standard paged wrapper)
+        else if (Array.isArray(subCatResponse?.data?.data)) {
+          subCats = subCatResponse.data.data;
+        }
+
+        // case C: response.data.content is array
+        else if (Array.isArray(subCatResponse?.data?.content)) {
+          subCats = subCatResponse.data.content;
+        }
+
+        // case D: response.data?.data?.content is array (nested)
+        else if (Array.isArray(subCatResponse?.data?.data?.content)) {
+          subCats = subCatResponse.data.data.content;
+        }
+
+        // case E: sometimes backend returns { code, data: ['a','b'] }
+        else if (subCatResponse?.data?.code === "0000" && Array.isArray(subCatResponse.data.data)) {
+          subCats = subCatResponse.data.data;
+        }
+
+        // fallback: if data.payload is an object map, extract keys or values
+        else if (subCatResponse?.data && typeof subCatResponse.data === "object") {
+          // try to extract arrays from properties
+          const candidates = Object.values(subCatResponse.data).filter((v) => Array.isArray(v));
+          if (candidates.length > 0) subCats = candidates[0];
+        }
+
+        // ensure array of strings
+        if (!Array.isArray(subCats)) subCats = [];
+        // flatten and filter
+        subCats = subCats.flat().map((s) => (s && s.name ? s.name : s)).filter(Boolean);
+
+        allSubCategories.value = subCats;
+        console.log("✅ 子分類載入成功:", allSubCategories.value.length, "個");
+        console.log("📋 完整子分類列表:", allSubCategories.value);
 
           const hasVegetable = allSubCategories.value.includes("蔬菜");
           console.log("🔍 是否有「蔬菜」子分類:", hasVegetable);
@@ -318,7 +351,6 @@ const loadData = async () => {
             "📂 其他分類 (" + otherCategories.value.length + "個):",
             otherCategories.value
           );
-        }
       } catch (subCatError) {
         console.error("⚠️ 子分類查詢失敗:", subCatError.message);
         console.error("⚠️ 完整錯誤:", subCatError);
