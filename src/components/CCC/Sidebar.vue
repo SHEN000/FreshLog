@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onUnmounted } from "vue";
 
 const props = defineProps({
   filters: {
@@ -246,15 +246,37 @@ const emitFilters = () => {
   emit("update-filters", { ...localFilters.value });
 };
 
+let priceEmitTimeout = null;
+const DEBOUNCE_MS = 400;
+
 const validateAndEmitPriceRange = () => {
   if (localPriceRange.value[0] > localPriceRange.value[1]) {
     localPriceRange.value[0] = localPriceRange.value[1];
   }
+
+  // debounce emit so we don't spam API while dragging
+  if (priceEmitTimeout) clearTimeout(priceEmitTimeout);
+  priceEmitTimeout = setTimeout(() => {
+    emit("update-price-range", [...localPriceRange.value]);
+    priceEmitTimeout = null;
+  }, DEBOUNCE_MS);
 };
 
 const emitPriceRange = () => {
+  // immediate emit (Apply button)
+  if (priceEmitTimeout) {
+    clearTimeout(priceEmitTimeout);
+    priceEmitTimeout = null;
+  }
   emit("update-price-range", [...localPriceRange.value]);
 };
+
+onUnmounted(() => {
+  if (priceEmitTimeout) {
+    clearTimeout(priceEmitTimeout);
+    priceEmitTimeout = null;
+  }
+});
 </script>
 
 <style scoped>
