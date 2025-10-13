@@ -43,7 +43,7 @@ export const foodApi = {
       name: null,
       nameEn: null,
       priceMin: 0, // number 型別
-      priceMax: 1000, // number 型別
+      priceMax: 999999, // number 型別
       tag: null,
       sort: "PRICE_DESC", // Body 的 sort (enum 值)
     };
@@ -53,9 +53,12 @@ export const foodApi = {
       pageSize: 20,
     };
 
+    // 合併參數，保留 null 值
+    const requestBody = { ...defaultParams, ...params };
+
     return request.post(
       "/api/food/findFoodsList",
-      { ...defaultParams, ...params },
+      requestBody,
       { params: { ...defaultPagination, ...pagination } }
     );
   },
