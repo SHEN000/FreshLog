@@ -120,9 +120,15 @@
               <div class="price-section">
                 <div class="price-info">
                   <span class="price">NT${{ dish.price }}/台斤</span>
-                  <span class="price-change" :class="getPriceChangeClass()">
-                    {{ getPriceChangeText() }}
+                  <span
+                    class="price-change"
+                    :class="getPriceChangeClass(dish.priceChangePct)"
+                  >
+                    {{ getPriceChangeText(dish.priceChangePct) }}
                   </span>
+                </div>
+                <div class="price-date" v-if="dish.priceDateDisplay">
+                  價格日期：{{ dish.priceDateDisplay }}
                 </div>
                 <button class="detail-btn" @click="viewRecipeDetails(dish.id)">
                   詳細資訊
@@ -166,6 +172,10 @@
           >
             下一頁
           </button>
+
+          <div class="page-summary">
+            第 {{ currentPage }} / {{ totalPages }} 頁
+          </div>
         </div>
       </div>
     </div>
@@ -495,46 +505,57 @@ const loadData = async () => {
       });
 
       if (Array.isArray(foodList) && foodList.length > 0) {
-        // 🔧 移除重複的食品（根據 foodId 去重）
-        const uniqueFoodMap = new Map();
-        foodList.forEach((item) => {
-          if (!uniqueFoodMap.has(item.foodId)) {
-            uniqueFoodMap.set(item.foodId, item);
-          }
-        });
-        const uniqueFoodList = Array.from(uniqueFoodMap.values());
+        // � 不做去重，直接使用後端回傳的 foodList
+        // 並在前端依 priceDate 由新到舊排序，及計算同 foodId 前一次價格的百分比差異
 
-        console.log(
-          `🔍 去重前: ${foodList.length} 筆，去重後: ${uniqueFoodList.length} 筆`
-        );
-
-        allDishes.value = uniqueFoodList.map((item) => {
-          // safe JSON parse helper for fields that may be strings or arrays
-          const safeParse = (v) => {
-            if (!v && v !== 0) return [];
-            if (Array.isArray(v)) return v.filter(Boolean);
-            if (typeof v === "string") {
-              try {
-                const parsed = JSON.parse(v);
-                if (Array.isArray(parsed)) return parsed.filter(Boolean);
-              } catch (e) {
-                // fallback: split by common separators
-                return v
-                  .replace(/^\s*\[|\]\s*$/g, "")
-                  .replace(/^"|"$|^'|'$/g, "")
-                  .split(/","|','|,|;|\n|\uff1b|\|/g)
-                  .map((s) => s.replace(/^"|"$|^'|'$/g, "").trim())
-                  .filter(Boolean);
-              }
+        // safe JSON parse helper for fields that may be strings or arrays
+        const safeParse = (v) => {
+          if (!v && v !== 0) return [];
+          if (Array.isArray(v)) return v.filter(Boolean);
+          if (typeof v === "string") {
+            try {
+              const parsed = JSON.parse(v);
+              if (Array.isArray(parsed)) return parsed.filter(Boolean);
+            } catch (e) {
+              // fallback: split by common separators
+              return v
+                .replace(/^\s*\[|\]\s*$/g, "")
+                .replace(/^"|"$|^'|'$/g, "")
+                .split(/","|','|,|;|\n|\uff1b|\|/g)
+                .map((s) => s.replace(/^"|"$|^'|'$/g, "").trim())
+                .filter(Boolean);
             }
-            return [];
-          };
+          }
+          return [];
+        };
 
-          return {
+        const parseDateTs = (d) => {
+          if (!d) return 0;
+          const ts = Date.parse(d);
+          return isNaN(ts) ? 0 : ts;
+        };
+
+        const formatDateStr = (d) => {
+          if (!d) return "";
+          const dt = new Date(d);
+          if (isNaN(dt)) return String(d);
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, "0");
+          const dd = String(dt.getDate()).padStart(2, "0");
+          return `${y}/${m}/${dd}`;
+        };
+
+        // 先做基本映射
+        const mappedList = foodList.map((item) => {
+          const priceNum = Number(item.price ?? 0);
+          const priceDateStr = item.priceDate || null;
+          const priceDateTs = parseDateTs(priceDateStr);
+          // safe JSON parse helper for fields that may be strings or arrays
+          const base = {
             id: item.foodId,
             name: item.name,
             nameEn: item.nameEn || null,
-            price: item.price || 50,
+            price: isNaN(priceNum) ? 0 : priceNum,
             type: item.category,
             subCategory: item.subCategory || null,
             ingredients: item.tag
@@ -549,7 +570,9 @@ const loadData = async () => {
             // keep season and pricing metadata
             seasonStart: item.seasonStart || null,
             seasonEnd: item.seasonEnd || null,
-            priceDate: item.priceDate || null,
+            priceDate: priceDateStr,
+            priceDateTs,
+            priceDateDisplay: formatDateStr(priceDateStr),
             // parse aiRecommendations and benefits into arrays when possible
             aiRecommendations: safeParse(item.aiRecommendations),
             benefits: safeParse(item.benefits),
@@ -557,7 +580,36 @@ const loadData = async () => {
             // keep original payload for debugging
             _raw: item,
           };
+          return base;
         });
+
+        // 針對相同 foodId，依日期由新到舊排序，並計算與前一次的百分比變化
+        const byFood = new Map();
+        mappedList.forEach((d) => {
+          const key = d.id || d._raw?.foodId || d.name;
+          if (!byFood.has(key)) byFood.set(key, []);
+          byFood.get(key).push(d);
+        });
+
+        byFood.forEach((arr) => {
+          arr.sort((a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0));
+          for (let i = 0; i < arr.length; i++) {
+            const cur = arr[i];
+            const prev = arr[i + 1]; // 下一筆是較舊日期
+            if (prev && typeof prev.price === "number" && prev.price > 0) {
+              const diff = cur.price - prev.price;
+              cur.priceChangePct = (diff / prev.price) * 100;
+            } else {
+              cur.priceChangePct = null;
+            }
+          }
+        });
+
+        // 全部資料依日期新到舊排序後顯示
+        const sortedList = [...mappedList].sort(
+          (a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0)
+        );
+        allDishes.value = sortedList;
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
@@ -578,7 +630,7 @@ const loadData = async () => {
           );
         });
 
-        // 🔧 統計圖片狀況
+  // 🔧 統計圖片狀況
         const withImage = allDishes.value.filter((d) => d._raw.image).length;
         const withoutImage = allDishes.value.length - withImage;
         console.log(
@@ -792,12 +844,15 @@ const getCardClass = (type) => {
   return typeMap[type] || "vegetable";
 };
 
-const getPriceChangeClass = () => {
-  return Math.random() > 0.5 ? "price-up" : "price-down";
+const getPriceChangeClass = (pct) => {
+  if (typeof pct !== "number" || isNaN(pct)) return "price-flat";
+  return pct > 0 ? "price-up" : pct < 0 ? "price-down" : "price-flat";
 };
 
-const getPriceChangeText = () => {
-  return Math.random() > 0.5 ? "▲1.5%" : "▼0.2%";
+const getPriceChangeText = (pct) => {
+  if (typeof pct !== "number" || isNaN(pct)) return "—";
+  const abs = Math.abs(pct).toFixed(1);
+  return pct > 0 ? `▲${abs}%` : pct < 0 ? `▼${abs}%` : "0.0%";
 };
 
 // ==================== 事件處理 ====================
@@ -1025,10 +1080,14 @@ onMounted(() => {
 }
 
 .dish-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.4;
+  font-size: 15px;
+  color: #222; /* 更深的字色，使描述更醒目 */
+  font-weight: 600; /* 加粗 */
+  line-height: 1.45;
   margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(255,250,240,0.9), rgba(255,255,255,0));
+  padding: 6px 8px;
+  border-radius: 6px;
 }
 
 .nutrition-tags {
@@ -1217,5 +1276,15 @@ onMounted(() => {
   .main-content {
     order: 1;
   }
+}
+.price-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.page-summary {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #666;
 }
 </style>

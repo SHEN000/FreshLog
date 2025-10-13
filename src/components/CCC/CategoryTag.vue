@@ -11,6 +11,7 @@
         @mouseleave="category.id === 'other' ? handleMouseLeave() : null"
       >
         <button
+          type="button"
           class="category-btn"
           :class="{ active: activeCategory === category.id, 'other-btn': category.id === 'other' }"
           @click="handleCategoryClick(category)"
@@ -27,6 +28,7 @@
         >
         <template v-if="otherCategories && otherCategories.length > 0">
           <button
+            type="button"
             v-for="subCat in otherCategories"
             :key="subCat"
             class="other-dropdown-item"
@@ -106,9 +108,10 @@ const handleCategoryClick = (category) => {
   if (category.id === 'other') {
     // 點擊「其他」也可以切換顯示
     showOtherDropdown.value = !showOtherDropdown.value;
-    console.log('🔧 點擊「其他」按鈕，showOtherDropdown:', showOtherDropdown.value);
+    console.log('🔧 點擊「其他」按鈕，showOtherDropdown:', showOtherDropdown.value, 'category:', category);
   } else {
     showOtherDropdown.value = false;
+    console.log('🔧 emit set-category', category.id);
     emit('set-category', category.id);
   }
 };
@@ -130,6 +133,7 @@ const handleMouseLeave = () => {
 const handleOtherCategoryClick = (subCategory) => {
   if (hideTimeout) clearTimeout(hideTimeout);
   showOtherDropdown.value = false;
+  console.log('🔧 emit set-subcategory', subCategory);
   emit('set-subcategory', subCategory);
 };
 </script>
@@ -318,7 +322,7 @@ const handleOtherCategoryClick = (subCategory) => {
   cursor: pointer;
   position: relative;
   white-space: nowrap;
-  pointer-events: none; /* 🔧 防止阻擋 select */
+  pointer-events: auto; /* 允許事件，以便透明 select 能捕獲點擊 */
 }
 
 /* 🔧 箭頭圖示 */
