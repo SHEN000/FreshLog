@@ -36,6 +36,7 @@
         <RecipeCategoryTags
           :category-tags="categoryTags"
           :active-category="activeCategory"
+          :category-options="categoryOptions"
           @category-change="handleCategoryChange"
         />
 
@@ -101,13 +102,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import {
   recipeListData,
   filterOptions,
   categoryTags,
-  sortOptions,
 } from "@/data/6424/RecipeListData/RecipeListData.js";
+import { recipeApi } from "@/api/recipe";
 
 // 🔧 修正：使用您設定的正確路徑
 import RecipeFilterSidebar from "@/components/CCC/RecipeList/RecipeSideBar.vue";
@@ -120,109 +121,22 @@ const isLoading = ref(false);
 const allRecipes = ref([]);
 const filters = ref({ ...filterOptions });
 const activeCategory = ref("all");
-const currentSort = ref("recommend");
+const currentSort = ref("newest"); // 改用 API 的預設值
 const currentPage = ref(1);
-const itemsPerPage = 6;
+const itemsPerPage = 20; // API 預設每頁20筆
 
-// 計算屬性
-const filteredRecipes = computed(() => {
-  let recipes = [...allRecipes.value];
+// API 回傳的分頁資訊
+const totalElements = ref(0);
+const totalPages = ref(0);
 
-  // 分類篩選
-  if (activeCategory.value !== "all") {
-    recipes = recipes.filter(
-      (recipe) => recipe.category === getCategoryName(activeCategory.value)
-    );
-  }
+// 排序選項（從 API 載入）
+const sortOptions = ref([]);
 
-  // 特色篩選
-  const checkedFeatures = filters.value.features.filter(
-    (f) => f.checked && f.id !== "all"
-  );
-  if (checkedFeatures.length > 0) {
-    recipes = recipes.filter((recipe) => {
-      return checkedFeatures.some((feature) => {
-        switch (feature.id) {
-          case "vegetarian":
-            return recipe.tags.includes("素食");
-          default:
-            return true;
-        }
-      });
-    });
-  }
+// 分類選項（從 API 載入）
+const categoryOptions = ref([]);
 
-  // 料理時間篩選
-  const checkedCookTimes = filters.value.cookTime.filter((t) => t.checked);
-  if (checkedCookTimes.length > 0) {
-    recipes = recipes.filter((recipe) => {
-      const cookTimeNum = parseInt(recipe.cookTime);
-      return checkedCookTimes.some((timeFilter) => {
-        switch (timeFilter.id) {
-          case "15min":
-            return cookTimeNum <= 15;
-          case "30min":
-            return cookTimeNum <= 30;
-          case "1hour":
-            return cookTimeNum <= 60;
-          default:
-            return true;
-        }
-      });
-    });
-  }
-
-  // 難易度篩選
-  const checkedDifficulties = filters.value.difficulty.filter((d) => d.checked);
-  if (checkedDifficulties.length > 0) {
-    const difficultyNames = checkedDifficulties.map((d) => {
-      switch (d.id) {
-        case "easy":
-          return "簡單";
-        case "medium":
-          return "中等";
-        case "hard":
-          return "困難";
-        default:
-          return d.id;
-      }
-    });
-    recipes = recipes.filter((recipe) =>
-      difficultyNames.includes(recipe.difficulty)
-    );
-  }
-
-  // 排序
-  switch (currentSort.value) {
-    case "recommend":
-      recipes.sort((a, b) => b.isRecommended - a.isRecommended);
-      break;
-    case "difficulty":
-      const difficultyOrder = { 簡單: 1, 中等: 2, 困難: 3 };
-      recipes.sort(
-        (a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]
-      );
-      break;
-    case "time":
-      recipes.sort((a, b) => parseInt(a.cookTime) - parseInt(b.cookTime));
-      break;
-    case "popular":
-      recipes.sort(() => Math.random() - 0.5); // 隨機排序模擬熱門程度
-      break;
-  }
-
-  return recipes;
-});
-
-const totalPages = computed(() =>
-  Math.ceil(filteredRecipes.value.length / itemsPerPage)
-);
-
-const paginatedRecipes = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return filteredRecipes.value.slice(start, end);
-});
+// 計算屬性 - 現在改用 API 的資料，不需要前端篩選
+const paginatedRecipes = computed(() => allRecipes.value);
 
 const displayPages = computed(() => {
   const total = totalPages.value;
@@ -249,16 +163,240 @@ const aiRecommendedRecipes = computed(() => {
   return allRecipes.value.filter((recipe) => recipe.isRecommended).slice(0, 3);
 });
 
-// 方法
+// 將分類 ID 轉換為中文名稱（給 API 用）
+const getCategoryName = (categoryId) => {
+  // 如果是自選分類（格式：custom:分類名稱）
+  if (categoryId.startsWith("custom:")) {
+    return categoryId.replace("custom:", "");
+  }
+
+  // 固定分類對應
+  const categoryMap = {
+    all: "",
+    soup: "湯品",
+    vegetable: "蔬菜",
+    dessert: "甜點",
+    salad: "沙拉",
+    meat: "肉類",
+    rice: "飯類",
+  };
+  return categoryMap[categoryId] || "";
+};
+
+// 載入排序選項
+const loadSortOptions = async () => {
+  try {
+    const response = await recipeApi.getRecipeSortEnums();
+
+    console.log("📥 排序選項 API 回傳:", response.data);
+
+    if (response.data && response.data.code === "0000") {
+      // 轉換 API 格式 {code, label} 為前端格式 {value, label}
+      sortOptions.value = response.data.data.map((option) => ({
+        value: option.code,
+        label: option.label,
+      }));
+
+      console.log("✅ 排序選項載入成功:", sortOptions.value);
+    } else {
+      console.error("❌ 排序選項 API 回傳格式錯誤:", response.data);
+      // 使用預設選項
+      sortOptions.value = [
+        { value: "newest", label: "最新上架" },
+        { value: "cooktime_asc", label: "烹調時間由短到長" },
+        { value: "cooktime_desc", label: "烹調時間由長到短" },
+        { value: "difficulty_asc", label: "難易度由易到難" },
+        { value: "difficulty_desc", label: "難易度由難到易" },
+      ];
+    }
+  } catch (error) {
+    console.error("❌ 載入排序選項失敗:", error);
+    // 使用預設選項
+    sortOptions.value = [
+      { value: "newest", label: "最新上架" },
+      { value: "cooktime_asc", label: "烹調時間由短到長" },
+      { value: "cooktime_desc", label: "烹調時間由長到短" },
+      { value: "difficulty_asc", label: "難易度由易到難" },
+      { value: "difficulty_desc", label: "難易度由難到易" },
+    ];
+  }
+};
+
+// 載入分類選項
+const loadCategoryOptions = async () => {
+  try {
+    const response = await recipeApi.getRecipeCategories();
+
+    console.log("📥 分類選項 API 回傳:", response.data);
+
+    if (response.data && response.data.code === "0000") {
+      // API 回傳的是字串陣列，例如：["湯品", "熱炒", "涼拌", ...]
+      categoryOptions.value = response.data.data;
+
+      console.log("✅ 分類選項載入成功:", categoryOptions.value);
+    } else {
+      console.error("❌ 分類選項 API 回傳格式錯誤:", response.data);
+      categoryOptions.value = [];
+    }
+  } catch (error) {
+    console.error("❌ 載入分類選項失敗:", error);
+    categoryOptions.value = [];
+  }
+};
+
+// 取得料理時間上限
+const getMaxCookMinutes = () => {
+  const checkedCookTimes = filters.value.cookTime.filter((t) => t.checked);
+  if (checkedCookTimes.length === 0) return null;
+
+  // 找出最大的時間限制
+  const maxTimes = checkedCookTimes.map((timeFilter) => {
+    switch (timeFilter.id) {
+      case "15min":
+        return 15;
+      case "30min":
+        return 30;
+      case "1hour":
+        return 60;
+      default:
+        return null;
+    }
+  });
+
+  return Math.max(...maxTimes.filter((t) => t !== null));
+};
+
+// 取得難易度篩選
+const getDifficultyParam = () => {
+  const checkedDifficulties = filters.value.difficulty.filter((d) => d.checked);
+  if (checkedDifficulties.length === 0) return "";
+
+  // 目前只支援單一難易度，如果有多個就取第一個
+  const firstDifficulty = checkedDifficulties[0];
+  const difficultyMap = {
+    easy: "簡單",
+    medium: "中等",
+    hard: "困難",
+  };
+  return difficultyMap[firstDifficulty.id] || "";
+};
+
+// 取得標籤篩選
+const getTagParam = () => {
+  const checkedFeatures = filters.value.features.filter(
+    (f) => f.checked && f.id !== "all"
+  );
+  if (checkedFeatures.length === 0) return "";
+
+  // 將特色轉換為標籤
+  const tagMap = {
+    vegetarian: "素食",
+  };
+
+  return checkedFeatures
+    .map((f) => tagMap[f.id])
+    .filter((t) => t)
+    .join(",");
+};
+
+// 方法 - 從 API 載入食譜
 const loadRecipes = async () => {
   isLoading.value = true;
   try {
-    // 模擬 API 調用
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    allRecipes.value = recipeListData;
-    console.log("✅ 食譜資料載入成功:", allRecipes.value.length, "筆");
+    // 準備 Request Body 參數
+    const bodyParams = {
+      category: getCategoryName(activeCategory.value),
+      name: "", // 可以之後加搜尋功能
+      maxCookMinutes: getMaxCookMinutes(),
+      servings: "",
+      difficulty: getDifficultyParam(),
+      tag: getTagParam(),
+      sort: currentSort.value, // 直接使用 API 的排序代碼
+    };
+
+    // 準備 Query String 參數（分頁）
+    const queryParams = {
+      pageNo: currentPage.value - 1, // API 是 0-based，前端顯示是 1-based
+      pageSize: itemsPerPage,
+    };
+
+    console.log("🔍 API 請求參數:", { bodyParams, queryParams });
+
+    // 呼叫 API
+    const response = await recipeApi.findRecipesList(bodyParams, queryParams);
+
+    console.log("📥 API 回傳:", response.data);
+
+    // 處理回傳資料 (API 的 code 是字串 '0000' 代表成功)
+    if (response.data && response.data.code === "0000") {
+      const pageData = response.data.data;
+
+      // 轉換 API 資料格式為前端格式
+      allRecipes.value = pageData.content.map((recipe) => ({
+        id: recipe.recipeId,
+        name: recipe.title,
+        image: recipe.image,
+        description: recipe.description,
+        tags: recipe.tag ? recipe.tag.split(",") : [],
+        cookTime: `${recipe.cookTimeMinutes}分鐘`,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
+        category: bodyParams.category,
+        isRecommended: false, // API 沒有這個欄位，先設為 false
+        createdAt: recipe.createdAt,
+      }));
+
+      // Debug: 檢查第一筆食譜的圖片資訊
+      if (allRecipes.value.length > 0) {
+        const firstRecipe = allRecipes.value[0];
+        const assetBase = import.meta.env.VITE_ASSET_BASE;
+        const fullImageUrl = assetBase
+          ? new URL(firstRecipe.image, assetBase).href
+          : firstRecipe.image;
+
+        console.log("🖼️ 第一筆食譜圖片:", {
+          title: firstRecipe.name,
+          image: firstRecipe.image,
+          assetBase: assetBase,
+          fullImageUrl: fullImageUrl,
+          imageEmpty: !firstRecipe.image,
+        });
+
+        // 測試圖片是否可以載入
+        console.log("🧪 開始測試圖片載入...");
+        const testImg = new Image();
+        testImg.onload = () => {
+          console.log("✅ 圖片載入成功:", fullImageUrl);
+        };
+        testImg.onerror = (error) => {
+          console.error("❌ 圖片載入失敗:", fullImageUrl, error);
+        };
+        testImg.src = fullImageUrl;
+        console.log("🧪 圖片測試已觸發，URL:", testImg.src);
+      }
+
+      // 更新分頁資訊
+      totalElements.value = pageData.totalElements;
+      totalPages.value = pageData.totalPages;
+
+      console.log(
+        "✅ 食譜資料載入成功:",
+        allRecipes.value.length,
+        "筆，共",
+        totalElements.value,
+        "筆"
+      );
+    } else {
+      console.error("❌ API 回傳格式錯誤:", response.data);
+      allRecipes.value = [];
+      totalElements.value = 0;
+      totalPages.value = 0;
+    }
   } catch (error) {
     console.error("❌ 載入食譜失敗:", error);
+    allRecipes.value = [];
+    totalElements.value = 0;
+    totalPages.value = 0;
   } finally {
     isLoading.value = false;
   }
@@ -267,20 +405,24 @@ const loadRecipes = async () => {
 const updateFilters = (newFilters) => {
   filters.value = newFilters;
   currentPage.value = 1; // 重置頁碼
+  loadRecipes(); // 重新載入資料
 };
 
 const handleCategoryChange = (categoryId) => {
   activeCategory.value = categoryId;
   currentPage.value = 1;
+  loadRecipes(); // 重新載入資料
 };
 
 const handleSortChange = () => {
   currentPage.value = 1;
+  loadRecipes(); // 重新載入資料
 };
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
+    loadRecipes(); // 載入該頁資料
     // 滾動到頁面頂部
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -289,24 +431,15 @@ const goToPage = (page) => {
 const resetFilters = () => {
   filters.value = { ...filterOptions };
   activeCategory.value = "all";
-  currentSort.value = "recommend";
+  currentSort.value = "newest"; // 改用 API 的預設值
   currentPage.value = 1;
-};
-
-const getCategoryName = (categoryId) => {
-  const categoryMap = {
-    soup: "湯品",
-    vegetable: "蔬菜",
-    dessert: "甜點",
-    salad: "沙拉",
-    meat: "肉類",
-    rice: "飯類",
-  };
-  return categoryMap[categoryId] || categoryId;
+  loadRecipes(); // 重新載入資料
 };
 
 // 生命週期
-onMounted(() => {
+onMounted(async () => {
+  // 先載入選項，再載入食譜
+  await Promise.all([loadSortOptions(), loadCategoryOptions()]);
   loadRecipes();
 });
 </script>

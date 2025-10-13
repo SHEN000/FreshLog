@@ -96,44 +96,17 @@ const handleImageLoad = () => {
   console.log(`✅ 圖片載入成功: ${props.recipe.name}`);
 };
 
-// 處理圖片載入錯誤 - 改良版
+// 處理圖片載入錯誤 - 改良版（直接顯示錯誤狀態，不重試）
 const handleImageError = (event) => {
   const img = event.target;
   const currentSrc = img.src;
 
   imageLoading.value = false;
 
-  // 避免無限迴圈：如果已經是預設圖片，就不再重試
-  if (currentSrc.includes("/images/placeholder/recipe-placeholder.jpg")) {
-    console.warn(`🖼️ 預設圖片也載入失敗: ${props.recipe.name}`);
-    imageErrorCount.value = maxRetries + 1; // 直接設為超過上限
-    return;
-  }
+  console.warn(`❌ 圖片載入失敗: ${props.recipe.name}`, currentSrc);
 
-  imageErrorCount.value++;
-  console.log(
-    `🔄 圖片載入失敗 (第${imageErrorCount.value}次): ${props.recipe.name}`
-  );
-
-  // 如果超過最大重試次數，停止重試
-  if (imageErrorCount.value > maxRetries) {
-    console.error(
-      `❌ 圖片載入失敗超過${maxRetries}次，停止重試: ${props.recipe.name}`
-    );
-    return;
-  }
-
-  // 清除之前的重試計時器
-  if (retryTimeout) {
-    clearTimeout(retryTimeout);
-  }
-
-  // 設置20秒後重試預設圖片
-  retryTimeout = setTimeout(() => {
-    console.log(`🔄 20秒後重試載入預設圖片: ${props.recipe.name}`);
-    imageLoading.value = true;
-    img.src = "/images/placeholder/recipe-placeholder.jpg";
-  }, retryDelay);
+  // 直接設為超過上限，顯示錯誤狀態
+  imageErrorCount.value = maxRetries + 1;
 };
 
 // 取得標籤樣式類別
