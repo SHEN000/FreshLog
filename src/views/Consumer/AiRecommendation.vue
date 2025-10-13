@@ -33,6 +33,23 @@
         <!-- AI 市場洞察 -->
         <MarketInsight />
 
+        <!-- 名稱搜尋：顯示中文/英文同一輸入欄位（輸入後自動判斷並查詢） -->
+        <div class="name-search">
+          <div class="name-inputs">
+            <div class="input-group">
+              <label class="sr-label">名稱（中文或英文）</label>
+              <input
+                type="text"
+                v-model="inputRaw"
+                @input="onRawNameInput"
+                class="name-input"
+                placeholder="輸入中文或英文名稱，系統會自動判斷"
+              />
+            </div>
+            <div class="input-note">系統會自動判斷輸入內容為中文或英文並送出對應欄位</div>
+          </div>
+        </div>
+
         <!-- 載入狀態 -->
         <div v-if="isLoading" class="loading-container">
           <p>🔄 載入中...</p>
@@ -185,7 +202,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { foodApi } from "@/api/food.js";
 
@@ -217,6 +234,44 @@ const filters = reactive({
 });
 
 const priceRange = ref([0, 200]);
+
+// 新增：名稱搜尋欄位狀態與處理
+const inputRaw = ref("");
+const name = ref(null);
+const nameEn = ref(null);
+let nameDebounce = null;
+const NAME_DEBOUNCE_MS = 400;
+
+const isLikelyEnglish = (s) => {
+  if (!s) return false;
+  const hasLatin = /[A-Za-z]/.test(s);
+  const hasCJK = /[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f]/.test(s);
+  return hasLatin && !hasCJK;
+};
+
+const onRawNameInput = () => {
+  if (nameDebounce) clearTimeout(nameDebounce);
+  nameDebounce = setTimeout(async () => {
+    const v = (inputRaw.value || "").trim();
+    if (!v) {
+      name.value = null;
+      nameEn.value = null;
+    } else if (isLikelyEnglish(v)) {
+      nameEn.value = v;
+      name.value = null;
+    } else {
+      name.value = v;
+      nameEn.value = null;
+    }
+    currentPage.value = 1;
+    await loadData();
+    nameDebounce = null;
+  }, NAME_DEBOUNCE_MS);
+};
+
+onUnmounted(() => {
+  if (nameDebounce) clearTimeout(nameDebounce);
+});
 
 const nutritionFilters = reactive({
   vitaminA: false,
@@ -391,8 +446,8 @@ const loadData = async () => {
     const filterParams = {
       category: null, // 🔧 改用 subCategory 查詢，不使用 category
       subCategory: querySubCategory,
-      name: null,
-      nameEn: null,
+  name: name.value || null,
+  nameEn: nameEn.value || null,
       priceMin: isDefaultPriceRange
         ? 0
         : Number(Math.min(priceRange.value[0], priceRange.value[1])),
@@ -1318,5 +1373,29 @@ onMounted(() => {
   margin-left: 12px;
   font-size: 12px;
   color: #666;
+}
+
+/* 名稱搜尋區塊 */
+.name-search {
+  margin: 12px 0 18px 0;
+}
+.name-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+.name-input {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-width: 260px;
+}
+.input-note {
+  font-size: 12px;
+  color: #888;
 }
 </style>
