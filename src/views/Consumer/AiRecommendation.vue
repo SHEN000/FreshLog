@@ -87,6 +87,35 @@
                 </span>
               </div>
 
+              <!-- AI 建議（顯示前兩條） -->
+              <div
+                class="ai-recommendations"
+                v-if="dish.aiRecommendations && dish.aiRecommendations.length"
+              >
+                <ul>
+                  <li
+                    v-for="(rec, idx) in dish.aiRecommendations.slice(0, 2)"
+                    :key="idx"
+                    class="ai-reco"
+                  >
+                    {{ rec }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- 主要好處（以 pill 顯示，最多 3 個） -->
+              <div class="benefits" v-if="dish.benefits && dish.benefits.length">
+                <ul class="benefits-list-inline">
+                  <li
+                    v-for="(b, idx) in dish.benefits.slice(0, 3)"
+                    :key="idx"
+                    class="benefit-item"
+                  >
+                    {{ b }}
+                  </li>
+                </ul>
+              </div>
+
               <!-- 價格區域 -->
               <div class="price-section">
                 <div class="price-info">
@@ -479,20 +508,56 @@ const loadData = async () => {
           `🔍 去重前: ${foodList.length} 筆，去重後: ${uniqueFoodList.length} 筆`
         );
 
-        allDishes.value = uniqueFoodList.map((item) => ({
-          id: item.foodId,
-          name: item.name,
-          price: item.price || 50,
-          type: item.category,
-          ingredients: item.tag
-            ? item.tag.split("/").filter((t) => t.trim())
-            : ["新鮮", "營養"],
-          description: item.description || `新鮮的${item.name},營養豐富`,
-          image: item.image || "/src/assets/default-veggie.png", // 🔧 沒有圖片時使用預設圖
-          lastModifyDate: item.lastModifyDate,
-          isRecommendation: item.inSeason || item.affordable,
-          _raw: item, // 🆕 保留原始資料以便除錯
-        }));
+        allDishes.value = uniqueFoodList.map((item) => {
+          // safe JSON parse helper for fields that may be strings or arrays
+          const safeParse = (v) => {
+            if (!v && v !== 0) return [];
+            if (Array.isArray(v)) return v.filter(Boolean);
+            if (typeof v === "string") {
+              try {
+                const parsed = JSON.parse(v);
+                if (Array.isArray(parsed)) return parsed.filter(Boolean);
+              } catch (e) {
+                // fallback: split by common separators
+                return v
+                  .replace(/^\s*\[|\]\s*$/g, "")
+                  .replace(/^"|"$|^'|'$/g, "")
+                  .split(/","|','|,|;|\n|\uff1b|\|/g)
+                  .map((s) => s.replace(/^"|"$|^'|'$/g, "").trim())
+                  .filter(Boolean);
+              }
+            }
+            return [];
+          };
+
+          return {
+            id: item.foodId,
+            name: item.name,
+            nameEn: item.nameEn || null,
+            price: item.price || 50,
+            type: item.category,
+            subCategory: item.subCategory || null,
+            ingredients: item.tag
+              ? item.tag.split("/").filter((t) => t.trim())
+              : ["新鮮", "營養"],
+            description: item.description || `新鮮的${item.name},營養豐富`,
+            image: item.image || "/src/assets/default-veggie.png",
+            lastModifyDate: item.lastModifyDate,
+            // preserve server-provided recommendation if present, otherwise derive
+            isRecommendation:
+              item.isRecommendation ?? (item.inSeason || item.affordable),
+            // keep season and pricing metadata
+            seasonStart: item.seasonStart || null,
+            seasonEnd: item.seasonEnd || null,
+            priceDate: item.priceDate || null,
+            // parse aiRecommendations and benefits into arrays when possible
+            aiRecommendations: safeParse(item.aiRecommendations),
+            benefits: safeParse(item.benefits),
+            eatingSuggestions: item.eatingSuggestions || null,
+            // keep original payload for debugging
+            _raw: item,
+          };
+        });
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
@@ -1034,6 +1099,39 @@ onMounted(() => {
   padding: 60px 20px;
   color: #999;
   font-size: 16px;
+}
+
+/* AI recommendations and benefits */
+.ai-recommendations {
+  margin-top: 10px;
+}
+.ai-recommendations ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ai-recommendations .ai-reco {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  max-height: 2.6em;
+  overflow: hidden;
+}
+
+.benefits-list-inline {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.benefit-item {
+  background: #eef6f1;
+  color: #2e7d32;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 
 .pagination {
