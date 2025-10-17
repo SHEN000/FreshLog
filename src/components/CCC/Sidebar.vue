@@ -51,9 +51,8 @@
     <div class="filter-section">
       <h3 class="filter-title">價格區間</h3>
       <div class="price-range">
-        <div class="price-labels">
-          <span>NT${{ localPriceRange[0] }}</span>
-          <span>NT${{ localPriceRange[1] }}</span>
+        <div class="price-display">
+          NT${{ localPriceRange[0] }} - NT${{ localPriceRange[1] }}
         </div>
         <div class="slider-container">
           <input
@@ -62,6 +61,7 @@
             max="200"
             v-model.number="localPriceRange[0]"
             @input="validateAndEmitPriceRange"
+            class="slider-input"
           />
           <input
             type="range"
@@ -69,6 +69,7 @@
             max="200"
             v-model.number="localPriceRange[1]"
             @input="validateAndEmitPriceRange"
+            class="slider-input"
           />
           <div class="slider-track"></div>
           <div class="slider-fill" :style="sliderFillStyle"></div>
@@ -143,15 +144,15 @@ const nutritionTabs = [
 // 使用 computed 來讀取 activeNutritionTab
 const activeNutritionTab = computed(() => props.activeNutritionTab);
 
-// 計算滑桿填充樣式
+// 計算滑桿填充樣式（考慮 10px padding）
 const sliderFillStyle = computed(() => {
   const min = 0;
   const max = 200;
-  const left = ((localPriceRange.value[0] - min) / (max - min)) * 100;
-  const right = ((max - localPriceRange.value[1]) / (max - min)) * 100;
+  const leftPercent = ((localPriceRange.value[0] - min) / (max - min)) * 100;
+  const rightPercent = ((max - localPriceRange.value[1]) / (max - min)) * 100;
   return {
-    left: left + "%",
-    right: right + "%",
+    left: `calc(10px + ${leftPercent}% * (100% - 20px) / 100%)`,
+    right: `calc(10px + ${rightPercent}% * (100% - 20px) / 100%)`,
   };
 });
 
@@ -329,56 +330,76 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
-.price-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
+.price-display {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20px;
 }
 
 .slider-container {
   position: relative;
-  height: 40px;
+  height: 50px;
+  padding: 20px 10px 10px 10px;
 }
 
 .slider-container input[type="range"] {
   position: absolute;
-  width: 100%;
+  width: calc(100% - 20px);
+  left: 10px;
   height: 5px;
   background: none;
   pointer-events: none;
   -webkit-appearance: none;
   appearance: none;
+  top: 30px;
+  z-index: 2;
 }
 
 .slider-container input[type="range"]::-webkit-slider-thumb {
-  height: 20px;
-  width: 20px;
+  height: 16px;
+  width: 16px;
   border-radius: 50%;
   background: #2196f3;
   cursor: pointer;
   pointer-events: auto;
   -webkit-appearance: none;
-  margin-top: -8px;
+  margin-top: -5.5px;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  border: none;
+}
+
+.slider-container input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #2196f3;
+  cursor: pointer;
+  pointer-events: auto;
+  border: none;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  margin-top: -5.5px;
 }
 
 .slider-track {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 4px;
-  width: 100%;
-  background: #ddd;
-  border-radius: 4px;
+  top: 30px;
+  left: 10px;
+  height: 5px;
+  width: calc(100% - 20px);
+  background: #e0e0e0;
+  border-radius: 3px;
+  z-index: 1;
 }
 
 .slider-fill {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 4px;
-  background: #2196f3;
-  border-radius: 4px;
+  top: 30px;
+  height: 5px;
+  background: rgba(33, 150, 243, 0.3);
+  border-radius: 3px;
+  z-index: 1;
 }
 
 .apply-btn {
@@ -394,54 +415,38 @@ onUnmounted(() => {
 
 /* 營養需求導航 */
 .nutrition-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .nutrition-tab {
-  padding: 6px 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 8px 16px;
+  background: #f8f8f8;
+  border-radius: 20px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #f0f0f0;
   white-space: nowrap;
-  min-height: 32px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 400;
   user-select: none;
+  color: #333;
 }
 
 .nutrition-tab:hover {
-  background: #e3f2fd;
-  border-color: #2196f3;
+  background: #e8f5e9;
+  border-color: #e8f5e9;
 }
 
 .nutrition-tab.active {
-  background: #2196f3 !important;
+  background: #2e7d32 !important;
   color: white !important;
-  border-color: #2196f3 !important;
-}
-
-/* 讓第5、6、7個標籤到第二排 */
-.nutrition-tab:nth-child(5) {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.nutrition-tab:nth-child(6) {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.nutrition-tab:nth-child(7) {
-  grid-column: 3;
-  grid-row: 2;
+  border-color: #2e7d32 !important;
 }
 </style>

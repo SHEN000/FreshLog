@@ -106,16 +106,19 @@
                 v-model="profileData.email"
                 class="form-input"
                 placeholder="請輸入電子郵件"
+                readonly
+                disabled
               />
             </div>
 
             <!-- 偏好設定 -->
             <div class="form-group full-width">
-              <label for="foodPreference">偏好設定</label>
+              <label for="favoriteRecipeCategory">偏好食譜類別</label>
               <select
-                id="foodPreference"
-                v-model="profileData.foodPreference"
+                id="favoriteRecipeCategory"
+                v-model="profileData.favoriteRecipeCategory"
                 class="form-select"
+                @change="handleRecipeCategoryChange"
               >
                 <option value="">請選擇飲食偏好</option>
                 <option value="vegetarian">素食</option>
@@ -128,11 +131,12 @@
 
             <!-- 蔬菜季節偏好 -->
             <div class="form-group full-width">
-              <label for="seasonPreference">蔬菜季節</label>
+              <label for="favoriteFruitVeggieCategory">偏好蔬果類別</label>
               <select
-                id="seasonPreference"
-                v-model="profileData.seasonPreference"
+                id="favoriteFruitVeggieCategory"
+                v-model="profileData.favoriteFruitVeggieCategory"
                 class="form-select"
+                @change="handleVeggieCategoryChange"
               >
                 <option value="">請選擇季節偏好</option>
                 <option value="spring">春季</option>
@@ -215,10 +219,12 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/user.js";
+import { memberApi } from "@/api/member.js";
 
 // 引入模組化元件
 import Favorites from "./6424/favorites.vue";
 import VeggieFav from "./6424/VeggieFav.vue";
+import Footer from "@/components/Footer.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -230,13 +236,16 @@ const username = computed(() => userStore.userName || "使用者");
 // 當前選中的標籤
 const activeTab = ref("profile");
 
-// 個人資料表單數據
+// 儲存狀態
+const isSaving = ref(false);
+
+// 個人資料表單數據 (對應後端 MemberInfoVo schema)
 const profileData = ref({
   name: "",
   phone: "",
   email: "",
-  foodPreference: "",
-  seasonPreference: "",
+  favoriteRecipeCategory: "", // 對應 foodPreference
+  favoriteFruitVeggieCategory: "", // 對應 seasonPreference
   address: "",
 });
 
@@ -290,6 +299,10 @@ const filteredCollectionRecipes = computed(() => {
 // 預設頭像
 const userAvatar = ref("/images/default-avatar.png");
 
+// 子元件 refs
+const favoritesRef = ref(null);
+const veggieFavRef = ref(null);
+
 // 設定活動標籤
 const setActiveTab = (tab) => {
   activeTab.value = tab;
@@ -312,18 +325,68 @@ const getTabTitle = () => {
   return titles[activeTab.value] || "個人資訊";
 };
 
+// 監聽下拉選單變化
+const handleRecipeCategoryChange = (event) => {
+  console.log("🔄 偏好食譜類別變更:", event.target.value);
+  console.log("📋 完整 profileData:", profileData.value);
+};
+
+const handleVeggieCategoryChange = (event) => {
+  console.log("🔄 偏好蔬果類別變更:", event.target.value);
+  console.log("📋 完整 profileData:", profileData.value);
+};
+
 // 更新個人資料
 const updateProfile = async () => {
   isSaving.value = true;
 
   try {
-    // 這裡可以加入 API 呼叫來更新使用者資料
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // 模擬 API 請求
+    console.log("📤 開始更新會員資料...", profileData.value);
+    console.log("📤 userId:", userStore.userId);
 
-    alert("個人資料更新成功！");
+    // 先儲存到 localStorage（即使 API 失敗也能保留資料）
+    try {
+      const storageKey = `userProfile_${userStore.userId}`;
+      const dataToSave = JSON.stringify(profileData.value);
+      localStorage.setItem(storageKey, dataToSave);
+      console.log("✅ 資料已儲存到 localStorage");
+      console.log("📦 儲存的 key:", storageKey);
+      console.log("📦 儲存的資料:", dataToSave);
+
+      // 驗證是否真的存進去了
+      const savedData = localStorage.getItem(storageKey);
+      console.log("✔️ 驗證 localStorage:", savedData ? "成功" : "失敗");
+    } catch (storageError) {
+      console.error("❌ localStorage 儲存失敗:", storageError);
+    }
+
+    // 準備更新資料（Email 不需要傳給後端，因為 API 不接受 email 更新）
+    const updateData = {
+      name: profileData.value.name,
+      phone: profileData.value.phone,
+      address: profileData.value.address,
+      favoriteRecipeCategory: profileData.value.favoriteRecipeCategory,
+      favoriteFruitVeggieCategory: profileData.value.favoriteFruitVeggieCategory,
+    };
+
+    // 呼叫 API 更新
+    const response = await memberApi.updateMemberInfo(updateData);
+    console.log("📥 API 完整回應:", response);
+
+    // API 成功條件：code === '0000' 或 message === 'SUCCESS'
+    if (response.data && (response.data.code === '0000' || response.data.message === 'SUCCESS')) {
+      console.log("✅ 會員資料更新成功（API + localStorage）");
+      alert("個人資料更新成功！");
+    } else {
+      console.warn("⚠️ API 更新回應異常，但 localStorage 已儲存");
+      console.warn("回應資料:", response.data);
+      alert("資料已儲存（API 回應異常）");
+    }
   } catch (error) {
-    console.error("更新失敗:", error);
-    alert("更新失敗，請稍後再試");
+    console.error("❌ API 更新失敗，但 localStorage 已儲存");
+    console.error("錯誤詳情:", error);
+    console.error("錯誤回應:", error.response?.data);
+    alert("資料已儲存到本地（API 連線失敗）");
   } finally {
     isSaving.value = false;
   }
@@ -336,6 +399,9 @@ const handleLogout = async () => {
   }
 
   try {
+    // 清除個人資料快取
+    localStorage.removeItem(`userProfile_${userStore.userId}`);
+
     // 呼叫 Pinia store 的登出方法
     userStore.logout();
 
@@ -353,18 +419,75 @@ const handleLogout = async () => {
 // 載入使用者資料
 const loadUserData = async () => {
   try {
-    // 這裡可以加入 API 呼叫來載入使用者資料
-    // 目前使用假資料示範
-    profileData.value = {
-      name: username.value || "",
-      phone: "",
-      email: "",
-      foodPreference: "",
-      seasonPreference: "",
-      address: "",
-    };
+    console.log("📥 開始載入會員資料...");
+
+    // 先從 localStorage 讀取（快速顯示）
+    const cachedProfile = localStorage.getItem(`userProfile_${userStore.userId}`);
+    if (cachedProfile) {
+      profileData.value = JSON.parse(cachedProfile);
+      console.log("✅ 從 localStorage 快速載入會員資料");
+    }
+
+    // 然後呼叫 API 取得最新資料（優先使用後端資料）
+    try {
+      const response = await memberApi.getMemberInfo();
+
+      if (response.data && response.data.data) {
+        const memberInfo = response.data.data;
+
+        // 🔧 暫時方案：如果 API 回傳的偏好設定是 null，優先使用 localStorage 的值
+        const savedPreferences = cachedProfile ? JSON.parse(cachedProfile) : {};
+
+        profileData.value = {
+          name: memberInfo.name || "",
+          phone: memberInfo.phone || "",
+          email: memberInfo.email || "",
+          // 如果後端回傳 null，使用 localStorage 的值（後端暫時無法儲存這兩個欄位）
+          favoriteRecipeCategory: memberInfo.favoriteRecipeCategory || savedPreferences.favoriteRecipeCategory || "",
+          favoriteFruitVeggieCategory: memberInfo.favoriteFruitVeggieCategory || savedPreferences.favoriteFruitVeggieCategory || "",
+          address: memberInfo.address || "",
+        };
+
+        // 儲存到 localStorage
+        localStorage.setItem(`userProfile_${userStore.userId}`, JSON.stringify(profileData.value));
+        console.log("✅ 從 API 載入會員資料（偏好設定保留 localStorage 值）");
+        console.log("📋 資料內容:", profileData.value);
+        return;
+      }
+    } catch (apiError) {
+      console.warn("⚠️ API 載入失敗，使用 localStorage:", apiError);
+      // API 失敗時已經有 localStorage 的資料了，不需要額外處理
+      if (cachedProfile) return;
+    }
+
+    // 如果沒有 localStorage，使用預設值
+    if (!cachedProfile) {
+      console.warn("⚠️ 沒有本地資料，使用預設值");
+      profileData.value = {
+        name: username.value || "",
+        phone: "",
+        email: "",
+        favoriteRecipeCategory: "",
+        favoriteFruitVeggieCategory: "",
+        address: "",
+      };
+    }
   } catch (error) {
-    console.error("載入使用者資料失敗:", error);
+    console.error("❌ 載入使用者資料時發生錯誤:", error);
+    // 最後的容錯處理
+    const cachedProfile = localStorage.getItem(`userProfile_${userStore.userId}`);
+    if (cachedProfile) {
+      profileData.value = JSON.parse(cachedProfile);
+    } else {
+      profileData.value = {
+        name: username.value || "",
+        phone: "",
+        email: "",
+        favoriteRecipeCategory: "",
+        favoriteFruitVeggieCategory: "",
+        address: "",
+      };
+    }
   }
 };
 
@@ -614,6 +737,12 @@ onMounted(() => {
 .form-select:focus {
   outline: none;
   border-color: #2e7d32;
+}
+
+.form-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
 }
 
 .form-select {

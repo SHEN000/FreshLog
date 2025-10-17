@@ -141,14 +141,18 @@ const removeFavOK = (r) => CODE_OK.has(String(r?.code ?? '')) || String(r?.code 
 
 /* 用「清單」端點同步收藏狀態（可跨裝置） */
 async function favStatus(recipeId, userId) {
-  const resp = await apiFetch('GET', '/api/memberUser/favorites/recipe', { query: { userId } })
+  // 修正：加入必填的 category 參數
+  const resp = await apiFetch('GET', '/api/memberUser/favorites/recipe', { query: { category: 'ALL', userId } })
+  console.log('🔍 檢查收藏狀態 API 回應:', resp)
   const raw  = resp?.data?.items ?? resp?.data ?? resp?.items ?? []
   const list = Array.isArray(raw) ? raw : []
-  return list.some(it => {
+  const isFav = list.some(it => {
     if (typeof it === 'string') return it === String(recipeId)
     const v = it?.recipeId ?? it?.value ?? it?.id
     return String(v) === String(recipeId)
   })
+  console.log(`✅ 食譜 ${recipeId} 收藏狀態:`, isFav ? '已收藏' : '未收藏')
+  return isFav
 }
 
 /* 狀態 + 防重點擊 */
@@ -189,21 +193,25 @@ async function toggleFavorite() {
   try {
     if (!prev) {
       const resp = await favAdd(rid, uid)
+      console.log('📥 加入收藏 API 回應:', resp)
       if (!addFavOK(resp)) throw new Error(resp?.message || '加入收藏失敗')
       isFavorite.value = true
+      alert('✅ 已加入收藏！')
     } else {
       const resp = await favRemove(rid, uid)
+      console.log('📥 取消收藏 API 回應:', resp)
       if (!removeFavOK(resp)) throw new Error(resp?.message || '移除收藏失敗')
       isFavorite.value = false
+      alert('✅ 已取消收藏！')
     }
   } catch (err) {
     isFavorite.value = prev
     if (err?.status === 401) {
-      alert('請先登入再使用收藏功能')
+      alert('❌ 請先登入再使用收藏功能')
       localStorage.setItem('redirectAfterLogin', route.fullPath)
       router.push('/member/login')
     } else {
-      alert(err?.message || '操作失敗，請稍後再試')
+      alert(`❌ ${err?.message || '操作失敗，請稍後再試'}`)
     }
   } finally {
     favBusy.value = false

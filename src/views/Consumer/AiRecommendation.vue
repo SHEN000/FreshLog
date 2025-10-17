@@ -211,6 +211,9 @@ import FilterSidebar from "@/components/CCC/Sidebar.vue";
 import CategoryTabs from "@/components/CCC/CategoryTag.vue";
 import MarketInsight from "@/components/CCC/MarketSight.vue";
 
+// 引入預設圖片
+import defaultVeggieImage from "@/assets/default-veggie.png";
+
 const router = useRouter();
 
 // ==================== 基本狀態 ====================
@@ -649,7 +652,7 @@ const loadData = async () => {
               ? item.tag.split("/").filter((t) => t.trim())
               : ["新鮮", "營養"],
             description: item.description || `新鮮的${item.name},營養豐富`,
-            image: item.image || "/src/assets/default-veggie.png",
+            image: item.image || defaultVeggieImage,
             lastModifyDate: item.lastModifyDate,
             // preserve server-provided recommendation if present, otherwise derive
             isRecommendation:
@@ -985,17 +988,25 @@ const updateNutritionTab = (tab) => {
   activeNutritionTab.value = tab;
 };
 
-const viewRecipeDetails = async (recipeId) => {
+const viewRecipeDetails = async (foodId) => {
+  console.log("🔍 點擊查看蔬果詳情，ID:", foodId);
+
   try {
-    const response = await foodApi.findFoodData(recipeId);
-    if (response && response.code === "8000" && response.data) {
-      localStorage.setItem(`recipe_${recipeId}`, JSON.stringify(response.data));
+    const response = await foodApi.findFoodData(foodId);
+    console.log("📥 蔬果詳情 API 回應:", response);
+
+    if (response && response.data && response.data.data) {
+      // 可選：將資料暫存到 localStorage 供內頁使用（如果內頁有需要）
+      localStorage.setItem(`food_${foodId}`, JSON.stringify(response.data.data));
+      console.log("✅ 蔬果資料已暫存");
     }
   } catch (error) {
-    console.error("載入食譜詳情失敗:", error);
+    console.error("❌ 載入蔬果詳情失敗:", error);
   }
 
-  router.push(`/ai-recommendation/${recipeId}`);
+  // 跳轉到蔬果內頁 (VeggieInfoPage.vue 的路由是 /veggie/:id)
+  router.push(`/veggie/${foodId}`);
+  console.log("🚀 跳轉到蔬果內頁: /veggie/" + foodId);
 };
 
 const prevPage = () => {
@@ -1017,7 +1028,10 @@ const goToPage = (page) => {
 // 🔧 處理圖片載入失敗
 const handleImageError = (event) => {
   console.warn("🖼️ 圖片載入失敗:", event.target.src);
-  event.target.src = "/src/assets/default-veggie.png";
+  // 避免無限迴圈：如果已經是預設圖片就不再重設
+  if (event.target.src !== defaultVeggieImage) {
+    event.target.src = defaultVeggieImage;
+  }
 };
 
 // ==================== 初始化 ====================

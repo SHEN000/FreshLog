@@ -78,12 +78,18 @@ const protectedPaths = [
 
 // 路由守衛
 router.beforeEach((to, from, next) => {
+  // 檢查是否有完整的登入資訊
   const token = localStorage.getItem("userToken");
+  const userId = localStorage.getItem("userId");
+  const userName = localStorage.getItem("userName");
+
+  // 只有三者都存在才視為已登入
+  const isLoggedIn = !!(token && userId && userName);
 
   const isAuthPage = ["/member/login", "/member/register"].includes(to.path);
   const requiresAuth = protectedPaths.includes(to.path);
 
-  // 果是訪問登入/註冊頁，記錄從哪裡來（但排除自己來自己）
+  // 如果是訪問登入/註冊頁，記錄從哪裡來（但排除自己來自己）
   if (
     isAuthPage &&
     from.path &&
@@ -94,7 +100,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // 如果是需要登入的頁面，且沒登入 → 強制跳轉 & 記錄來源
-  if (!token && requiresAuth) {
+  if (!isLoggedIn && requiresAuth) {
     localStorage.setItem("redirectAfterLogin", to.fullPath);
     return next("/member/login");
   }

@@ -56,11 +56,9 @@ export const foodApi = {
     // 合併參數，保留 null 值
     const requestBody = { ...defaultParams, ...params };
 
-    return request.post(
-      "/api/food/findFoodsList",
-      requestBody,
-      { params: { ...defaultPagination, ...pagination } }
-    );
+    return request.post("/api/food/findFoodsList", requestBody, {
+      params: { ...defaultPagination, ...pagination },
+    });
   },
 
   /**

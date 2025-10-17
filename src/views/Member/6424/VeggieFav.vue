@@ -75,6 +75,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { favoriteApi } from "@/api/favorite";
 
 const router = useRouter();
 
@@ -93,63 +94,8 @@ const veggieFilters = [
   { id: "bean-pod", label: "豆類" },
 ];
 
-// 收藏的蔬菜數據（假資料）
-const veggieCollection = ref([
-  {
-    id: "V001",
-    name: "番茄",
-    price: "台灣",
-    category: "fruit",
-    categoryLabel: "果菜類",
-    image: "/images/veggies/tomato.jpg",
-    tags: ["維生素C", "抗氧化"],
-  },
-  {
-    id: "V002",
-    name: "高麗菜",
-    price: "新化",
-    category: "leafy",
-    categoryLabel: "葉菜類",
-    image: "/images/veggies/cabbage.jpg",
-    tags: ["葉菜類", "纖維"],
-  },
-  {
-    id: "V003",
-    name: "胡蘿蔔",
-    price: "雲林",
-    category: "root",
-    categoryLabel: "根莖類",
-    image: "/images/veggies/carrot.jpg",
-    tags: ["維生素A", "護眼"],
-  },
-  {
-    id: "V004",
-    name: "青椒",
-    price: "彰化",
-    category: "fruit",
-    categoryLabel: "果菜類",
-    image: "/images/veggies/green-pepper.jpg",
-    tags: ["維生素C", "果菜"],
-  },
-  {
-    id: "V005",
-    name: "菠菜",
-    price: "台中",
-    category: "leafy",
-    categoryLabel: "葉菜類",
-    image: "/images/veggies/spinach.jpg",
-    tags: ["葉酸", "鐵質"],
-  },
-  {
-    id: "V006",
-    name: "白蘿蔔",
-    price: "台南",
-    category: "root",
-    categoryLabel: "根莖類",
-    image: "/images/veggies/daikon.jpg",
-    tags: ["消化", "纖維"],
-  },
-]);
+// 收藏的蔬菜數據（從 API 載入）
+const veggieCollection = ref([]);
 
 // 計算篩選後的收藏蔬菜
 const filteredVeggieCollection = computed(() => {
@@ -179,25 +125,26 @@ const removeFromCollection = async (veggieId) => {
 
   try {
     isLoading.value = true;
+    console.log("🗑️ 開始移除收藏:", veggieId);
 
-    // 🔧 TODO: 這裡替換成真實的 API 呼叫
-    // const response = await veggieApi.removeFavorite(veggieId)
-    // if (response.success) {
+    const response = await favoriteApi.removeFoodFavorite(veggieId);
+    console.log("📥 刪除 API 回應:", response);
 
-    // 模擬 API 延遲
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 檢查 API 回應是否成功
+    if (response.data && (response.data.code === "0000" || response.data.message === "SUCCESS")) {
+      // 從本地數據中移除
+      veggieCollection.value = veggieCollection.value.filter(
+        (veggie) => veggie.id !== veggieId
+      );
 
-    // 從本地數據中移除
-    veggieCollection.value = veggieCollection.value.filter(
-      (veggie) => veggie.id !== veggieId
-    );
-
-    // 可以使用 toast 通知替代 alert
-    alert("已從收藏中移除");
-
-    // }
+      console.log("✅ 已從收藏中移除");
+      alert("✅ 已從收藏中移除");
+    } else {
+      console.warn("⚠️ API 回應異常:", response.data);
+      alert("移除失敗，請稍後再試");
+    }
   } catch (error) {
-    console.error("移除收藏失敗:", error);
+    console.error("❌ 移除收藏失敗:", error);
     alert("移除失敗，請稍後再試");
   } finally {
     isLoading.value = false;
@@ -209,18 +156,61 @@ const handleImageError = (event) => {
   event.target.src = "/images/placeholder/veggie-placeholder.jpg";
 };
 
+// 將 API 的分類對應到本地分類
+const mapCategory = (apiCategory) => {
+  const categoryMap = {
+    根莖類: "root",
+    葉菜類: "leafy",
+    果菜類: "fruit",
+    瓜果類: "bean",
+    菇類: "mushroom",
+    豆類: "bean-pod",
+  };
+  return categoryMap[apiCategory] || "all";
+};
+
+// 根據分類 ID 取得標籤文字
+const getCategoryLabel = (apiCategory) => {
+  const labelMap = {
+    根莖類: "根莖類",
+    葉菜類: "葉菜類",
+    果菜類: "果菜類",
+    瓜果類: "瓜果類",
+    菇類: "菇類",
+    豆類: "豆類",
+  };
+  return labelMap[apiCategory] || apiCategory;
+};
+
 // 載入收藏列表
 const loadVeggieFavorites = async () => {
   try {
     isLoading.value = true;
+    console.log("🥬 開始載入收藏蔬菜列表...");
 
-    // 🔧 TODO: 這裡替換成真實的 API 呼叫
-    // const response = await veggieApi.getFavoritesList()
-    // veggieCollection.value = response.data
+    const response = await favoriteApi.getFoodFavoriteList("ALL");
+    console.log("📥 API 回應:", response);
 
-    console.log("🥬 載入收藏蔬菜列表");
+    if (response.data && response.data.data) {
+      // 將 API 資料格式轉換成元件需要的格式
+      veggieCollection.value = response.data.data.map((item) => ({
+        id: item.recipeId || item.foodId || item.id,
+        name: item.name,
+        price: item.price || "未知",
+        category: mapCategory(item.category),
+        categoryLabel: getCategoryLabel(item.category),
+        image: item.image,
+        tags: [item.category],
+      }));
+
+      console.log("✅ 收藏列表載入成功，共", veggieCollection.value.length, "筆");
+    } else {
+      console.warn("⚠️ API 回應格式不符預期:", response.data);
+      veggieCollection.value = [];
+    }
   } catch (error) {
-    console.error("載入收藏失敗:", error);
+    console.error("❌ 載入收藏失敗:", error);
+    veggieCollection.value = [];
   } finally {
     isLoading.value = false;
   }
