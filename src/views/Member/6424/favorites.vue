@@ -75,6 +75,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { favoriteApi } from "@/api/favorite";
 
 const router = useRouter();
 
@@ -90,63 +91,8 @@ const collectionFilters = [
   { id: "quick", label: "快炒" },
 ];
 
-// 收藏的食譜數據（假資料）
-const collectionRecipes = ref([
-  {
-    id: "R001",
-    name: "蕃茄炒蛋",
-    cookTime: "15分鐘",
-    difficulty: "簡單",
-    category: "quick",
-    image: "/images/recipes/tomato-egg.jpg",
-    tags: ["家常菜", "簡單"],
-  },
-  {
-    id: "R002",
-    name: "蔬菜湯",
-    cookTime: "30分鐘",
-    difficulty: "簡單",
-    category: "vegetarian",
-    image: "/images/recipes/vegetable-soup.jpg",
-    tags: ["素食", "湯品"],
-  },
-  {
-    id: "R003",
-    name: "涼拌小黃瓜",
-    cookTime: "20分鐘",
-    difficulty: "普通",
-    category: "vegetarian",
-    image: "/images/recipes/cucumber-salad.jpg",
-    tags: ["涼拌", "素食"],
-  },
-  {
-    id: "R004",
-    name: "宮保雞丁",
-    cookTime: "25分鐘",
-    difficulty: "普通",
-    category: "hot",
-    image: "/images/recipes/kung-pao-chicken.jpg",
-    tags: ["熱門", "川菜"],
-  },
-  {
-    id: "R005",
-    name: "青椒肉絲",
-    cookTime: "18分鐘",
-    difficulty: "簡單",
-    category: "quick",
-    image: "/images/recipes/pepper-pork.jpg",
-    tags: ["快炒", "家常菜"],
-  },
-  {
-    id: "R006",
-    name: "麻婆豆腐",
-    cookTime: "22分鐘",
-    difficulty: "困難",
-    category: "hot",
-    image: "/images/recipes/mapo-tofu.jpg",
-    tags: ["熱門", "川菜", "素食"],
-  },
-]);
+// 收藏的食譜數據（從 API 載入）
+const collectionRecipes = ref([]);
 
 // 計算篩選後的收藏食譜
 const filteredCollectionRecipes = computed(() => {
@@ -176,25 +122,26 @@ const removeFromCollection = async (recipeId) => {
 
   try {
     isLoading.value = true;
+    console.log("🗑️ 開始移除收藏:", recipeId);
 
-    // 🔧 TODO: 這裡替換成真實的 API 呼叫
-    // const response = await favoritesApi.removeFavorite(recipeId)
-    // if (response.success) {
+    const response = await favoriteApi.removeRecipeFavorite(recipeId);
+    console.log("📥 刪除 API 回應:", response);
 
-    // 模擬 API 延遲
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 檢查 API 回應是否成功
+    if (response.data && (response.data.code === "0000" || response.data.message === "SUCCESS")) {
+      // 從本地數據中移除
+      collectionRecipes.value = collectionRecipes.value.filter(
+        (recipe) => recipe.id !== recipeId
+      );
 
-    // 從本地數據中移除
-    collectionRecipes.value = collectionRecipes.value.filter(
-      (recipe) => recipe.id !== recipeId
-    );
-
-    // 可以使用 toast 通知替代 alert
-    alert("已從收藏中移除");
-
-    // }
+      console.log("✅ 已從收藏中移除");
+      alert("已從收藏中移除");
+    } else {
+      console.warn("⚠️ API 回應異常:", response.data);
+      alert("移除失敗，請稍後再試");
+    }
   } catch (error) {
-    console.error("移除收藏失敗:", error);
+    console.error("❌ 移除收藏失敗:", error);
     alert("移除失敗，請稍後再試");
   } finally {
     isLoading.value = false;
@@ -210,17 +157,44 @@ const handleImageError = (event) => {
 const loadFavorites = async () => {
   try {
     isLoading.value = true;
+    console.log("🍳 開始載入收藏食譜列表...");
 
-    // 🔧 TODO: 這裡替換成真實的 API 呼叫
-    // const response = await favoritesApi.getFavoritesList()
-    // collectionRecipes.value = response.data
+    const response = await favoriteApi.getRecipeFavoriteList("ALL");
+    console.log("📥 API 回應:", response);
 
-    console.log("🍳 載入收藏食譜列表");
+    if (response.data && response.data.data) {
+      // 將 API 資料格式轉換成元件需要的格式
+      collectionRecipes.value = response.data.data.map((item) => ({
+        id: item.recipeId,
+        name: item.name,
+        cookTime: `${item.cookTimeMinutes}分鐘`,
+        difficulty: "簡單", // API 沒有提供難度，使用預設值
+        category: mapCategory(item.category), // 轉換分類
+        image: item.image,
+        tags: [item.category],
+      }));
+
+      console.log("✅ 收藏列表載入成功，共", collectionRecipes.value.length, "筆");
+    } else {
+      console.warn("⚠️ API 回應格式不符預期:", response.data);
+      collectionRecipes.value = [];
+    }
   } catch (error) {
-    console.error("載入收藏失敗:", error);
+    console.error("❌ 載入收藏失敗:", error);
+    collectionRecipes.value = [];
   } finally {
     isLoading.value = false;
   }
+};
+
+// 將 API 的分類對應到本地分類
+const mapCategory = (apiCategory) => {
+  const categoryMap = {
+    素食: "vegetarian",
+    熱門: "hot",
+    快炒: "quick",
+  };
+  return categoryMap[apiCategory] || "all";
 };
 
 // 初始化

@@ -33,6 +33,23 @@
         <!-- AI 市場洞察 -->
         <MarketInsight />
 
+        <!-- 名稱搜尋：顯示中文/英文同一輸入欄位（輸入後自動判斷並查詢） -->
+        <div class="name-search">
+          <div class="name-inputs">
+            <div class="input-group">
+              <label class="sr-label">名稱（中文或英文）</label>
+              <input
+                type="text"
+                v-model="inputRaw"
+                @input="onRawNameInput"
+                class="name-input"
+                placeholder="輸入中文或英文名稱，系統會自動判斷"
+              />
+            </div>
+            <div class="input-note">系統會自動判斷輸入內容為中文或英文並送出對應欄位</div>
+          </div>
+        </div>
+
         <!-- 載入狀態 -->
         <div v-if="isLoading" class="loading-container">
           <p>🔄 載入中...</p>
@@ -87,13 +104,48 @@
                 </span>
               </div>
 
+              <!-- AI 建議（顯示前兩條） -->
+              <div
+                class="ai-recommendations"
+                v-if="dish.aiRecommendations && dish.aiRecommendations.length"
+              >
+                <ul>
+                  <li
+                    v-for="(rec, idx) in dish.aiRecommendations.slice(0, 2)"
+                    :key="idx"
+                    class="ai-reco"
+                  >
+                    {{ rec }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- 主要好處（以 pill 顯示，最多 3 個） -->
+              <div class="benefits" v-if="dish.benefits && dish.benefits.length">
+                <ul class="benefits-list-inline">
+                  <li
+                    v-for="(b, idx) in dish.benefits.slice(0, 3)"
+                    :key="idx"
+                    class="benefit-item"
+                  >
+                    {{ b }}
+                  </li>
+                </ul>
+              </div>
+
               <!-- 價格區域 -->
               <div class="price-section">
                 <div class="price-info">
                   <span class="price">NT${{ dish.price }}/台斤</span>
-                  <span class="price-change" :class="getPriceChangeClass()">
-                    {{ getPriceChangeText() }}
+                  <span
+                    class="price-change"
+                    :class="getPriceChangeClass(dish.priceChangePct)"
+                  >
+                    {{ getPriceChangeText(dish.priceChangePct) }}
                   </span>
+                </div>
+                <div class="price-date" v-if="dish.priceDateDisplay">
+                  價格日期：{{ dish.priceDateDisplay }}
                 </div>
                 <button class="detail-btn" @click="viewRecipeDetails(dish.id)">
                   詳細資訊
@@ -137,6 +189,10 @@
           >
             下一頁
           </button>
+
+          <div class="page-summary">
+            第 {{ currentPage }} / {{ totalPages }} 頁
+          </div>
         </div>
       </div>
     </div>
@@ -146,7 +202,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { foodApi } from "@/api/food.js";
 
@@ -154,6 +210,9 @@ import { foodApi } from "@/api/food.js";
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
 import CategoryTabs from "@/components/CCC/CategoryTag.vue";
 import MarketInsight from "@/components/CCC/MarketSight.vue";
+
+// 引入預設圖片
+import defaultVeggieImage from "@/assets/default-veggie.png";
 
 const router = useRouter();
 
@@ -179,6 +238,44 @@ const filters = reactive({
 
 const priceRange = ref([0, 200]);
 
+// 新增：名稱搜尋欄位狀態與處理
+const inputRaw = ref("");
+const name = ref(null);
+const nameEn = ref(null);
+let nameDebounce = null;
+const NAME_DEBOUNCE_MS = 400;
+
+const isLikelyEnglish = (s) => {
+  if (!s) return false;
+  const hasLatin = /[A-Za-z]/.test(s);
+  const hasCJK = /[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f]/.test(s);
+  return hasLatin && !hasCJK;
+};
+
+const onRawNameInput = () => {
+  if (nameDebounce) clearTimeout(nameDebounce);
+  nameDebounce = setTimeout(async () => {
+    const v = (inputRaw.value || "").trim();
+    if (!v) {
+      name.value = null;
+      nameEn.value = null;
+    } else if (isLikelyEnglish(v)) {
+      nameEn.value = v;
+      name.value = null;
+    } else {
+      name.value = v;
+      nameEn.value = null;
+    }
+    currentPage.value = 1;
+    await loadData();
+    nameDebounce = null;
+  }, NAME_DEBOUNCE_MS);
+};
+
+onUnmounted(() => {
+  if (nameDebounce) clearTimeout(nameDebounce);
+});
+
 const nutritionFilters = reactive({
   vitaminA: false,
   vitaminC: false,
@@ -195,7 +292,7 @@ const allSubCategories = ref([]);
 // 注意：這些 subCategory 必須與後端 API 回傳的子分類名稱完全一致
 const mainCategories = [
   { id: "all", name: "全部", subCategory: null },
-  { id: "vegetable", name: "蔬菜", subCategory: null },
+  { id: "vegetable", name: "蔬菜", subCategory: "蔬菜" },
   { id: "fruit", name: "水果", subCategory: "水果" },
   { id: "leafy", name: "葉菜類", subCategory: "葉菜類" },
   { id: "root", name: "根莖類", subCategory: "根莖類" },
@@ -246,16 +343,49 @@ const loadData = async () => {
         const subCatResponse = await foodApi.getFoodSubCategories("");
 
         console.log("📂 getFoodSubCategories API 完整回應:", subCatResponse);
-        console.log("📂 子分類 data:", subCatResponse.data);
+        // normalize various possible response shapes into an array of strings
+        let subCats = [];
 
-        if (subCatResponse.data?.code === "0000" && subCatResponse.data?.data) {
-          allSubCategories.value = subCatResponse.data.data;
-          console.log(
-            "✅ 子分類載入成功:",
-            allSubCategories.value.length,
-            "個"
-          );
-          console.log("📋 完整子分類列表:", allSubCategories.value);
+        // case A: response.data is array
+        if (Array.isArray(subCatResponse?.data)) {
+          subCats = subCatResponse.data;
+        }
+
+        // case B: response.data.data is array (standard paged wrapper)
+        else if (Array.isArray(subCatResponse?.data?.data)) {
+          subCats = subCatResponse.data.data;
+        }
+
+        // case C: response.data.content is array
+        else if (Array.isArray(subCatResponse?.data?.content)) {
+          subCats = subCatResponse.data.content;
+        }
+
+        // case D: response.data?.data?.content is array (nested)
+        else if (Array.isArray(subCatResponse?.data?.data?.content)) {
+          subCats = subCatResponse.data.data.content;
+        }
+
+        // case E: sometimes backend returns { code, data: ['a','b'] }
+        else if (subCatResponse?.data?.code === "0000" && Array.isArray(subCatResponse.data.data)) {
+          subCats = subCatResponse.data.data;
+        }
+
+        // fallback: if data.payload is an object map, extract keys or values
+        else if (subCatResponse?.data && typeof subCatResponse.data === "object") {
+          // try to extract arrays from properties
+          const candidates = Object.values(subCatResponse.data).filter((v) => Array.isArray(v));
+          if (candidates.length > 0) subCats = candidates[0];
+        }
+
+        // ensure array of strings
+        if (!Array.isArray(subCats)) subCats = [];
+        // flatten and filter
+        subCats = subCats.flat().map((s) => (s && s.name ? s.name : s)).filter(Boolean);
+
+        allSubCategories.value = subCats;
+        console.log("✅ 子分類載入成功:", allSubCategories.value.length, "個");
+        console.log("📋 完整子分類列表:", allSubCategories.value);
 
           const hasVegetable = allSubCategories.value.includes("蔬菜");
           console.log("🔍 是否有「蔬菜」子分類:", hasVegetable);
@@ -279,7 +409,6 @@ const loadData = async () => {
             "📂 其他分類 (" + otherCategories.value.length + "個):",
             otherCategories.value
           );
-        }
       } catch (subCatError) {
         console.error("⚠️ 子分類查詢失敗:", subCatError.message);
         console.error("⚠️ 完整錯誤:", subCatError);
@@ -320,8 +449,8 @@ const loadData = async () => {
     const filterParams = {
       category: null, // 🔧 改用 subCategory 查詢，不使用 category
       subCategory: querySubCategory,
-      name: null,
-      nameEn: null,
+  name: name.value || null,
+  nameEn: nameEn.value || null,
       priceMin: isDefaultPriceRange
         ? 0
         : Number(Math.min(priceRange.value[0], priceRange.value[1])),
@@ -466,33 +595,111 @@ const loadData = async () => {
       });
 
       if (Array.isArray(foodList) && foodList.length > 0) {
-        // 🔧 移除重複的食品（根據 foodId 去重）
-        const uniqueFoodMap = new Map();
-        foodList.forEach((item) => {
-          if (!uniqueFoodMap.has(item.foodId)) {
-            uniqueFoodMap.set(item.foodId, item);
+        // � 不做去重，直接使用後端回傳的 foodList
+        // 並在前端依 priceDate 由新到舊排序，及計算同 foodId 前一次價格的百分比差異
+
+        // safe JSON parse helper for fields that may be strings or arrays
+        const safeParse = (v) => {
+          if (!v && v !== 0) return [];
+          if (Array.isArray(v)) return v.filter(Boolean);
+          if (typeof v === "string") {
+            try {
+              const parsed = JSON.parse(v);
+              if (Array.isArray(parsed)) return parsed.filter(Boolean);
+            } catch (e) {
+              // fallback: split by common separators
+              return v
+                .replace(/^\s*\[|\]\s*$/g, "")
+                .replace(/^"|"$|^'|'$/g, "")
+                .split(/","|','|,|;|\n|\uff1b|\|/g)
+                .map((s) => s.replace(/^"|"$|^'|'$/g, "").trim())
+                .filter(Boolean);
+            }
+          }
+          return [];
+        };
+
+        const parseDateTs = (d) => {
+          if (!d) return 0;
+          const ts = Date.parse(d);
+          return isNaN(ts) ? 0 : ts;
+        };
+
+        const formatDateStr = (d) => {
+          if (!d) return "";
+          const dt = new Date(d);
+          if (isNaN(dt)) return String(d);
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, "0");
+          const dd = String(dt.getDate()).padStart(2, "0");
+          return `${y}/${m}/${dd}`;
+        };
+
+        // 先做基本映射
+        const mappedList = foodList.map((item) => {
+          const priceNum = Number(item.price ?? 0);
+          const priceDateStr = item.priceDate || null;
+          const priceDateTs = parseDateTs(priceDateStr);
+          // safe JSON parse helper for fields that may be strings or arrays
+          const base = {
+            id: item.foodId,
+            name: item.name,
+            nameEn: item.nameEn || null,
+            price: isNaN(priceNum) ? 0 : priceNum,
+            type: item.category,
+            subCategory: item.subCategory || null,
+            ingredients: item.tag
+              ? item.tag.split("/").filter((t) => t.trim())
+              : ["新鮮", "營養"],
+            description: item.description || `新鮮的${item.name},營養豐富`,
+            image: item.image || defaultVeggieImage,
+            lastModifyDate: item.lastModifyDate,
+            // preserve server-provided recommendation if present, otherwise derive
+            isRecommendation:
+              item.isRecommendation ?? (item.inSeason || item.affordable),
+            // keep season and pricing metadata
+            seasonStart: item.seasonStart || null,
+            seasonEnd: item.seasonEnd || null,
+            priceDate: priceDateStr,
+            priceDateTs,
+            priceDateDisplay: formatDateStr(priceDateStr),
+            // parse aiRecommendations and benefits into arrays when possible
+            aiRecommendations: safeParse(item.aiRecommendations),
+            benefits: safeParse(item.benefits),
+            eatingSuggestions: item.eatingSuggestions || null,
+            // keep original payload for debugging
+            _raw: item,
+          };
+          return base;
+        });
+
+        // 針對相同 foodId，依日期由新到舊排序，並計算與前一次的百分比變化
+        const byFood = new Map();
+        mappedList.forEach((d) => {
+          const key = d.id || d._raw?.foodId || d.name;
+          if (!byFood.has(key)) byFood.set(key, []);
+          byFood.get(key).push(d);
+        });
+
+        byFood.forEach((arr) => {
+          arr.sort((a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0));
+          for (let i = 0; i < arr.length; i++) {
+            const cur = arr[i];
+            const prev = arr[i + 1]; // 下一筆是較舊日期
+            if (prev && typeof prev.price === "number" && prev.price > 0) {
+              const diff = cur.price - prev.price;
+              cur.priceChangePct = (diff / prev.price) * 100;
+            } else {
+              cur.priceChangePct = null;
+            }
           }
         });
-        const uniqueFoodList = Array.from(uniqueFoodMap.values());
 
-        console.log(
-          `🔍 去重前: ${foodList.length} 筆，去重後: ${uniqueFoodList.length} 筆`
+        // 全部資料依日期新到舊排序後顯示
+        const sortedList = [...mappedList].sort(
+          (a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0)
         );
-
-        allDishes.value = uniqueFoodList.map((item) => ({
-          id: item.foodId,
-          name: item.name,
-          price: item.price || 50,
-          type: item.category,
-          ingredients: item.tag
-            ? item.tag.split("/").filter((t) => t.trim())
-            : ["新鮮", "營養"],
-          description: item.description || `新鮮的${item.name},營養豐富`,
-          image: item.image || "/src/assets/default-veggie.png", // 🔧 沒有圖片時使用預設圖
-          lastModifyDate: item.lastModifyDate,
-          isRecommendation: item.inSeason || item.affordable,
-          _raw: item, // 🆕 保留原始資料以便除錯
-        }));
+        allDishes.value = sortedList;
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
@@ -513,7 +720,7 @@ const loadData = async () => {
           );
         });
 
-        // 🔧 統計圖片狀況
+  // 🔧 統計圖片狀況
         const withImage = allDishes.value.filter((d) => d._raw.image).length;
         const withoutImage = allDishes.value.length - withImage;
         console.log(
@@ -727,12 +934,15 @@ const getCardClass = (type) => {
   return typeMap[type] || "vegetable";
 };
 
-const getPriceChangeClass = () => {
-  return Math.random() > 0.5 ? "price-up" : "price-down";
+const getPriceChangeClass = (pct) => {
+  if (typeof pct !== "number" || isNaN(pct)) return "price-flat";
+  return pct > 0 ? "price-up" : pct < 0 ? "price-down" : "price-flat";
 };
 
-const getPriceChangeText = () => {
-  return Math.random() > 0.5 ? "▲1.5%" : "▼0.2%";
+const getPriceChangeText = (pct) => {
+  if (typeof pct !== "number" || isNaN(pct)) return "—";
+  const abs = Math.abs(pct).toFixed(1);
+  return pct > 0 ? `▲${abs}%` : pct < 0 ? `▼${abs}%` : "0.0%";
 };
 
 // ==================== 事件處理 ====================
@@ -778,17 +988,25 @@ const updateNutritionTab = (tab) => {
   activeNutritionTab.value = tab;
 };
 
-const viewRecipeDetails = async (recipeId) => {
+const viewRecipeDetails = async (foodId) => {
+  console.log("🔍 點擊查看蔬果詳情，ID:", foodId);
+
   try {
-    const response = await foodApi.findFoodData(recipeId);
-    if (response && response.code === "8000" && response.data) {
-      localStorage.setItem(`recipe_${recipeId}`, JSON.stringify(response.data));
+    const response = await foodApi.findFoodData(foodId);
+    console.log("📥 蔬果詳情 API 回應:", response);
+
+    if (response && response.data && response.data.data) {
+      // 可選：將資料暫存到 localStorage 供內頁使用（如果內頁有需要）
+      localStorage.setItem(`food_${foodId}`, JSON.stringify(response.data.data));
+      console.log("✅ 蔬果資料已暫存");
     }
   } catch (error) {
-    console.error("載入食譜詳情失敗:", error);
+    console.error("❌ 載入蔬果詳情失敗:", error);
   }
 
-  router.push(`/ai-recommendation/${recipeId}`);
+  // 跳轉到蔬果內頁 (VeggieInfoPage.vue 的路由是 /veggie/:id)
+  router.push(`/veggie/${foodId}`);
+  console.log("🚀 跳轉到蔬果內頁: /veggie/" + foodId);
 };
 
 const prevPage = () => {
@@ -810,7 +1028,10 @@ const goToPage = (page) => {
 // 🔧 處理圖片載入失敗
 const handleImageError = (event) => {
   console.warn("🖼️ 圖片載入失敗:", event.target.src);
-  event.target.src = "/src/assets/default-veggie.png";
+  // 避免無限迴圈：如果已經是預設圖片就不再重設
+  if (event.target.src !== defaultVeggieImage) {
+    event.target.src = defaultVeggieImage;
+  }
 };
 
 // ==================== 初始化 ====================
@@ -960,10 +1181,14 @@ onMounted(() => {
 }
 
 .dish-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.4;
+  font-size: 15px;
+  color: #222; /* 更深的字色，使描述更醒目 */
+  font-weight: 600; /* 加粗 */
+  line-height: 1.45;
   margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(255,250,240,0.9), rgba(255,255,255,0));
+  padding: 6px 8px;
+  border-radius: 6px;
 }
 
 .nutrition-tags {
@@ -1034,6 +1259,39 @@ onMounted(() => {
   padding: 60px 20px;
   color: #999;
   font-size: 16px;
+}
+
+/* AI recommendations and benefits */
+.ai-recommendations {
+  margin-top: 10px;
+}
+.ai-recommendations ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ai-recommendations .ai-reco {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  max-height: 2.6em;
+  overflow: hidden;
+}
+
+.benefits-list-inline {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.benefit-item {
+  background: #eef6f1;
+  color: #2e7d32;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
 }
 
 .pagination {
@@ -1119,5 +1377,39 @@ onMounted(() => {
   .main-content {
     order: 1;
   }
+}
+.price-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.page-summary {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* 名稱搜尋區塊 */
+.name-search {
+  margin: 12px 0 18px 0;
+}
+.name-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+.name-input {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-width: 260px;
+}
+.input-note {
+  font-size: 12px;
+  color: #888;
 }
 </style>

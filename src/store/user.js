@@ -1,16 +1,27 @@
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
-  state: () => ({
-    // 只存「原始 JWT」，不要加 'Bearer '
-    token: localStorage.getItem('userToken') || '',
-    isAuthenticated: !!localStorage.getItem('userToken'),
+  state: () => {
+    // 檢查 localStorage 是否有 token 和基本使用者資訊
+    const token = localStorage.getItem('userToken') || ''
+    const userId = Number(localStorage.getItem('userId')) || null
+    const userName = localStorage.getItem('userName') || ''
 
-    userRole: localStorage.getItem('userRole') || 'consumer',
-    userId: Number(localStorage.getItem('userId')) || null,
-    userName: localStorage.getItem('userName') || '',
-    userInfo: {},
-  }),
+    // 只有當 token、userId、userName 都存在時，才認為是已登入狀態
+    const hasValidSession = !!(token && userId && userName)
+
+    return {
+      // 只存「原始 JWT」，不要加 'Bearer '
+      token,
+      // 需要有完整的登入資訊才視為已登入
+      isAuthenticated: hasValidSession,
+
+      userRole: localStorage.getItem('userRole') || 'consumer',
+      userId,
+      userName,
+      userInfo: {},
+    }
+  },
 
   getters: {
     // 需要時才組 Authorization header

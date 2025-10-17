@@ -136,20 +136,24 @@ const CODE_NOT_FOUND = '2002'
 
 // 用清單端點初始化 / 同步收藏狀態
 async function favStatus(foodId, userId) {
+  // 修正：加入必填的 subCategory 參數
   const resp = await apiFetch(
     'GET',
-    '/api/memberUser/favorites/food', 
-    { query: { userId } }
+    '/api/memberUser/favorites/food',
+    { query: { subCategory: 'ALL', userId } }
   )
+  console.log('🔍 檢查收藏狀態 API 回應:', resp)
 
   const raw  = resp?.data?.items ?? resp?.data ?? resp?.items ?? []
   const list = Array.isArray(raw) ? raw : []
 
-  return list.some(it => {
+  const isFav = list.some(it => {
     if (typeof it === 'string') return it === String(foodId)
     const v = it?.foodId ?? it?.value ?? it?.id
     return String(v) === String(foodId)
   })
+  console.log(`✅ 蔬菜 ${foodId} 收藏狀態:`, isFav ? '已收藏' : '未收藏')
+  return isFav
 }
 
 function addFavOK(resp) {
@@ -221,12 +225,16 @@ async function toggleFavorite () {
   try {
     if (!prev) {
       const resp = await favAdd(foodId, userId)
+      console.log('📥 加入收藏 API 回應:', resp)
       if (!addFavOK(resp)) throw new Error(resp?.message || '加入收藏失敗')
       isFavorite.value = true
+      alert('✅ 已加入收藏！')
     } else {
       const resp = await favRemove(foodId, userId)
+      console.log('📥 取消收藏 API 回應:', resp)
       if (!removeFavOK(resp)) throw new Error(resp?.message || '移除收藏失敗')
       isFavorite.value = false
+      alert('✅ 已取消收藏！')
     }
   } catch (err) {
     isFavorite.value = prev
