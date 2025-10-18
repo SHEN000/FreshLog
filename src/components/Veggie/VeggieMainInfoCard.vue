@@ -144,13 +144,8 @@ async function favStatus(foodId, userId) {
   // 修正：加入必填的 subCategory 參數
   const resp = await apiFetch(
     'GET',
-<<<<<<< HEAD
     '/api/memberUser/favorites/food',
-    { query: { subCategory: 'ALL', userId } }
-=======
-    '/api/memberUser/favorites/food', 
     { query: { userId, subCategory: FAVORITES_SUBCATEGORY } }
->>>>>>> YouHua
   )
   console.log('🔍 檢查收藏狀態 API 回應:', resp)
 
