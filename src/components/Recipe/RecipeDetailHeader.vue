@@ -20,7 +20,7 @@
         </span>
         <span class="info-item">
           <img src="@/assets/icons/quantity.png" alt="份量" class="icon" />
-          {{ servings }}人份
+          {{ servings }}
         </span>
         <span class="info-item">
           <img src="@/assets/icons/difficulty.png" alt="難度" class="icon" />
@@ -140,10 +140,16 @@ const addFavOK    = (r) => CODE_OK.has(String(r?.code ?? '')) || String(r?.code 
 const removeFavOK = (r) => CODE_OK.has(String(r?.code ?? '')) || String(r?.code ?? '') === CODE_NOT_FOUND   || /success|成功|ok|移除|刪除/i.test(String(r?.message ?? ''))
 
 /* 用「清單」端點同步收藏狀態（可跨裝置） */
+const FAVORITES_CATEGORY = 'ALL'
+
 async function favStatus(recipeId, userId) {
+<<<<<<< HEAD
   // 修正：加入必填的 category 參數
   const resp = await apiFetch('GET', '/api/memberUser/favorites/recipe', { query: { category: 'ALL', userId } })
   console.log('🔍 檢查收藏狀態 API 回應:', resp)
+=======
+  const resp = await apiFetch('GET', '/api/memberUser/favorites/recipe', { query: { userId, category: FAVORITES_CATEGORY } })
+>>>>>>> YouHua
   const raw  = resp?.data?.items ?? resp?.data ?? resp?.items ?? []
   const list = Array.isArray(raw) ? raw : []
   const isFav = list.some(it => {

@@ -28,6 +28,8 @@
 </template>
 
 <script>
+import { NUTRIENT_STATS } from '@/data/nutrientStats.js'
+
 export default {
   name: 'NutritionInfoCard',
   props: { nutrition: { type: Object, required: true } },
@@ -82,38 +84,40 @@ export default {
         carbs: 'carbohydrate', '碳水': 'carbohydrate', '碳水化合物': 'carbohydrate',
         'vit a': 'vitamin a', 'vita': 'vitamin a', '維生素a': 'vitamin a',
         'dietary fiber': 'fiber', '膳食纖維': 'fiber', '纖維': 'fiber',
-        'k': 'potassium', '鉀': 'potassium', '蛋白質': 'protein', '脂肪': 'fat'
+        'k': 'potassium', '鉀': 'potassium', '蛋白質': 'protein', '脂肪': 'fat',
+        'total carbohydrate': 'total_carbohydrate',
+        'total carbohydrates': 'total_carbohydrates',
+        'total sugars': 'total_sugars',
+        'omega 3': 'omega-3',
       }
       return alias[s] || s
     },
 
+    // 從統計表取出對應的比例尺
     getScaleSpec(name) {
       const key = this.normalize(name)
-      const table = {
-        'carbohydrate': { max: 15, unit: 'g' },
-        'protein': { max: 2, unit: 'g' },
-        'fat': { max: 2, unit: 'g' },
-        'vitamin a': { max: 1000, unit: 'µg' },
-        'potassium': { max: 1000, unit: 'mg' },
-        'fiber': { max: 5, unit: 'g' },
-      }
-      return table[key]
+      const stat = NUTRIENT_STATS[key]
+      if (!stat) return null
+
+      // 以 p95 作為 100%，沒有就退回 max，再退回 mean
+      const full = Number(stat.p95 ?? stat.max ?? stat.mean ?? 0)
+      if (!full) return null
+
+      return { max: full, unit: null } // unit=null 表示與輸入相同
     },
 
+    // 依統計表的 max（p95）計算百分比
     getBarWidth(macro) {
-      const v = Number(macro.amount ?? macro.value ?? 0)
-      let spec = this.getScaleSpec(macro.nutrient)
-
-      // 如果是其他維生素沒在表內，給個通用門檻避免顯示 50%
-      if (!spec && /^vitamin\b/i.test(macro.nutrient || '')) {
-        // mg 用 100 當滿刻度、µg 用 1000，g 用 1
-        const u = (macro.unit || '').toLowerCase()
-        spec = { max: u === 'mg' ? 100 : (u === 'g' ? 1 : 1000), unit: u || 'mg' }
-      }
-
+      const rawVal = Number(macro.amount ?? macro.value ?? 0)
+      const spec = this.getScaleSpec(macro.nutrient)
       if (!spec) return 50
-      const val = this.convertUnit(v, macro.unit, spec.unit)
-      return Math.min((val / spec.max) * 100, 100)
+
+      // 若之後提供 UNIT_HINTS，可在這裡做轉換：
+      // const val = spec.unit ? this.convertUnit(rawVal, macro.unit, spec.unit) : rawVal
+      const val = rawVal
+
+      const pct = (val / spec.max) * 100
+      return Math.max(0, Math.min(pct, 100))
     },
 
     convertUnit(value, from, to) {
@@ -139,24 +143,55 @@ export default {
 
       // 直接對照的常見項目
       const map = {
-        'carbohydrate': '碳水化合物',
-        'potassium': '鉀',
-        'fiber': '膳食纖維',
-        'vitamin c': '維生素C',
-        'folate': '葉酸',
-        'sugar': '糖',
-        'iron': '鐵',
         'calcium': '鈣',
-        'protein': '蛋白質',
-        'vitamin b12': '維生素B12',
-        'fat': '脂肪',
+        'calories': '卡路里 / 熱量',
+        'carbohydrate': '碳水化合物',
+        'carbohydrates': '碳水化合物',
+        'carbohydrate_total': '總碳水化合物',
         'cholesterol': '膽固醇',
+        'copper': '銅',
+        'dietary_fiber': '膳食纖維',
+        'fat': '脂肪',
+        'fiber': '纖維',
+        'fiber_total': '總纖維',
+        'fiber_total_dietary': '總膳食纖維',
+        'folate': '葉酸',
+        'iodine': '碘',
+        'iron': '鐵',
+        'lycopene': '茄紅素',
+        'magnesium': '鎂',
+        'manganese': '錳',
+        'monounsaturated_fat': '單元不飽和脂肪',
+        'niacin': '維生素B3',
         'omega-3': 'Omega-3 脂肪酸',
-        'vitamin d': '維生素D',
+        'omega_3_fatty_acids': 'Omega-3 脂肪酸',
+        'potassium': '鉀',
+        'protein': '蛋白質',
+        'riboflavin': '維生素B2',
+        'saturated_fat': '飽和脂肪',
+        'selenium': '硒',
+        'sodium': '鈉',
+        'sugar': '糖',
+        'sugars': '糖類',
+        'thiamine': '維生素B1',
+        'total_carbohydrate': '總碳水化合物',
+        'total_carbohydrates': '總碳水化合物',
+        'total_fat': '總脂肪',
+        'total_sugars': '總糖',
         'vitamin a': '維生素A',
-        'vitamin k': '維生素K',
-        'zinc': '鋅',
+        'vitamin b12': '維生素B12',
         'vitamin b6': '維生素B6',
+        'vitamin c': '維生素C',
+        'vitamin d': '維生素D',
+        'vitamin k': '維生素K',
+        'vitamin_a': '維生素A',
+        'vitamin_b12': '維生素B12',
+        'vitamin_b6': '維生素B6',
+        'vitamin_c': '維生素C',
+        'vitamin_e': '維生素E',
+        'vitamin_k': '維生素K',
+        'water': '水分',
+        'zinc': '鋅',
       }
       if (map[s]) return map[s]
 
