@@ -1,4 +1,6 @@
-<template>
+<!-- <template>
+ 暫時用不到
+ 
   <div class="page-header">
     <h1>AI 智慧推薦</h1>
   </div>
@@ -58,4 +60,4 @@ h1 {
     min-width: unset;
   }
 }
-</style>
+</style> -->
