@@ -113,6 +113,8 @@ const router = useRouter()
 //後端位址 
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || ''
 
+const token = ref('')
+
 // 流程：1=Email, 2=驗證碼, 3=修改密碼 
 const step = ref(1)
 
@@ -146,122 +148,134 @@ let timer = null
 
 // 按鈕可用條件
 const canRequestCode = computed(() => isEmailValid.value)
-const canVerifyCode  = computed(() => isCodeValid.value)
-const canResend      = computed(() => step.value === 2)
-const canReset       = computed(() => isPasswordValid.value && isConfirmMatch.value)
+const canVerifyCode = computed(() => isCodeValid.value)
+const canResend = computed(() => step.value === 2)
+const canReset = computed(() => isPasswordValid.value && isConfirmMatch.value)
 
 // 啟動 5 分鐘倒數
 function startCountdown() {
-  countdown.value = 300
-  clearInterval(timer)
-  timer = setInterval(() => {
-    if (countdown.value > 0) countdown.value--
-    else clearInterval(timer)
-  }, 1000)
+    countdown.value = 300
+    clearInterval(timer)
+    timer = setInterval(() => {
+        if (countdown.value > 0) countdown.value--
+        else clearInterval(timer)
+    }, 1000)
 }
 onBeforeUnmount(() => clearInterval(timer))
 
 // 呼叫 API（POST/PUT）
 async function apiFetch(method, path, { query, body } = {}) {
-  const q = query ? `?${new URLSearchParams(query).toString()}` : ''
-  const url = `${API_BASE}${path}${q}`
-  const res = await fetch(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
-  return data
+    const q = query ? `?${new URLSearchParams(query).toString()}` : ''
+    const url = `${API_BASE}${path}${q}`
+
+    // 如果沒有 body，不要送 Content-Type
+    const options = { method }
+    if (body) {
+        options.headers = { 'Content-Type': 'application/json' }
+        options.body = JSON.stringify(body)
+    }
+
+    const res = await fetch(url, options)
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
+    return data
 }
 const apiPost = (path, opt) => apiFetch('POST', path, opt)
-const apiPut  = (path, opt) => apiFetch('PUT',  path, opt)
+const apiPut = (path, opt) => apiFetch('PUT', path, opt)
+
 
 // ── 1) 取得驗證碼
 async function requestCode() {
-  if (!isEmailValid.value) return
-  try {
-    await apiPost('/api/user/send-code', { query: { email: email.value.trim() } })
-    // 成功 → 進入 step 2 並開始倒數
-    step.value = 2
-    startCountdown()
-  } catch (err) {
-    console.error(err)
-    alert(err.message || '驗證碼寄送失敗，請稍後再試。')
-  }
+    if (!isEmailValid.value) return
+    try {
+        await apiPost('/api/user/send-code', {
+            query: { email: email.value.trim() }
+        })
+        // 成功 → 進入 step 2 並開始倒數
+        step.value = 2
+        startCountdown()
+    } catch (err) {
+        console.error(err)
+        alert(err.message || '驗證碼寄送失敗，請稍後再試。')
+    }
 }
 
 // ── 重新寄送
 async function resendCode() {
-  try {
-    await apiPost('/api/user/send-code', { query: { email: email.value.trim() } })
-    code.value = ''
-    startCountdown()
-  } catch (err) {
-    console.error(err)
-    alert(err.message || '重新寄送失敗，請稍後再試。')
-  }
+    try {
+        await apiPost('/api/user/send-code', { query: { email: email.value.trim() } })
+        code.value = ''
+        startCountdown()
+    } catch (err) {
+        console.error(err)
+        alert(err.message || '重新寄送失敗，請稍後再試。')
+    }
 }
 
 // ── 2) 驗證碼確認
 async function verifyCode() {
-  if (!canVerifyCode.value) return
-  try {
-    const resp = await apiPost('/api/user/verify-code', {
-      body: { email: email.value.trim(), code: code.value.trim() }
-    })
-    // 後端錯誤例：{ code: "6007", message: "驗證碼錯誤或無效" }（HTTP 200）
-    const bizCode = `${resp?.code ?? ''}`
-    if (bizCode === '6007') {
-      alert(resp?.message || '驗證碼錯誤或已過期')
-      return
+    if (!canVerifyCode.value) return
+    try {
+        const resp = await apiPost('/api/user/verify-code', {
+            body: { email: email.value.trim(), code: code.value.trim() }
+        })
+
+        // 後端若成功，會回傳 data = token
+        if (resp?.code === '6007') {
+            alert(resp?.message || '驗證碼錯誤或已過期')
+            return
+        }
+
+        // 儲存 token 以便重設密碼使用
+        token.value = resp?.data || ''
+
+        // 驗證成功 → 進入 step 3
+        clearInterval(timer)
+        step.value = 3
+    } catch (err) {
+        console.error(err)
+        alert(err.message || '驗證失敗，請稍後再試。')
     }
-    // 驗證成功 → 進入 step 3
-    clearInterval(timer)
-    step.value = 3
-  } catch (err) {
-    console.error(err)
-    alert(err.message || '驗證失敗，請稍後再試。')
-  }
 }
 
 // ── 3) 重設密碼
 async function resetPassword() {
-  try {
-    const resp = await apiPut('/api/user/forgetPassword', {
-      query: {
-        email: email.value.trim(),
-        newPassword: newPassword.value
-      }
-    })
+    try {
+        const resp = await apiPut('/api/user/forgetPassword', {
+            query: {
+                email: email.value.trim(),
+                newPassword: newPassword.value,
+                token: token.value
+            }
+        })
 
-    // ── 邏輯判斷（後端錯誤也用 200 回來） ──
-    const bizCode = `${resp?.code ?? ''}`
+        // ── 邏輯判斷（後端錯誤也用 200 回來） ──
+        const bizCode = `${resp?.code ?? ''}`
 
-    const bizOk =
-      bizCode === '6100' ||               
-      /^2/.test(bizCode) ||            
-      resp?.code === 'OK' || resp?.success === true || resp?.data === true
+        const bizOk =
+            bizCode === '6100' ||
+            /^2/.test(bizCode) ||
+            resp?.code === 'OK' || resp?.success === true || resp?.data === true
 
-    // 特別處理 404：「資料不存在」
-    if (bizCode === '404') {
-      alert(resp?.message || '資料不存在或信箱未註冊')
-      return
+        // 特別處理 404：「資料不存在」
+        if (bizCode === '404') {
+            alert(resp?.message || '資料不存在或信箱未註冊')
+            return
+        }
+
+        if (!bizOk) {
+            // 其他非成功碼，一律視為失敗
+            alert(resp?.message || '重設失敗，請稍後再試。')
+            return
+        }
+
+        // 成功才提示並跳轉
+        alert('密碼重設成功！請重新登入。')
+        router.push('/member/login')
+    } catch (err) {
+        console.error(err)
+        alert(err.message || '重設失敗，請稍後再試。')
     }
-
-    if (!bizOk) {
-      // 其他非成功碼，一律視為失敗
-      alert(resp?.message || '重設失敗，請稍後再試。')
-      return
-    }
-
-    // 成功才提示並跳轉
-    alert('密碼重設成功！請重新登入。')
-    router.push('/member/login')
-  } catch (err) {
-    console.error(err)
-    alert(err.message || '重設失敗，請稍後再試。')
-  }
 }
 
 </script>
@@ -413,27 +427,27 @@ async function resetPassword() {
 }
 
 .horizontal-group {
-  display: flex;
-  gap: 8px;
+    display: flex;
+    gap: 8px;
 }
 
 .resend-btn {
-  flex-shrink: 0;
-  height: 44px;
-  padding: 0 16px;
-  background: #2e7d32;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 16px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .resend-btn:disabled {
-  background: #BDBDBD;
-  cursor: not-allowed;
+    background: #BDBDBD;
+    cursor: not-allowed;
 }
 
 
