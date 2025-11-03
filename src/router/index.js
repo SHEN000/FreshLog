@@ -10,7 +10,7 @@ const routes = [
     path: "/recipes",
     name: "RecipeList",
     component: () => import("@/views/Consumer/RecipeListPage.vue"),
-  }, // 蔬菜列表
+  }, // 精選食譜
   {
     path: "/veggie",
     redirect: "/veggie/F001",
@@ -61,6 +61,16 @@ const routes = [
     name: "RecipeDetail",
     component: () => import("@/views/Consumer/RecipeDetail.vue"),
   }, // 食譜內頁
+  {
+    path: "/poultry-market",
+    name: "PoultryMarket",
+    component: () => import("@/views/Consumer/PoultryMarket.vue"),
+  }, // 禽產行情（未開放）
+  {
+    path: "/seafood-market",
+    name: "SeafoodMarket",
+    component: () => import("@/views/Consumer/SeafoodMarket.vue"),
+  }, // 海產行情（未開放）
 ];
 
 const router = createRouter({

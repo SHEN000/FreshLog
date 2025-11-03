@@ -16,17 +16,29 @@
       <div v-if="!isMobile" class="nav-links">
         <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
 
-        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-          class="nav-item">蔬菜列表</RouterLink>
-
-        <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
-          蔬菜內頁</RouterLink>
-
-        <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">食譜列表
+        <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">精選食譜
         </RouterLink>
 
-        <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
-          :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
+        <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+          class="nav-item">農產行情</RouterLink>
+
+        <!-- 禽產/海產 行情（點擊進入「未開放」頁） -->
+        <RouterLink v-if="isConsumer" to="/poultry-market" :class="{ active: isActive('/poultry-market') }"
+          class="nav-item">
+          禽產行情
+        </RouterLink>
+
+        <RouterLink v-if="isConsumer" to="/seafood-market" :class="{ active: isActive('/seafood-market') }"
+          class="nav-item">
+          海產行情
+        </RouterLink>
+
+        <!-- <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
+          蔬菜內頁</RouterLink> -->
+
+        <!-- <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
+          :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink> -->
+
       </div>
 
       <!-- 桌機搜尋 -->
@@ -124,17 +136,28 @@
     <div class="mobile-dropdown" v-if="showMenu && isMobile && !mobileSearchMode">
       <RouterLink v-if="isConsumer" to="/" :class="{ active: isActive('/') }" class="nav-item">首頁</RouterLink>
 
-      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
-        class="nav-item">蔬菜列表</RouterLink>
-
-      <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
-        蔬菜內頁</RouterLink>
-
-      <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">食譜列表
+      <RouterLink v-if="isConsumer" to="/recipes" :class="{ active: isActive('/recipes') }" class="nav-item">精選食譜
       </RouterLink>
 
-      <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
-        :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink>
+      <RouterLink v-if="isConsumer" to="/ai-recommendation" :class="{ active: isActive('/ai-recommendation') }"
+        class="nav-item">農產行情</RouterLink>
+
+      <!-- 禽產/海產 行情（點擊進入「未開放」頁） -->
+      <RouterLink v-if="isConsumer" to="/poultry-market" :class="{ active: isActive('/poultry-market') }"
+        class="nav-item">
+        禽產行情
+      </RouterLink>
+
+      <RouterLink v-if="isConsumer" to="/seafood-market" :class="{ active: isActive('/seafood-market') }"
+        class="nav-item">
+        海產行情
+      </RouterLink>
+
+      <!-- <RouterLink v-if="isConsumer" to="/veggie/F001" :class="{ active: isActive('/veggie/F001') }" class="nav-item">
+        蔬菜內頁</RouterLink> -->
+
+      <!-- <RouterLink v-if="isConsumer" to="/ai-recommendation/R001"
+        :class="{ active: isActive('/ai-recommendation/R001') }" class="nav-item">食譜內頁</RouterLink> -->
     </div>
   </header>
 </template>

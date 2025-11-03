@@ -1,7 +1,7 @@
 <template>
   <div class="main-info-card">
     <!-- 手機版用的當季推薦徽章 -->
-    <div class="mobile-badge">
+    <div class="mobile-badge" v-if="showSeasonBadge">
       <img src="@/assets/season-badge.png" alt="當季推薦" />
     </div>
 
@@ -37,7 +37,7 @@
 
     <div class="right">
       <div class="date-text">數據日期：{{ formattedDate }}</div>
-      <div class="season-badge">
+      <div class="season-badge" v-if="showSeasonBadge">
         <img src="@/assets/season-badge.png" alt="當季推薦" />
       </div>
     </div>
@@ -63,6 +63,9 @@ const { veggie } = toRefs(props)
 const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
+
+// inSeason === true 才顯示；其餘狀況隱藏
+const showSeasonBadge = computed(() => veggie.value?.inSeason === true)
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -126,6 +129,8 @@ async function apiFetch(method, path, { query, body } = {}) {
   return data
 }
 
+const FAVORITES_SUBCATEGORY = 'ALL'
+
 // 兩個實際呼叫
 const favAdd = (foodId, userId) => apiFetch('POST', `/api/memberUser/favorites/food/${encodeURIComponent(foodId)}`, { query: { userId } })
 const favRemove = (foodId, userId) => apiFetch('DELETE', `/api/memberUser/favorites/food/${encodeURIComponent(foodId)}`, { query: { userId } })
@@ -140,7 +145,7 @@ async function favStatus(foodId, userId) {
   const resp = await apiFetch(
     'GET',
     '/api/memberUser/favorites/food',
-    { query: { subCategory: 'ALL', userId } }
+    { query: { userId, subCategory: FAVORITES_SUBCATEGORY } }
   )
   console.log('🔍 檢查收藏狀態 API 回應:', resp)
 

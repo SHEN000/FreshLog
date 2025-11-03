@@ -98,7 +98,7 @@
             </div>
             <!-- 密碼強度 / 格式檢查提醒 -->
             <p v-if="password !== '' && !isPasswordValid" class="input-error">
-              密碼至少8位，且需包含英文及數字<br/>
+              密碼至少8位，且需包含英文及數字<br />
               註:可加上特殊符號加強密碼強度
             </p>
           </div>
@@ -162,6 +162,8 @@ const codeSent = ref(false) // 驗證碼是否已寄出
 const countdown = ref(60)
 let timer = null
 const isLoading = ref(false)
+
+const registerToken = ref('')
 
 // 驗證 Email 格式
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -296,6 +298,9 @@ async function verifyCode() {
       return
     }
 
+    // 取註冊 token
+    registerToken.value = resp?.data || ''
+
     clearInterval(timer)
     step.value = 2
   } catch (err) {
@@ -315,6 +320,7 @@ async function handleRegister() {
   isLoading.value = true
   try {
     const resp = await apiPost('/api/user/register', {
+      query: { token: registerToken.value }, // token
       body: {
         userName: account.value.trim(),
         userPassword: password.value,
