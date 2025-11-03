@@ -298,7 +298,6 @@ const allSubCategories = ref([]);
 // 注意：這些 subCategory 必須與後端 API 回傳的子分類名稱完全一致
 const mainCategories = [
   { id: "all", name: "未分類", subCategory: "未分類" }, // 🔧 使用"未分類"（從"其他"下拉選單驗證可用）
-  { id: "fruit", name: "水果", subCategory: "水果" },
   { id: "leafy", name: "葉菜類", subCategory: "葉菜類" },
   { id: "root", name: "根莖類", subCategory: "根莖類" },
   { id: "grain", name: "雜糧類", subCategory: "雜糧類" },

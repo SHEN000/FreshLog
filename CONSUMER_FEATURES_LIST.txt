@@ -1,0 +1,207 @@
+FreshLog 消費者功能完整清單
+============================
+
+## 1. 首頁 (ConsumerHome.vue)
+功能:
+- 品牌介紹卡片 (BrandHeroCard)
+- 市場行情卡片 (MarketTrendCard) - 查看市場價格走勢
+- 農業複合指數卡片 (AgriCompositeIndexCard)
+- 食譜清單卡片 (RecipeListCard) - 推薦食譜
+- 營養助手卡片 (NutritionHelperCard)
+- 食安快訊卡片 (NewsCard) - 查看食安新聞
+
+## 2. 蔬菜瀏覽功能 (VegetableList.vue)
+路由: /ai-recommendation
+
+主要功能:
+a) 篩選功能:
+   - 分類篩選 (葉菜類、根莖類、雜糧類、其他)
+   - 價格範圍篩選 (0-200元)
+   - 營養篩選 (維生素A、C、鈣、鐵、抗氧化)
+   - 特色篩選 (抗氧化、補鈣、護眼、能量、超級食物)
+
+b) 搜尋功能:
+   - 輸入中文或英文蔬菜名稱
+   - 自動判斷語言類型
+   - 實時篩選結果
+
+c) 排序功能:
+   - 產季由近到遠
+   - 價格高到低
+   - 價格低到高
+
+d) 蔬菜卡片信息:
+   - 圖片、評分、追蹤狀態
+   - 名稱、分類、描述
+   - 營養標籤、AI建議、好處
+   - 價格、價格變化、詳細資訊按鈕
+
+e) 分頁: 6項/頁，支援上一頁/下一頁/直接選擇
+
+## 3. 蔬菜詳細頁 (VeggieInfoPage.vue)
+路由: /veggie/:id
+
+顯示內容:
+- 蔬菜主要資訊 (VeggieMainInfoCard)
+- AI建議 (AiSuggestionCard)
+- 營養資訊 (NutritionInfoCard)
+- 價格趨勢圖 (AveragePriceTrendChart)
+- 多市場價格對比 (MultiMarketPriceCompareCard)
+- 相似蔬菜對比 (SimilarVeggieCompareCard)
+- 食譜推薦 (RecipeRecommendCard)
+- 保存貼士 (StorageTipsCard)
+
+## 4. 食譜功能
+4.1 食譜列表 (RecipeListPage.vue)
+路由: /recipes
+
+篩選功能:
+- 烹調時間: 15分、30分、1小時
+- 難易度: 簡單、中等、困難
+- 特色: 素食、其他
+- 分類: 湯品、蔬菜、甜點、沙拉、肉類、飯類
+
+操作:
+- 排序: 最新、烹調時間長短、難易度
+- 搜尋: 按食譜名稱
+- 分頁: 20項/頁
+- 查看AI推薦區塊
+
+4.2 食譜詳細頁 (RecipeDetail.vue)
+路由: /ai-recommendation/:id
+
+內容:
+- 麵包屑導航
+- 食譜頭部信息 (名稱、描述、圖片、時間、份量、難易度)
+- 主要食材價格及成本估算
+- 完整食材列表
+- 烹調步驟
+- 營養資訊
+- 當季推薦
+- 替代食材建議
+- 市場行情
+- 相關食譜推薦
+
+## 5. 市場資訊頁面
+5.1 禽產行情 (PoultryMarket.vue) - 開發中
+路由: /poultry-market
+操作: 關閉彈窗、返回首頁
+
+5.2 海產行情 (SeafoodMarket.vue) - 開發中
+路由: /seafood-market
+操作: 關閉彈窗、返回首頁
+
+5.3 食安詳細資訊 (FoodSafetyDetail.vue)
+路由: /foodsafety/:id
+顯示食品安全詳細資訊
+
+## 6. 會員認證功能
+
+6.1 登入 (Login.vue)
+路由: /member/login
+- 輸入帳號、密碼、驗證碼
+- 密碼顯示/隱藏切換
+- 驗證碼刷新
+- 保持登入狀態選項
+- Google登入選項
+- 忘記密碼鏈接
+- 轉向註冊頁
+
+6.2 註冊 (Register.vue)
+路由: /member/register
+- 輸入帳號、Email、密碼、確認密碼、驗證碼
+- 同意服務條款
+- 驗證碼驗證
+
+6.3 忘記密碼 (ForgotPassword.vue)
+路由: /member/forgot-password
+- 輸入Email或帳號
+- 驗證碼驗證
+- 設置新密碼
+
+## 7. 個人資料頁 (Profile.vue) - 需要登入
+路由: /member/profile
+
+功能:
+a) 個人資訊編輯:
+   - 姓名、電話、Email、地址、出生日期、性別、照片
+
+b) 食譜收藏:
+   - 查看已保存食譜
+   - 移除收藏
+   - 點擊查看詳情
+
+c) 蔬菜收藏:
+   - 查看已收藏蔬菜
+   - 移除收藏
+   - 查看詳情
+
+d) 到價追蹤:
+   - 查看追蹤記錄
+   - 編輯追蹤價格
+   - 移除追蹤
+   - 接收通知
+
+側邊欄: 個人頭像、標籤導航、登出按鈕
+
+## 8. 追蹤功能
+
+8.1 我的追蹤 (MyFollows.vue) - 需要登入
+路由: /member/follows
+- 查看追蹤的農民/作物
+- 取消追蹤
+- 檢視詳情
+
+8.2 追蹤設定 (FollowSetting.vue) - 需要登入
+路由: /member/follow-setting
+- 價格變動通知設定
+- 新作物上架通知
+- 新食譜推薦通知
+- 農民更新通知
+- 設置價格門檻
+- 通知方式選擇
+
+## 9. 身份驗證保護
+
+需要登入的路徑:
+- /member/profile (個人資料)
+- /member/follows (我的追蹤)
+- /member/follow-setting (追蹤設定)
+- /farmer/crop-dashboard (農作物儀表板)
+
+驗證機制:
+- localStorage 存儲: userToken、userId、userName
+- 路由守衛檢查三者都存在
+
+## 10. 儲存資料
+LocalStorage:
+- userToken - 認證令牌
+- userId - 用戶ID
+- userName - 用戶名
+- redirectAfterLogin - 登入後重定向
+- food_{foodId} - 蔬菜詳細資料快取
+
+## 11. API 調用
+食物API:
+- GET /api/food/findFoodData
+- POST /api/food/findFoodsList
+- GET /api/food/getFoodSubCategories
+- GET /api/food/getFoodSortEnums
+
+食譜API:
+- GET /api/recipe/findRecipeData
+- POST /api/recipe/findRecipesList
+- GET /api/recipe/getRecipeCategories
+- GET /api/recipe/getRecipeSortEnums
+
+認證API:
+- POST /api/auth/login
+- POST /api/auth/register
+- POST /api/auth/forgot-password
+- GET /api/captcha/auth/captcha
+
+## 12. 未實現功能
+- 購物車功能
+- 結賬/支付功能
+- 訂單管理
+
