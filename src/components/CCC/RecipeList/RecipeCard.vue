@@ -6,23 +6,23 @@
     <!-- 圖片區域 -->
     <div class="image-container">
       <!-- 載入狀態 -->
-      <div v-if="imageLoading" class="image-loading">
+      <div v-show="imageLoading && !imageError" class="image-loading">
         <span>載入中...</span>
       </div>
 
       <!-- 錯誤狀態 -->
-      <div v-else-if="imageErrorCount > maxRetries" class="image-error">
+      <div v-show="imageError" class="image-error">
         <span>🖼️</span>
         <span>圖片載入失敗</span>
         <small>{{ recipe.name }}</small>
       </div>
 
-      <!-- 正常圖片 -->
+      <!-- 正常圖片 - 始終渲染以觸發 load/error 事件 -->
       <img
-        v-else
         :src="$img(recipe.image)"
         :alt="recipe.name"
         class="recipe-image"
+        :style="{ display: (imageLoading || imageError) ? 'none' : 'block' }"
         @load="handleImageLoad"
         @error="handleImageError"
       />
@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const props = defineProps({
@@ -79,10 +79,7 @@ const router = useRouter();
 
 // 圖片狀態管理
 const imageLoading = ref(true);
-const imageErrorCount = ref(0);
-const maxRetries = 3;
-const retryDelay = 20000; // 20秒
-let retryTimeout = null;
+const imageError = ref(false);
 
 // 前往詳情頁
 const goToDetail = () => {
@@ -92,21 +89,19 @@ const goToDetail = () => {
 // 圖片載入成功
 const handleImageLoad = () => {
   imageLoading.value = false;
-  imageErrorCount.value = 0; // 重置錯誤計數
+  imageError.value = false;
   console.log(`✅ 圖片載入成功: ${props.recipe.name}`);
 };
 
-// 處理圖片載入錯誤 - 改良版（直接顯示錯誤狀態，不重試）
+// 處理圖片載入錯誤
 const handleImageError = (event) => {
   const img = event.target;
   const currentSrc = img.src;
 
   imageLoading.value = false;
+  imageError.value = true;
 
   console.warn(`❌ 圖片載入失敗: ${props.recipe.name}`, currentSrc);
-
-  // 直接設為超過上限，顯示錯誤狀態
-  imageErrorCount.value = maxRetries + 1;
 };
 
 // 取得標籤樣式類別
@@ -121,13 +116,6 @@ const getTagClass = (tag) => {
   };
   return tagClassMap[tag] || "tag-default";
 };
-
-// 清理計時器
-onUnmounted(() => {
-  if (retryTimeout) {
-    clearTimeout(retryTimeout);
-  }
-});
 </script>
 
 <style scoped>
@@ -170,9 +158,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #f5f5f5;
 }
 
 .image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,9 +173,13 @@ onUnmounted(() => {
   background-color: #f5f5f5;
   color: #666;
   font-size: 14px;
+  z-index: 1;
 }
 
 .image-error {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -196,6 +192,7 @@ onUnmounted(() => {
   text-align: center;
   padding: 16px;
   box-sizing: border-box;
+  z-index: 1;
 }
 
 .image-error span:first-child {
@@ -214,6 +211,9 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .recipe-card:hover .recipe-image {

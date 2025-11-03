@@ -1,0 +1,464 @@
+@startuml FreshLog消費者活動圖
+!theme cerulean-outline
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Microsoft YaHei
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1976D2
+skinparam activityDiamondBackgroundColor #FFF3E0
+skinparam activityDiamondBorderColor #F57C00
+
+title FreshLog網站 - 消費者完整活動圖
+
+start
+
+:進入FreshLog首頁;
+note right
+  顯示以下內容：
+  • 品牌介紹
+  • 市場行情（過去7天走勢）
+  • 農業複合指數
+  • 食譜清單
+  • 營養助手
+  • 食安快訊
+end note
+
+:選擇功能模組;
+note right: 消費者可選擇不同功能
+
+|蔬菜瀏覽與搜尋|
+split
+  :進入蔬菜列表頁;
+
+  partition "篩選與搜尋" {
+    fork
+      :選擇分類篩選;
+      note right
+        • 葉菜類
+        • 根莖類
+        • 雜糧類
+        • 其他
+      end note
+    fork again
+      :設定價格範圍;
+      note right: 0-200元滑桿
+    fork again
+      :選擇營養篩選;
+      note right
+        • 維生素A/C
+        • 鈣、鐵
+        • 抗氧化
+      end note
+    fork again
+      :選擇特色篩選;
+      note right
+        • 抗氧化
+        • 補鈣、護眼
+        • 能量、超級食物
+      end note
+    fork again
+      :輸入中文/英文名稱搜尋;
+      note right: 自動判斷語言
+    end fork
+
+    :選擇排序方式;
+    note right
+      • 產季由近到遠
+      • 價格高到低
+      • 價格低到高
+    end note
+  }
+
+  :載入並顯示蔬菜卡片;
+  note right
+    每張卡片顯示：
+    • 圖片、評分、追蹤狀態
+    • 名稱、分類、描述
+    • 營養標籤、AI建議
+    • 價格、價格變化百分比
+  end note
+
+  :查看分頁結果;
+  note right: 每頁6項
+
+  if (需要翻頁?) then (是)
+    :點擊上一頁/下一頁/頁碼;
+    :載入並顯示蔬菜卡片;
+  else (否)
+  endif
+
+  if (是否查看詳情?) then (是)
+    :點擊"詳細資訊"按鈕;
+
+    :進入蔬菜詳細頁;
+    note right
+      顯示內容：
+      • 蔬菜主要資訊
+      • AI建議卡片
+      • 詳細營養資訊
+      • 價格趨勢圖表
+      • 多市場價格對比
+      • 相似蔬菜對比
+      • 相關食譜推薦
+      • 保存貼士
+    end note
+
+    if (是否已登入?) then (是)
+      if (操作選擇?) then (收藏蔬菜)
+        :加入蔬菜收藏清單;
+      else (設定價格追蹤)
+        :輸入目標價格;
+        :加入到價追蹤清單;
+        note right: 價格到達時會收到通知
+      else (查看相關食譜)
+        :點擊相關食譜;
+        detach
+      endif
+    else (否)
+      :提示需要登入;
+      if (是否前往登入?) then (是)
+        :轉向登入頁面;
+        detach
+      else (否)
+        :繼續瀏覽其他內容;
+      endif
+    endif
+
+    :返回蔬菜列表;
+  else (否)
+    :繼續瀏覽列表;
+  endif
+
+split again
+
+|食譜瀏覽與查詢|
+  :進入食譜列表頁;
+
+  partition "食譜篩選" {
+    fork
+      :選擇烹調時間篩選;
+      note right
+        • 15分鐘
+        • 30分鐘
+        • 1小時
+      end note
+    fork again
+      :選擇難易度篩選;
+      note right
+        • 簡單
+        • 中等
+        • 困難
+      end note
+    fork again
+      :選擇特色篩選;
+      note right
+        • 素食
+        • 其他
+      end note
+    fork again
+      :選擇分類篩選;
+      note right
+        • 湯品、蔬菜
+        • 甜點、沙拉
+        • 肉類、飯類
+      end note
+    fork again
+      :輸入食譜名稱搜尋;
+    end fork
+
+    :選擇排序方式;
+    note right
+      • 最新上架
+      • 烹調時間（短到長/長到短）
+      • 難易度（易到難/難到易）
+    end note
+  }
+
+  :載入並顯示食譜列表;
+  note right
+    每頁20項
+    顯示AI推薦區塊
+  end note
+
+  if (需要翻頁?) then (是)
+    :點擊分頁按鈕;
+    :載入並顯示食譜列表;
+  else (否)
+  endif
+
+  if (是否查看食譜詳情?) then (是)
+    :點擊食譜卡片;
+
+    :進入食譜詳細頁;
+    note right
+      顯示內容：
+      • 麵包屑導航
+      • 食譜基本資訊（圖片、描述、時間、份量、難度）
+      • 主要食材價格及成本估算
+      • 完整食材列表
+      • 分步驟烹調指南
+      • 營養資訊表
+      • 當季食材推薦
+      • 替代食材建議
+      • 市場行情參考
+      • 相關食譜推薦
+    end note
+
+    if (是否已登入?) then (是)
+      if (是否收藏食譜?) then (是)
+        :加入食譜收藏清單;
+      else (否)
+      endif
+    else (否)
+      :提示需要登入才能收藏;
+    endif
+
+    if (是否查看相關食譜?) then (是)
+      :點擊相關食譜;
+      :進入食譜詳細頁;
+    else (否)
+    endif
+
+    :返回食譜列表;
+  else (否)
+    :繼續瀏覽列表;
+  endif
+
+split again
+
+|會員功能|
+  if (是否已登入?) then (否)
+    :進入登入頁面;
+
+    if (登入方式選擇?) then (一般登入)
+      :輸入帳號;
+      :輸入密碼;
+      :輸入驗證碼;
+
+      if (是否保持登入狀態?) then (是)
+        :勾選"保持登入";
+      else (否)
+      endif
+
+      :點擊登入按鈕;
+
+      if (驗證成功?) then (是)
+        :儲存Token到localStorage;
+        :登入成功，轉向首頁或原頁面;
+      else (否)
+        :顯示錯誤訊息;
+        if (忘記密碼?) then (是)
+          :進入忘記密碼頁面;
+          :輸入電子郵件或帳號;
+          :輸入驗證碼;
+          if (驗證成功?) then (是)
+            :輸入新密碼;
+            :確認新密碼;
+            :密碼重設成功;
+            :轉向登入頁面;
+          else (否)
+            :顯示驗證失敗訊息;
+            stop
+          endif
+        else (否)
+          :重新輸入;
+        endif
+      endif
+
+    else if (Google OAuth登入) then
+      :點擊Google登入按鈕;
+      :跳轉Google OAuth頁面;
+      :授權完成;
+      if (認證成功?) then (是)
+        :儲存Token;
+        :登入成功;
+      else (否)
+        :顯示錯誤訊息;
+        stop
+      endif
+
+    else (尚無帳號，前往註冊)
+      :進入註冊頁面;
+      :輸入帳號;
+      :輸入電子郵件;
+      :輸入密碼;
+      :確認密碼;
+      :輸入驗證碼;
+      :勾選同意服務條款;
+
+      :點擊註冊按鈕;
+
+      if (資料驗證成功?) then (是)
+        :建立帳號;
+        :註冊成功;
+        :轉向登入頁面;
+      else (否)
+        :顯示錯誤訊息;
+        :修正資料;
+      endif
+    endif
+
+  else (是)
+    :已登入狀態;
+  endif
+
+  ' 登入後的會員功能
+  if (是否進入會員中心?) then (是)
+    :進入個人資料管理頁;
+
+    if (選擇功能標籤?) then (個人資訊)
+      :顯示個人資訊表單;
+      note right
+        可編輯欄位：
+        • 姓名
+        • 電話
+        • 電子郵件
+        • 地址
+        • 出生日期
+        • 性別
+        • 照片/頭像
+      end note
+
+      if (是否修改資料?) then (是)
+        :編輯個人資訊;
+        :點擊儲存按鈕;
+        if (驗證成功?) then (是)
+          :更新資料;
+          :顯示更新成功訊息;
+        else (否)
+          :顯示錯誤訊息;
+        endif
+      else (否)
+      endif
+
+    else if (食譜收藏) then
+      :顯示已收藏食譜列表;
+
+      if (操作選擇?) then (查看詳情)
+        :點擊食譜;
+        :進入食譜詳細頁;
+        detach
+      else (移除收藏)
+        :點擊移除按鈕;
+        :從收藏清單移除;
+      endif
+
+    else if (蔬菜收藏) then
+      :顯示已收藏蔬菜列表;
+
+      if (操作選擇?) then (查看詳情)
+        :點擊蔬菜;
+        :進入蔬菜詳細頁;
+        detach
+      else (移除收藏)
+        :點擊移除按鈕;
+        :從收藏清單移除;
+      endif
+
+    else (到價追蹤)
+      :顯示追蹤清單;
+      note right
+        顯示每項追蹤：
+        • 蔬菜名稱
+        • 目標價格
+        • 當前價格
+        • 價格狀態
+      end note
+
+      if (操作選擇?) then (編輯目標價格)
+        :輸入新的目標價格;
+        :更新追蹤設定;
+      else (移除追蹤)
+        :點擊移除按鈕;
+        :從追蹤清單移除;
+      else (查看詳情)
+        :進入蔬菜詳細頁;
+        detach
+      endif
+    endif
+
+  else (否)
+  endif
+
+  if (是否設定追蹤偏好?) then (是)
+    :進入追蹤設定頁面;
+
+    fork
+      :價格變動通知 開/關;
+    fork again
+      :新作物上架通知 開/關;
+    fork again
+      :新食譜推薦通知 開/關;
+    fork again
+      :農民更新通知 開/關;
+    fork again
+      :設置價格門檻;
+    fork again
+      :選擇通知方式;
+      note right
+        • 電子郵件
+        • 應用推送
+      end note
+    end fork
+
+    :儲存追蹤設定;
+    :顯示設定成功訊息;
+  else (否)
+  endif
+
+split again
+
+|市場資訊查詢|
+  if (查詢類型?) then (食安快訊)
+    :進入食安快訊列表;
+    :選擇快訊項目;
+    :查看食安詳細資訊;
+    note right: 路由: /foodsafety/:id
+
+  else if (禽產行情) then
+    :進入禽產市場頁面;
+    note right
+      路由: /poultry-market
+      (功能開發中)
+    end note
+
+  else (海產行情)
+    :進入海產市場頁面;
+    note right
+      路由: /seafood-market
+      (功能開發中)
+    end note
+  endif
+
+end split
+
+:返回首頁或離開網站;
+
+stop
+
+legend right
+  |= 符號說明 |
+  | 圓角矩形 | 活動/動作 |
+  | 菱形 | 決策點 |
+  | 粗黑條 | 並行分叉/匯合 |
+  | 細黑條 | 分割/合併 |
+
+  |= 顏色標示 |
+  | 藍色 | 一般活動 |
+  | 橙色 | 決策點 |
+
+  |= 重要說明 |
+  需要登入的功能：
+  • 收藏蔬菜/食譜
+  • 價格追蹤
+  • 個人資料管理
+  • 追蹤設定
+
+  不需登入的功能：
+  • 瀏覽蔬菜列表
+  • 查看蔬菜詳情
+  • 瀏覽食譜列表
+  • 查看食譜詳情
+  • 市場資訊查詢
+endlegend
+
+@enduml

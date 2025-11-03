@@ -46,7 +46,9 @@
                 placeholder="輸入中文或英文名稱，系統會自動判斷"
               />
             </div>
-            <div class="input-note">系統會自動判斷輸入內容為中文或英文並送出對應欄位</div>
+            <div class="input-note">
+              系統會自動判斷輸入內容為中文或英文並送出對應欄位
+            </div>
           </div>
         </div>
 
@@ -121,7 +123,10 @@
               </div>
 
               <!-- 主要好處（以 pill 顯示，最多 3 個） -->
-              <div class="benefits" v-if="dish.benefits && dish.benefits.length">
+              <div
+                class="benefits"
+                v-if="dish.benefits && dish.benefits.length"
+              >
                 <ul class="benefits-list-inline">
                   <li
                     v-for="(b, idx) in dish.benefits.slice(0, 3)"
@@ -157,7 +162,8 @@
 
         <!-- 沒有資料時的顯示 -->
         <div v-if="!isLoading && paginatedDishes.length === 0" class="no-data">
-          <p>目前沒有符合條件的食譜</p>
+          <p>目前沒有符合條件的食材</p>
+          <p class="no-data-hint">提示: 當前分類下的資料可能尚未補充，請嘗試選擇其他分類</p>
         </div>
 
         <!-- 分頁控制 -->
@@ -291,9 +297,7 @@ const allSubCategories = ref([]);
 
 // 注意：這些 subCategory 必須與後端 API 回傳的子分類名稱完全一致
 const mainCategories = [
-  { id: "all", name: "全部", subCategory: null },
-  { id: "vegetable", name: "蔬菜", subCategory: "蔬菜" },
-  { id: "fruit", name: "水果", subCategory: "水果" },
+  { id: "all", name: "未分類", subCategory: "未分類" }, // 🔧 使用"未分類"（從"其他"下拉選單驗證可用）
   { id: "leafy", name: "葉菜類", subCategory: "葉菜類" },
   { id: "root", name: "根莖類", subCategory: "根莖類" },
   { id: "grain", name: "雜糧類", subCategory: "雜糧類" },
@@ -367,48 +371,59 @@ const loadData = async () => {
         }
 
         // case E: sometimes backend returns { code, data: ['a','b'] }
-        else if (subCatResponse?.data?.code === "0000" && Array.isArray(subCatResponse.data.data)) {
+        else if (
+          subCatResponse?.data?.code === "0000" &&
+          Array.isArray(subCatResponse.data.data)
+        ) {
           subCats = subCatResponse.data.data;
         }
 
         // fallback: if data.payload is an object map, extract keys or values
-        else if (subCatResponse?.data && typeof subCatResponse.data === "object") {
+        else if (
+          subCatResponse?.data &&
+          typeof subCatResponse.data === "object"
+        ) {
           // try to extract arrays from properties
-          const candidates = Object.values(subCatResponse.data).filter((v) => Array.isArray(v));
+          const candidates = Object.values(subCatResponse.data).filter((v) =>
+            Array.isArray(v)
+          );
           if (candidates.length > 0) subCats = candidates[0];
         }
 
         // ensure array of strings
         if (!Array.isArray(subCats)) subCats = [];
         // flatten and filter
-        subCats = subCats.flat().map((s) => (s && s.name ? s.name : s)).filter(Boolean);
+        subCats = subCats
+          .flat()
+          .map((s) => (s && s.name ? s.name : s))
+          .filter(Boolean);
 
         allSubCategories.value = subCats;
         console.log("✅ 子分類載入成功:", allSubCategories.value.length, "個");
         console.log("📋 完整子分類列表:", allSubCategories.value);
 
-          const hasVegetable = allSubCategories.value.includes("蔬菜");
-          console.log("🔍 是否有「蔬菜」子分類:", hasVegetable);
+        const hasVegetable = allSubCategories.value.includes("蔬菜");
+        console.log("🔍 是否有「蔬菜」子分類:", hasVegetable);
 
-          if (!hasVegetable) {
-            const vegetableRelated = allSubCategories.value.filter(
-              (s) => s.includes("菜") || s.includes("蔬")
-            );
-            console.log("🔍 相關的子分類:", vegetableRelated);
-          }
+        if (!hasVegetable) {
+          const vegetableRelated = allSubCategories.value.filter(
+            (s) => s.includes("菜") || s.includes("蔬")
+          );
+          console.log("🔍 相關的子分類:", vegetableRelated);
+        }
 
-          // 計算「其他」分類（排除已在主按鈕列的）
-          const mainSubCategories = mainCategories
-            .map((c) => c.subCategory)
-            .filter(Boolean);
-          otherCategories.value = allSubCategories.value.filter(
-            (subCat) =>
-              !mainSubCategories.includes(subCat) && subCat !== "其他作物"
-          );
-          console.log(
-            "📂 其他分類 (" + otherCategories.value.length + "個):",
-            otherCategories.value
-          );
+        // 計算「其他」分類（排除已在主按鈕列的）
+        const mainSubCategories = mainCategories
+          .map((c) => c.subCategory)
+          .filter(Boolean);
+        otherCategories.value = allSubCategories.value.filter(
+          (subCat) =>
+            !mainSubCategories.includes(subCat) && subCat !== "其他作物"
+        );
+        console.log(
+          "📂 其他分類 (" + otherCategories.value.length + "個):",
+          otherCategories.value
+        );
       } catch (subCatError) {
         console.error("⚠️ 子分類查詢失敗:", subCatError.message);
         console.error("⚠️ 完整錯誤:", subCatError);
@@ -430,27 +445,30 @@ const loadData = async () => {
 
     // 🔧 根據當前分類取得對應的 subCategory
     let querySubCategory = null;
-    if (activeCategory.value !== "all") {
-      // 檢查是否是從「其他」選單選的子分類
-      if (activeCategory.value.startsWith("other-")) {
-        querySubCategory = activeCategory.value.replace("other-", "");
-        console.log("📂 使用其他分類:", querySubCategory);
-      } else {
-        const currentCategory = mainCategories.find(
-          (c) => c.id === activeCategory.value
-        );
+
+    // 檢查是否是從「其他」選單選的子分類
+    if (activeCategory.value.startsWith("other-")) {
+      querySubCategory = activeCategory.value.replace("other-", "");
+      console.log("📂 使用其他分類:", querySubCategory);
+    } else {
+      // 從 mainCategories 中查找對應的分類配置
+      const currentCategory = mainCategories.find(
+        (c) => c.id === activeCategory.value
+      );
+
+      if (currentCategory) {
         querySubCategory =
-          currentCategory?.subCategory === "other"
+          currentCategory.subCategory === "other"
             ? null
-            : currentCategory?.subCategory || null;
+            : currentCategory.subCategory || null;
       }
     }
 
     const filterParams = {
       category: null, // 🔧 改用 subCategory 查詢，不使用 category
       subCategory: querySubCategory,
-  name: name.value || null,
-  nameEn: nameEn.value || null,
+      name: name.value || null,
+      nameEn: nameEn.value || null,
       priceMin: isDefaultPriceRange
         ? 0
         : Number(Math.min(priceRange.value[0], priceRange.value[1])),
@@ -462,10 +480,9 @@ const loadData = async () => {
     };
 
     // Query Parameters（分頁參數）
-    // 🔧 改用較大的 pageSize 確保能取得所有資料
     const paginationParams = {
       pageNo: 0,
-      pageSize: 200, // 🔧 從 20 改為 200，確保能取得更多資料
+      pageSize: 200, // 統一使用 200
     };
 
     if (filterParams.subCategory) {
@@ -595,7 +612,36 @@ const loadData = async () => {
       });
 
       if (Array.isArray(foodList) && foodList.length > 0) {
-        // � 不做去重，直接使用後端回傳的 foodList
+        // 🔧 過濾假資料 (F 開頭的 foodId)
+        const originalCount = foodList.length;
+        const fakeDataItems = foodList.filter((item) => {
+          const foodId = item.foodId || "";
+          return /^F\d+$/i.test(foodId); // F 後面接數字的是假資料
+        });
+
+        foodList = foodList.filter((item) => {
+          const foodId = item.foodId || "";
+          const isFakeData = /^F\d+$/i.test(foodId);
+          return !isFakeData;
+        });
+
+        const filteredCount = foodList.length;
+
+        if (originalCount !== filteredCount) {
+          console.log(`🔧 過濾假資料: ${originalCount} 筆 → ${filteredCount} 筆 (移除 ${originalCount - filteredCount} 筆假資料)`);
+
+          if (filteredCount === 0) {
+            console.warn(`⚠️ 警告: 當前分類 "${activeCategory.value}" 的所有資料都是假資料（F 開頭）`);
+            console.warn(`⚠️ 建議: 請選擇其他分類，或聯繫後端補充真實資料`);
+            console.warn(`⚠️ 假資料範例:`, fakeDataItems.slice(0, 3).map(item => ({
+              foodId: item.foodId,
+              name: item.name,
+              subCategory: item.subCategory
+            })));
+          }
+        }
+
+        // 不做去重，直接使用後端回傳的 foodList
         // 並在前端依 priceDate 由新到舊排序，及計算同 foodId 前一次價格的百分比差異
 
         // safe JSON parse helper for fields that may be strings or arrays
@@ -637,7 +683,16 @@ const loadData = async () => {
 
         // 先做基本映射
         const mappedList = foodList.map((item) => {
-          const priceNum = Number(item.price ?? 0);
+          // 🔧 嘗試多個可能的價格欄位
+          const priceNum = Number(
+            item.price ??
+            item.avgPrice ??
+            item.averagePrice ??
+            item.currentPrice ??
+            item.latestPrice ??
+            item.marketPrice ??
+            0
+          );
           const priceDateStr = item.priceDate || null;
           const priceDateTs = parseDateTs(priceDateStr);
           // safe JSON parse helper for fields that may be strings or arrays
@@ -720,7 +775,7 @@ const loadData = async () => {
           );
         });
 
-  // 🔧 統計圖片狀況
+        // 🔧 統計圖片狀況
         const withImage = allDishes.value.filter((d) => d._raw.image).length;
         const withoutImage = allDishes.value.length - withImage;
         console.log(
@@ -997,7 +1052,10 @@ const viewRecipeDetails = async (foodId) => {
 
     if (response && response.data && response.data.data) {
       // 可選：將資料暫存到 localStorage 供內頁使用（如果內頁有需要）
-      localStorage.setItem(`food_${foodId}`, JSON.stringify(response.data.data));
+      localStorage.setItem(
+        `food_${foodId}`,
+        JSON.stringify(response.data.data)
+      );
       console.log("✅ 蔬果資料已暫存");
     }
   } catch (error) {
@@ -1186,7 +1244,11 @@ onMounted(() => {
   font-weight: 600; /* 加粗 */
   line-height: 1.45;
   margin-bottom: 12px;
-  background: linear-gradient(90deg, rgba(255,250,240,0.9), rgba(255,255,255,0));
+  background: linear-gradient(
+    90deg,
+    rgba(255, 250, 240, 0.9),
+    rgba(255, 255, 255, 0)
+  );
   padding: 6px 8px;
   border-radius: 6px;
 }
@@ -1259,6 +1321,17 @@ onMounted(() => {
   padding: 60px 20px;
   color: #999;
   font-size: 16px;
+}
+
+.no-data-hint {
+  font-size: 14px;
+  color: #666;
+  margin-top: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 12px 20px;
+  display: inline-block;
 }
 
 /* AI recommendations and benefits */

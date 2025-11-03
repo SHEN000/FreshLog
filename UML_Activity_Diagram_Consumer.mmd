@@ -1,0 +1,112 @@
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#E3F2FD','primaryTextColor':'#000','primaryBorderColor':'#1976D2','fontSize':'16px','fontFamily':'Arial, Microsoft YaHei'}}}%%
+
+flowchart LR
+    Start([開始]) --> Home[進入首頁]
+    Home --> Choose{選擇功能}
+
+    %% 蔬菜模組
+    Choose -->|蔬菜| V1[蔬菜列表]
+    V1 --> V2>篩選]
+    V2 --> V3[排序]
+    V3 --> V4[顯示結果]
+    V4 --> V5{翻頁?}
+    V5 -->|是| V4
+    V5 -->|否| V6{查看?}
+    V6 -->|是| V7[蔬菜詳情]
+    V7 --> V8{已登入?}
+    V8 -->|是| V9{操作}
+    V9 -->|收藏| V10[加入收藏]
+    V9 -->|追蹤| V11[價格追蹤]
+    V9 -->|食譜| R7
+    V10 --> VEnd[返回]
+    V11 --> VEnd
+    V8 -->|否| V12[提示登入]
+    V12 --> V13{登入?}
+    V13 -->|是| Login
+    V13 -->|否| VEnd
+    V6 -->|否| VEnd
+    VEnd --> End
+
+    %% 食譜模組
+    Choose -->|食譜| R1[食譜列表]
+    R1 --> R2>篩選]
+    R2 --> R3[排序]
+    R3 --> R4[顯示結果]
+    R4 --> R5{翻頁?}
+    R5 -->|是| R4
+    R5 -->|否| R6{查看?}
+    R6 -->|是| R7[食譜詳情]
+    R7 --> R8{已登入?}
+    R8 -->|是| R9{收藏?}
+    R9 -->|是| R10[加入收藏]
+    R9 -->|否| REnd[返回]
+    R10 --> REnd
+    R8 -->|否| R11[提示登入]
+    R11 --> REnd
+    R6 -->|否| REnd
+    REnd --> End
+
+    %% 會員模組
+    Choose -->|會員| M1{已登入?}
+    M1 -->|否| Login[登入頁]
+    Login --> M2{方式}
+    M2 -->|一般| M3[輸入帳密]
+    M3 --> M4{驗證?}
+    M4 -->|是| M5[登入成功]
+    M4 -->|否| M6{忘記?}
+    M6 -->|是| M7[重設密碼]
+    M7 --> Login
+    M6 -->|否| M3
+    M2 -->|Google| M8[OAuth]
+    M8 --> M9{成功?}
+    M9 -->|是| M5
+    M9 -->|否| MEnd1([結束])
+    M2 -->|註冊| M10[註冊頁]
+    M10 --> M11[填寫資料]
+    M11 --> M12{驗證?}
+    M12 -->|是| M13[建立帳號]
+    M13 --> Login
+    M12 -->|否| M11
+    M1 -->|是| M5
+    M5 --> M14{會員中心?}
+    M14 -->|是| M15[個人資料]
+    M15 --> M16{功能}
+    M16 -->|資訊| M17[編輯資訊]
+    M16 -->|食譜收藏| M18[管理收藏]
+    M16 -->|蔬菜收藏| M19[管理收藏]
+    M16 -->|追蹤| M20[管理追蹤]
+    M17 --> MEnd
+    M18 --> MEnd
+    M19 --> MEnd
+    M20 --> MEnd
+    M14 -->|否| M21{追蹤設定?}
+    M21 -->|是| M22>設定]
+    M22 --> M23[儲存]
+    M23 --> MEnd
+    M21 -->|否| MEnd
+    MEnd[返回] --> End
+
+    %% 市場模組
+    Choose -->|市場| K1{類型}
+    K1 -->|食安| K2[快訊列表]
+    K2 --> K3[查看詳情]
+    K1 -->|禽產| K4[禽產行情]
+    K1 -->|海產| K5[海產行情]
+    K3 --> KEnd[返回]
+    K4 --> KEnd
+    K5 --> KEnd
+    KEnd --> End
+
+    End([結束])
+
+    %% 樣式
+    classDef start fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff,font-size:16px
+    classDef decision fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,font-size:16px
+    classDef process fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,font-size:16px
+    classDef parallel fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,font-size:16px
+    classDef important fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px,font-size:16px
+
+    class Start,End,MEnd1 start
+    class Choose,V5,V6,V8,V9,V13,R5,R6,R8,R9,M1,M2,M4,M6,M9,M12,M14,M16,M21,K1 decision
+    class V2,R2,M22 parallel
+    class Login,M5,V7,R7,M15 important

@@ -54,8 +54,8 @@ const routes = [
   }, // 追蹤設定
   {
     path: "/ai-recommendation",
-    component: () => import("@/views/Consumer/AiRecommendation.vue"),
-  }, // 農產行情
+    component: () => import("@/views/Consumer/VegetableList.vue"),
+  }, // AI 智慧推薦
   {
     path: "/ai-recommendation/:id",
     name: "RecipeDetail",
@@ -76,19 +76,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-
-    // 所有頁面導航後一律置頂（並支援返回與 #hash）
-  scrollBehavior(to, from, savedPosition) {
-    // 瀏覽器返回/前進時，恢復先前的捲動位置
-    if (savedPosition) return savedPosition;
-
-    // 若有錨點(#section)就捲到錨點
-    if (to.hash) return { el: to.hash };
-
-    // 其餘情況統一回到頁面頂部
-    return { left: 0, top: 0 };
-  }
-
 });
 
 // 需要登入保護的路徑（只有這些才強制登入）

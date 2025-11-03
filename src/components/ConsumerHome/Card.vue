@@ -4,7 +4,8 @@
     <h3 v-if="title" class="card-title">{{ title }}</h3>
 
     <div class="card-content">
-      <slot />  <!-- slot 讓卡片內容可以由父層插入自訂內容 -->
+      <slot />
+      <!-- slot 讓卡片內容可以由父層插入自訂內容 -->
     </div>
   </div>
 </template>
@@ -12,8 +13,8 @@
 <script setup>
 // 定義 props：title 為可選字串，控制是否顯示標題
 defineProps({
-  title: String
-})
+  title: String,
+});
 </script>
 
 <style scoped>
@@ -22,7 +23,7 @@ defineProps({
   flex-direction: column;
   width: 100%; /* 讓卡片填滿容器寬度 */
   min-width: 0; /* 防止內容撐破卡片寬度 */
-  height: 100%;  /* 高度由內容自動撐開 */
+  height: 100%; /* 高度由內容自動撐開 */
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05); /* 陰影 */
