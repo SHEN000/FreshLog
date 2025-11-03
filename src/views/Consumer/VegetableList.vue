@@ -683,7 +683,16 @@ const loadData = async () => {
 
         // 先做基本映射
         const mappedList = foodList.map((item) => {
-          const priceNum = Number(item.price ?? 0);
+          // 🔧 嘗試多個可能的價格欄位
+          const priceNum = Number(
+            item.price ??
+            item.avgPrice ??
+            item.averagePrice ??
+            item.currentPrice ??
+            item.latestPrice ??
+            item.marketPrice ??
+            0
+          );
           const priceDateStr = item.priceDate || null;
           const priceDateTs = parseDateTs(priceDateStr);
           // safe JSON parse helper for fields that may be strings or arrays
