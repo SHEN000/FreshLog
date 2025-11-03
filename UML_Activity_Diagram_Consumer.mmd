@@ -1,318 +1,112 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#E3F2FD','primaryTextColor':'#1976D2','primaryBorderColor':'#1976D2','lineColor':'#1976D2','secondaryColor':'#FFF3E0','tertiaryColor':'#FFEBEE'}}}%%
-
-flowchart TD
-    Start([開始]) --> Home[進入FreshLog首頁<br/>品牌介紹、市場行情<br/>農業指數、食譜、食安快訊]
-
-    Home --> ChooseModule{選擇功能模組}
-
-    %% ========================================
-    %% 蔬菜瀏覽與搜尋模組
-    %% ========================================
-    ChooseModule -->|蔬菜瀏覽| VeggieList[進入蔬菜列表頁]
-
-    VeggieList --> FilterStart>開始並行篩選]
-    FilterStart --> Filter1[分類篩選<br/>葉菜/根莖/雜糧/其他]
-    FilterStart --> Filter2[價格範圍<br/>0-200元]
-    FilterStart --> Filter3[營養篩選<br/>維生素/鈣/鐵]
-    FilterStart --> Filter4[特色篩選<br/>抗氧化/護眼]
-    FilterStart --> Filter5[名稱搜尋<br/>中英文自動判斷]
-
-    Filter1 --> FilterEnd>篩選匯合]
-    Filter2 --> FilterEnd
-    Filter3 --> FilterEnd
-    Filter4 --> FilterEnd
-    Filter5 --> FilterEnd
-
-    FilterEnd --> SortVeggie[選擇排序方式<br/>產季/價格高低]
-
-    SortVeggie --> LoadVeggie[載入蔬菜卡片<br/>圖片/價格/營養]
-
-    LoadVeggie --> PaginateVeggie[查看分頁<br/>每頁6項]
-
-    PaginateVeggie --> NeedPageV{需要翻頁?}
-    NeedPageV -->|是| ClickPageV[點擊頁碼]
-    ClickPageV --> LoadVeggie
-
-    NeedPageV -->|否| ViewDetailQ{查看詳情?}
-
-    ViewDetailQ -->|是| VeggieDetail[進入蔬菜詳細頁]
-
-    VeggieDetail --> VeggieDetailPage[顯示詳細資訊<br/>AI建議/營養/價格趨勢<br/>市場對比/相關食譜]
-
-    VeggieDetailPage --> IsLoginV1{已登入?}
-
-    IsLoginV1 -->|是| OperationV{操作選擇}
-    OperationV -->|收藏| AddFavVeggie[加入收藏]
-    OperationV -->|價格追蹤| SetPriceTrack[設定目標價格<br/>加入追蹤清單]
-    OperationV -->|查看食譜| ClickRelatedRecipe[點擊相關食譜]
-    ClickRelatedRecipe --> RecipeDetailPage[食譜詳細頁]
-
-    AddFavVeggie --> BackToVeggieList[返回列表]
-    SetPriceTrack --> BackToVeggieList
-
-    IsLoginV1 -->|否| PromptLoginV[提示需要登入]
-    PromptLoginV --> GoLoginV{前往登入?}
-    GoLoginV -->|是| LoginPage[登入頁面]
-    GoLoginV -->|否| ContinueBrowseV[繼續瀏覽]
-    ContinueBrowseV --> BackToVeggieList
-
-    ViewDetailQ -->|否| ContinueListV[繼續瀏覽列表]
-    ContinueListV --> BackToVeggieList
-
-    BackToVeggieList --> ReturnHome1[返回首頁]
-
-    %% ========================================
-    %% 食譜瀏覽與查詢模組
-    %% ========================================
-    ChooseModule -->|食譜查詢| RecipeList[進入食譜列表頁]
-
-    RecipeList --> RecipeFilterStart>開始並行篩選]
-    RecipeFilterStart --> RF1[烹調時間<br/>15分/30分/1小時]
-    RecipeFilterStart --> RF2[難易度<br/>簡單/中等/困難]
-    RecipeFilterStart --> RF3[特色<br/>素食/其他]
-    RecipeFilterStart --> RF4[分類<br/>湯品/蔬菜/甜點]
-    RecipeFilterStart --> RF5[名稱搜尋]
-
-    RF1 --> RecipeFilterEnd>篩選匯合]
-    RF2 --> RecipeFilterEnd
-    RF3 --> RecipeFilterEnd
-    RF4 --> RecipeFilterEnd
-    RF5 --> RecipeFilterEnd
-
-    RecipeFilterEnd --> SortRecipe[選擇排序<br/>最新/時間/難度]
-
-    SortRecipe --> LoadRecipe[載入食譜列表<br/>每頁20項<br/>AI推薦]
-
-    LoadRecipe --> PaginateRecipe[查看分頁]
-
-    PaginateRecipe --> NeedPageR{需要翻頁?}
-    NeedPageR -->|是| ClickPageR[點擊分頁]
-    ClickPageR --> LoadRecipe
-
-    NeedPageR -->|否| ViewRecipeQ{查看詳情?}
-
-    ViewRecipeQ -->|是| ClickRecipe[點擊食譜]
-
-    ClickRecipe --> RecipeDetailPage2[食譜詳細頁<br/>食材價格/成本<br/>烹調步驟/營養<br/>相關推薦]
-
-    RecipeDetailPage2 --> IsLoginR1{已登入?}
-
-    IsLoginR1 -->|是| FavRecipeQ{收藏食譜?}
-    FavRecipeQ -->|是| AddFavRecipe[加入收藏]
-    FavRecipeQ -->|否| CheckRelatedR{查看相關食譜?}
-
-    AddFavRecipe --> CheckRelatedR
-
-    CheckRelatedR -->|是| ClickRelatedR[點擊相關食譜]
-    ClickRelatedR --> RecipeDetailPage2
-
-    CheckRelatedR -->|否| BackToRecipeList[返回列表]
-
-    IsLoginR1 -->|否| PromptLoginR[提示需登入]
-    PromptLoginR --> CheckRelatedR
-
-    ViewRecipeQ -->|否| ContinueListR[繼續瀏覽]
-    ContinueListR --> BackToRecipeList
-
-    BackToRecipeList --> ReturnHome2[返回首頁]
-
-    %% ========================================
-    %% 會員功能模組
-    %% ========================================
-    ChooseModule -->|會員功能| IsLoginM{已登入?}
-
-    IsLoginM -->|否| LoginPage
-
-    LoginPage --> LoginMethod{登入方式}
-
-    %% 一般登入
-    LoginMethod -->|一般登入| InputAccount[輸入帳號]
-    InputAccount --> InputPassword[輸入密碼]
-    InputPassword --> InputCaptcha[輸入驗證碼]
-
-    InputCaptcha --> KeepLoginQ{保持登入?}
-    KeepLoginQ -->|是| CheckKeepLogin[勾選保持登入]
-    KeepLoginQ -->|否| ClickLoginBtn[點擊登入]
-    CheckKeepLogin --> ClickLoginBtn
-
-    ClickLoginBtn --> LoginSuccess{驗證成功?}
-
-    LoginSuccess -->|是| SaveToken[儲存Token]
-    SaveToken --> LoginOK[登入成功<br/>轉向首頁]
-    LoginOK --> MemberFeatures[會員功能區]
-
-    LoginSuccess -->|否| ShowLoginError[顯示錯誤]
-    ShowLoginError --> ForgotPwdQ{忘記密碼?}
-
-    ForgotPwdQ -->|是| ForgotPwdPage[忘記密碼頁]
-    ForgotPwdPage --> InputEmailOrAccount[輸入郵件/帳號]
-    InputEmailOrAccount --> InputVerifyCode[輸入驗證碼]
-    InputVerifyCode --> VerifySuccess1{驗證成功?}
-
-    VerifySuccess1 -->|是| InputNewPwd[輸入新密碼]
-    InputNewPwd --> ConfirmNewPwd[確認密碼]
-    ConfirmNewPwd --> PwdResetOK[重設成功]
-    PwdResetOK --> LoginPage
-
-    VerifySuccess1 -->|否| ShowVerifyError[驗證失敗]
-    ShowVerifyError --> End1([結束])
-
-    ForgotPwdQ -->|否| RetryLogin[重新輸入]
-    RetryLogin --> InputAccount
-
-    %% Google OAuth
-    LoginMethod -->|Google OAuth| ClickGoogleBtn[點擊Google登入]
-    ClickGoogleBtn --> GoogleOAuth[跳轉OAuth頁面]
-    GoogleOAuth --> GoogleAuth[授權完成]
-    GoogleAuth --> GoogleSuccess{認證成功?}
-
-    GoogleSuccess -->|是| SaveTokenGoogle[儲存Token]
-    SaveTokenGoogle --> GoogleLoginOK[登入成功]
-    GoogleLoginOK --> MemberFeatures
-
-    GoogleSuccess -->|否| ShowGoogleError[顯示錯誤]
-    ShowGoogleError --> End2([結束])
-
-    %% 註冊
-    LoginMethod -->|註冊新帳號| RegisterPage[註冊頁面]
-    RegisterPage --> RegInputAccount[輸入帳號]
-    RegInputAccount --> RegInputEmail[輸入郵件]
-    RegInputEmail --> RegInputPwd[輸入密碼]
-    RegInputPwd --> RegConfirmPwd[確認密碼]
-    RegConfirmPwd --> RegInputCaptcha[輸入驗證碼]
-    RegInputCaptcha --> AgreeTerms[同意服務條款]
-
-    AgreeTerms --> ClickRegBtn[點擊註冊]
-    ClickRegBtn --> RegValidate{驗證成功?}
-
-    RegValidate -->|是| CreateAccount[建立帳號]
-    CreateAccount --> RegSuccess[註冊成功]
-    RegSuccess --> LoginPage
-
-    RegValidate -->|否| ShowRegError[顯示錯誤]
-    ShowRegError --> FixRegData[修正資料]
-    FixRegData --> RegInputAccount
-
-    %% 已登入
-    IsLoginM -->|是| MemberFeatures
-
-    MemberFeatures --> GotoProfileQ{進入會員中心?}
-
-    GotoProfileQ -->|是| ProfilePage[個人資料管理]
-
-    ProfilePage --> ProfileTab{功能標籤}
-
-    %% 個人資訊
-    ProfileTab -->|個人資訊| ShowProfile[顯示資訊表單<br/>姓名/電話/郵件<br/>地址/生日/性別]
-
-    ShowProfile --> EditProfileQ{修改資料?}
-
-    EditProfileQ -->|是| EditProfile[編輯資訊]
-    EditProfile --> SaveProfile[儲存]
-    SaveProfile --> ProfileValidate{驗證成功?}
-
-    ProfileValidate -->|是| UpdateProfile[更新資料]
-    UpdateProfile --> ShowProfileSuccess[更新成功]
-    ShowProfileSuccess --> ProfilePage
-
-    ProfileValidate -->|否| ShowProfileError[顯示錯誤]
-    ShowProfileError --> ProfilePage
-
-    EditProfileQ -->|否| ProfilePage
-
-    %% 食譜收藏
-    ProfileTab -->|食譜收藏| ShowFavRecipes[已收藏食譜]
-
-    ShowFavRecipes --> FavRecipeOp{操作}
-
-    FavRecipeOp -->|查看| ClickFavRecipe[點擊食譜]
-    ClickFavRecipe --> RecipeDetailPage
-
-    FavRecipeOp -->|移除| RemoveFavRecipe[移除收藏]
-    RemoveFavRecipe --> ProfilePage
-
-    %% 蔬菜收藏
-    ProfileTab -->|蔬菜收藏| ShowFavVeggies[已收藏蔬菜]
-
-    ShowFavVeggies --> FavVeggieOp{操作}
-
-    FavVeggieOp -->|查看| ClickFavVeggie[點擊蔬菜]
-    ClickFavVeggie --> VeggieDetailPage
-
-    FavVeggieOp -->|移除| RemoveFavVeggie[移除收藏]
-    RemoveFavVeggie --> ProfilePage
-
-    %% 到價追蹤
-    ProfileTab -->|到價追蹤| ShowPriceTrack[追蹤清單<br/>目標價/當前價]
-
-    ShowPriceTrack --> TrackOp{操作}
-
-    TrackOp -->|編輯| EditTargetPrice[修改目標價]
-    EditTargetPrice --> UpdateTrack[更新設定]
-    UpdateTrack --> ProfilePage
-
-    TrackOp -->|移除| RemoveTrack[移除追蹤]
-    RemoveTrack --> ProfilePage
-
-    TrackOp -->|查看| GotoVeggieFromTrack[查看蔬菜]
-    GotoVeggieFromTrack --> VeggieDetailPage
-
-    %% 追蹤設定
-    GotoProfileQ -->|否| SetFollowQ{設定追蹤偏好?}
-
-    SetFollowQ -->|是| FollowSettingPage[追蹤設定頁]
-
-    FollowSettingPage --> FollowStart>開始並行設定]
-    FollowStart --> FS1[價格變動通知]
-    FollowStart --> FS2[新作物通知]
-    FollowStart --> FS3[新食譜通知]
-    FollowStart --> FS4[農民更新通知]
-    FollowStart --> FS5[價格門檻]
-    FollowStart --> FS6[通知方式<br/>郵件/推送]
-
-    FS1 --> FollowEnd>設定匯合]
-    FS2 --> FollowEnd
-    FS3 --> FollowEnd
-    FS4 --> FollowEnd
-    FS5 --> FollowEnd
-    FS6 --> FollowEnd
-
-    FollowEnd --> SaveFollowSetting[儲存設定]
-    SaveFollowSetting --> ShowFollowSuccess[設定成功]
-    ShowFollowSuccess --> ReturnHome3[返回首頁]
-
-    SetFollowQ -->|否| ReturnHome3
-
-    %% ========================================
-    %% 市場資訊查詢模組
-    %% ========================================
-    ChooseModule -->|市場資訊| MarketInfoType{查詢類型}
-
-    MarketInfoType -->|食安快訊| FoodSafetyList[食安快訊列表]
-    FoodSafetyList --> SelectNews[選擇快訊]
-    SelectNews --> FoodSafetyDetail[查看詳細資訊]
-    FoodSafetyDetail --> ReturnHome4[返回首頁]
-
-    MarketInfoType -->|禽產行情| PoultryMarket[禽產市場<br/>開發中]
-    PoultryMarket --> ReturnHome4
-
-    MarketInfoType -->|海產行情| SeafoodMarket[海產市場<br/>開發中]
-    SeafoodMarket --> ReturnHome4
-
-    %% 結束
-    ReturnHome1 --> FinalEnd([結束])
-    ReturnHome2 --> FinalEnd
-    ReturnHome3 --> FinalEnd
-    ReturnHome4 --> FinalEnd
-
-    %% 樣式定義
-    classDef startEndStyle fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
-    classDef decisionStyle fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#333
-    classDef processStyle fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#333
-    classDef parallelStyle fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#333
-    classDef importantStyle fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px,color:#333
-
-    class Start,FinalEnd,End1,End2 startEndStyle
-    class ChooseModule,NeedPageV,ViewDetailQ,IsLoginV1,OperationV,GoLoginV,NeedPageR,ViewRecipeQ,IsLoginR1,FavRecipeQ,CheckRelatedR,IsLoginM,LoginMethod,KeepLoginQ,LoginSuccess,ForgotPwdQ,VerifySuccess1,GoogleSuccess,RegValidate,GotoProfileQ,ProfileTab,EditProfileQ,ProfileValidate,FavRecipeOp,FavVeggieOp,TrackOp,SetFollowQ,MarketInfoType decisionStyle
-    class FilterStart,FilterEnd,RecipeFilterStart,RecipeFilterEnd,FollowStart,FollowEnd parallelStyle
-    class LoginPage,RegisterPage,VeggieDetailPage,RecipeDetailPage,RecipeDetailPage2,ProfilePage,MemberFeatures importantStyle
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#E3F2FD','primaryTextColor':'#000','primaryBorderColor':'#1976D2','fontSize':'16px','fontFamily':'Arial, Microsoft YaHei'}}}%%
+
+flowchart LR
+    Start([開始]) --> Home[進入首頁]
+    Home --> Choose{選擇功能}
+
+    %% 蔬菜模組
+    Choose -->|蔬菜| V1[蔬菜列表]
+    V1 --> V2>篩選]
+    V2 --> V3[排序]
+    V3 --> V4[顯示結果]
+    V4 --> V5{翻頁?}
+    V5 -->|是| V4
+    V5 -->|否| V6{查看?}
+    V6 -->|是| V7[蔬菜詳情]
+    V7 --> V8{已登入?}
+    V8 -->|是| V9{操作}
+    V9 -->|收藏| V10[加入收藏]
+    V9 -->|追蹤| V11[價格追蹤]
+    V9 -->|食譜| R7
+    V10 --> VEnd[返回]
+    V11 --> VEnd
+    V8 -->|否| V12[提示登入]
+    V12 --> V13{登入?}
+    V13 -->|是| Login
+    V13 -->|否| VEnd
+    V6 -->|否| VEnd
+    VEnd --> End
+
+    %% 食譜模組
+    Choose -->|食譜| R1[食譜列表]
+    R1 --> R2>篩選]
+    R2 --> R3[排序]
+    R3 --> R4[顯示結果]
+    R4 --> R5{翻頁?}
+    R5 -->|是| R4
+    R5 -->|否| R6{查看?}
+    R6 -->|是| R7[食譜詳情]
+    R7 --> R8{已登入?}
+    R8 -->|是| R9{收藏?}
+    R9 -->|是| R10[加入收藏]
+    R9 -->|否| REnd[返回]
+    R10 --> REnd
+    R8 -->|否| R11[提示登入]
+    R11 --> REnd
+    R6 -->|否| REnd
+    REnd --> End
+
+    %% 會員模組
+    Choose -->|會員| M1{已登入?}
+    M1 -->|否| Login[登入頁]
+    Login --> M2{方式}
+    M2 -->|一般| M3[輸入帳密]
+    M3 --> M4{驗證?}
+    M4 -->|是| M5[登入成功]
+    M4 -->|否| M6{忘記?}
+    M6 -->|是| M7[重設密碼]
+    M7 --> Login
+    M6 -->|否| M3
+    M2 -->|Google| M8[OAuth]
+    M8 --> M9{成功?}
+    M9 -->|是| M5
+    M9 -->|否| MEnd1([結束])
+    M2 -->|註冊| M10[註冊頁]
+    M10 --> M11[填寫資料]
+    M11 --> M12{驗證?}
+    M12 -->|是| M13[建立帳號]
+    M13 --> Login
+    M12 -->|否| M11
+    M1 -->|是| M5
+    M5 --> M14{會員中心?}
+    M14 -->|是| M15[個人資料]
+    M15 --> M16{功能}
+    M16 -->|資訊| M17[編輯資訊]
+    M16 -->|食譜收藏| M18[管理收藏]
+    M16 -->|蔬菜收藏| M19[管理收藏]
+    M16 -->|追蹤| M20[管理追蹤]
+    M17 --> MEnd
+    M18 --> MEnd
+    M19 --> MEnd
+    M20 --> MEnd
+    M14 -->|否| M21{追蹤設定?}
+    M21 -->|是| M22>設定]
+    M22 --> M23[儲存]
+    M23 --> MEnd
+    M21 -->|否| MEnd
+    MEnd[返回] --> End
+
+    %% 市場模組
+    Choose -->|市場| K1{類型}
+    K1 -->|食安| K2[快訊列表]
+    K2 --> K3[查看詳情]
+    K1 -->|禽產| K4[禽產行情]
+    K1 -->|海產| K5[海產行情]
+    K3 --> KEnd[返回]
+    K4 --> KEnd
+    K5 --> KEnd
+    KEnd --> End
+
+    End([結束])
+
+    %% 樣式
+    classDef start fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff,font-size:16px
+    classDef decision fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,font-size:16px
+    classDef process fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,font-size:16px
+    classDef parallel fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,font-size:16px
+    classDef important fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px,font-size:16px
+
+    class Start,End,MEnd1 start
+    class Choose,V5,V6,V8,V9,V13,R5,R6,R8,R9,M1,M2,M4,M6,M9,M12,M14,M16,M21,K1 decision
+    class V2,R2,M22 parallel
+    class Login,M5,V7,R7,M15 important
