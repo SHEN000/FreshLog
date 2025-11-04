@@ -208,9 +208,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
 import { foodApi } from "@/api/food.js";
+import { request } from "@/api/client.js";
 
 // 引入子元件
 import FilterSidebar from "@/components/CCC/Sidebar.vue";
@@ -1091,6 +1092,98 @@ const handleImageError = (event) => {
     event.target.src = defaultVeggieImage;
   }
 };
+
+// ==================== 價格獲取 ====================
+const loadingPrices = ref(false);
+const priceCache = new Map(); // 快取已獲取的價格，避免重複請求
+
+// 為指定的食品列表獲取價格
+const fetchPricesForDishes = async (dishes) => {
+  if (!dishes || dishes.length === 0) return;
+
+  loadingPrices.value = true;
+  console.log(`💰 開始獲取 ${dishes.length} 個食品的價格...`);
+
+  const promises = dishes.map(async (dish) => {
+    // 如果已經有價格且不為0，跳過
+    if (dish.price && dish.price > 0) {
+      console.log(`✅ ${dish.name} 已有價格: NT$${dish.price}`);
+      return;
+    }
+
+    // 檢查快取
+    if (priceCache.has(dish.id)) {
+      const cached = priceCache.get(dish.id);
+      dish.price = cached.price;
+      dish.priceDate = cached.priceDate;
+      dish.priceDateDisplay = cached.priceDateDisplay;
+      console.log(`📦 ${dish.name} 使用快取價格: NT$${dish.price}`);
+      return;
+    }
+
+    try {
+      const response = await request.get('/api/food/average-price-trends', {
+        days: 'DAY_30',
+        foodId: dish.id
+      });
+
+      const payload = response.data?.data || {};
+      const trend = payload.trend30 ?? payload.trendHalfYear ?? payload.trendYear ?? [];
+
+      if (Array.isArray(trend) && trend.length > 0) {
+        // 找最新的有效價格
+        const latestData = trend
+          .filter(t => t && t.avgPrice != null && t.avgPrice > 0)
+          .sort((a, b) => new Date(b.intervalEnd) - new Date(a.intervalEnd))[0];
+
+        if (latestData) {
+          const price = Number(latestData.avgPrice);
+          const priceDate = latestData.intervalEnd;
+
+          // 格式化日期
+          const formatDate = (d) => {
+            if (!d) return "";
+            const dt = new Date(d);
+            if (isNaN(dt)) return String(d);
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, "0");
+            const dd = String(dt.getDate()).padStart(2, "0");
+            return `${y}/${m}/${dd}`;
+          };
+
+          const priceDateDisplay = formatDate(priceDate);
+
+          // 更新食品價格
+          dish.price = price;
+          dish.priceDate = priceDate;
+          dish.priceDateDisplay = priceDateDisplay;
+
+          // 存入快取
+          priceCache.set(dish.id, { price, priceDate, priceDateDisplay });
+
+          console.log(`💰 ${dish.name}: NT$${price} (${priceDateDisplay})`);
+        } else {
+          console.warn(`⚠️ ${dish.name} 無有效價格資料`);
+        }
+      } else {
+        console.warn(`⚠️ ${dish.name} 無價格趨勢資料`);
+      }
+    } catch (error) {
+      console.error(`❌ 獲取 ${dish.name} 價格失敗:`, error.message);
+    }
+  });
+
+  await Promise.all(promises);
+  loadingPrices.value = false;
+  console.log(`✅ 價格獲取完成`);
+};
+
+// 監聽當前頁數據變化，自動獲取價格
+watch(paginatedDishes, (newDishes) => {
+  if (newDishes && newDishes.length > 0) {
+    fetchPricesForDishes(newDishes);
+  }
+}, { immediate: false }); // 不立即執行，等數據載入後再執行
 
 // ==================== 初始化 ====================
 onMounted(() => {
