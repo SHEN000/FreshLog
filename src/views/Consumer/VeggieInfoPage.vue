@@ -44,7 +44,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 // import { veggieMockData } from "@/data/mockVeggieData.js";
 
-import axios from 'axios'
+import { foodApi } from '@/api/food.js'
 
 // 引入子元件
 import VeggieMainInfoCard from "@/components/Veggie/VeggieMainInfoCard.vue";
@@ -72,9 +72,7 @@ const loadVeggieData = async (id) => {
   isLoading.value = true
   error.value = null
   try {
-    const response = await axios.get('/api/food/findFoodData', {
-      params: { foodId: id } 
-    })
+    const response = await foodApi.findFoodData(id)
     veggieData.value = response.data.data
   } catch (err) {
     console.error('載入蔬菜資料失敗：', err)
