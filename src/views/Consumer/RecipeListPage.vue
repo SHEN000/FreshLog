@@ -61,7 +61,7 @@
         </div>
 
         <!-- 分頁控制 -->
-        <div v-if="totalPages > 1" class="pagination-container">
+        <div v-if="totalPages >= 1" class="pagination-container">
           <div class="pagination">
             <button
               :disabled="currentPage === 1"
@@ -76,6 +76,7 @@
                 v-for="page in displayPages"
                 :key="page"
                 :class="['page-number', { active: currentPage === page }]"
+                :disabled="page > totalPages"
                 @click="goToPage(page)"
               >
                 {{ page }}
@@ -83,7 +84,7 @@
             </div>
 
             <button
-              :disabled="currentPage === totalPages"
+              :disabled="currentPage >= totalPages"
               @click="goToPage(currentPage + 1)"
               class="page-btn next-btn"
             >
@@ -102,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import {
   recipeListData,
   filterOptions,
@@ -123,11 +124,37 @@ const filters = ref({ ...filterOptions });
 const activeCategory = ref("all");
 const currentSort = ref("newest"); // 改用 API 的預設值
 const currentPage = ref(1);
-const itemsPerPage = 20; // API 預設每頁20筆
+
+// 響應式每頁顯示數量
+const itemsPerPage = ref(21); // 預設21筆（桌面：3列×7排）
+const apiPageSize = ref(35); // API 請求35筆，過濾後確保有足夠資料
 
 // API 回傳的分頁資訊
 const totalElements = ref(0);
 const totalPages = ref(0);
+
+// 根據螢幕寬度計算每頁應顯示的數量
+const calculateItemsPerPage = () => {
+  const width = window.innerWidth;
+
+  if (width >= 1200) {
+    // 桌面版：3列 × 7排 = 21個
+    itemsPerPage.value = 21;
+    apiPageSize.value = 35;
+  } else if (width >= 992) {
+    // 中等螢幕：2列 × 6排 = 12個
+    itemsPerPage.value = 12;
+    apiPageSize.value = 20;
+  } else if (width >= 768) {
+    // 平板：2列 × 5排 = 10個
+    itemsPerPage.value = 10;
+    apiPageSize.value = 15;
+  } else {
+    // 手機：1列 × 5排 = 5個
+    itemsPerPage.value = 5;
+    apiPageSize.value = 10;
+  }
+};
 
 // 排序選項（從 API 載入）
 const sortOptions = ref([]);
@@ -143,11 +170,14 @@ const displayPages = computed(() => {
   const current = currentPage.value;
   const pages = [];
 
+  // 根據實際頁數顯示頁碼按鈕
   if (total <= 7) {
+    // 如果總頁數 <= 7，顯示所有頁碼
     for (let i = 1; i <= total; i++) {
       pages.push(i);
     }
   } else {
+    // 如果總頁數 > 7，顯示部分頁碼
     const start = Math.max(1, current - 3);
     const end = Math.min(total, start + 6);
 
@@ -174,11 +204,11 @@ const getCategoryName = (categoryId) => {
   const categoryMap = {
     all: "",
     soup: "湯品",
-    vegetable: "蔬菜",
     dessert: "甜點",
-    salad: "沙拉",
-    meat: "肉類",
-    rice: "飯類",
+    cold_dish: "涼拌",
+    baking: "烘焙",
+    frying: "煎炸",
+    stir_fry: "熱炒",
   };
   return categoryMap[categoryId] || "";
 };
@@ -274,9 +304,9 @@ const getDifficultyParam = () => {
   // 目前只支援單一難易度，如果有多個就取第一個
   const firstDifficulty = checkedDifficulties[0];
   const difficultyMap = {
-    easy: "簡單",
-    medium: "中等",
-    hard: "困難",
+    easy: "新手",
+    medium: "普通",
+    hard: "進階",
   };
   return difficultyMap[firstDifficulty.id] || "";
 };
@@ -317,7 +347,7 @@ const loadRecipes = async () => {
     // 準備 Query String 參數（分頁）
     const queryParams = {
       pageNo: currentPage.value - 1, // API 是 0-based，前端顯示是 1-based
-      pageSize: itemsPerPage,
+      pageSize: apiPageSize.value, // 請求更多資料以應對過濾
     };
 
     console.log("🔍 API 請求參數:", { bodyParams, queryParams });
@@ -331,8 +361,31 @@ const loadRecipes = async () => {
     if (response.data && response.data.code === "0000") {
       const pageData = response.data.data;
 
-      // 轉換 API 資料格式為前端格式
-      allRecipes.value = pageData.content.map((recipe) => ({
+      // 轉換 API 資料格式為前端格式，並過濾掉 F 開頭的資料（已棄用）
+      const filteredContent = pageData.content.filter((recipe) => {
+        // 檢查 recipeId 或 title 是否以 F 開頭
+        const isDeprecatedById = recipe.recipeId && recipe.recipeId.startsWith("F");
+        const isDeprecatedByTitle = recipe.title && recipe.title.startsWith("F");
+        const isDeprecated = isDeprecatedById || isDeprecatedByTitle;
+
+        if (isDeprecated) {
+          console.log("🚫 過濾掉已棄用的食譜:", {
+            recipeId: recipe.recipeId,
+            title: recipe.title,
+            deprecatedReason: isDeprecatedById ? "recipeId 以 F 開頭" : "title 以 F 開頭"
+          });
+        }
+        return !isDeprecated;
+      });
+
+      console.log(
+        `📊 過濾結果: 原始 ${pageData.content.length} 筆，過濾後 ${filteredContent.length} 筆`
+      );
+
+      // 只取前 itemsPerPage 筆資料顯示
+      const limitedContent = filteredContent.slice(0, itemsPerPage.value);
+
+      allRecipes.value = limitedContent.map((recipe) => ({
         id: recipe.recipeId,
         name: recipe.title,
         image: recipe.image,
@@ -375,17 +428,41 @@ const loadRecipes = async () => {
         console.log("🧪 圖片測試已觸發，URL:", testImg.src);
       }
 
-      // 更新分頁資訊
-      totalElements.value = pageData.totalElements;
-      totalPages.value = pageData.totalPages;
+      // 更新分頁資訊（基於過濾後的實際資料）
+      // 判斷邏輯：
+      // 1. API 回傳的資料量 < apiPageSize：表示 API 已經沒有更多資料了
+      // 2. 過濾後的資料 < itemsPerPage：表示這頁顯示不滿，是最後一頁
+      // 3. 過濾後的資料 >= itemsPerPage 且 API 資料 == apiPageSize：可能還有下一頁
 
-      console.log(
-        "✅ 食譜資料載入成功:",
-        allRecipes.value.length,
-        "筆，共",
-        totalElements.value,
-        "筆"
-      );
+      const apiReturnedCount = pageData.content.length; // API 實際回傳的筆數
+      const filteredCount = filteredContent.length; // 過濾後的筆數
+      const displayCount = allRecipes.value.length; // 實際顯示的筆數
+
+      // 檢查 API 是否還有更多資料
+      const apiHasMore = apiReturnedCount === apiPageSize.value;
+
+      // 檢查過濾後是否還有足夠資料
+      const filteredHasMore = filteredCount > itemsPerPage.value;
+
+      if (apiHasMore && filteredHasMore) {
+        // API 還有資料，且過濾後也還有多餘資料，表示確定有下一頁
+        totalElements.value = pageData.totalElements;
+        totalPages.value = pageData.totalPages;
+      } else {
+        // 否則這是最後一頁
+        totalPages.value = currentPage.value;
+        totalElements.value = (currentPage.value - 1) * itemsPerPage.value + displayCount;
+      }
+
+      console.log("✅ 食譜資料載入成功:", {
+        顯示筆數: allRecipes.value.length,
+        API回傳筆數: apiReturnedCount,
+        過濾後筆數: filteredCount,
+        當前頁: currentPage.value,
+        總頁數: totalPages.value,
+        API還有資料: apiHasMore,
+        過濾後還有資料: filteredHasMore,
+      });
     } else {
       console.error("❌ API 回傳格式錯誤:", response.data);
       allRecipes.value = [];
@@ -438,10 +515,39 @@ const resetFilters = () => {
 
 // 生命週期
 onMounted(async () => {
+  // 計算初始的每頁顯示數量
+  calculateItemsPerPage();
+
+  // 監聽視窗大小變化
+  window.addEventListener("resize", handleResize);
+
   // 先載入選項，再載入食譜
   await Promise.all([loadSortOptions(), loadCategoryOptions()]);
   loadRecipes();
 });
+
+// 清理監聽器
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
+
+// 處理視窗大小變化
+let resizeTimeout = null;
+const handleResize = () => {
+  // 使用防抖，避免頻繁觸發
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+
+  resizeTimeout = setTimeout(() => {
+    const oldItemsPerPage = itemsPerPage.value;
+    calculateItemsPerPage();
+
+    // 如果每頁顯示數量改變了，重新載入資料
+    if (oldItemsPerPage !== itemsPerPage.value) {
+      currentPage.value = 1;
+      loadRecipes();
+    }
+  }, 300);
+};
 </script>
 
 <style scoped>

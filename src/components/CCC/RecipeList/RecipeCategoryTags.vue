@@ -14,8 +14,8 @@
       <!-- 自選按鈕（帶下拉選單） -->
       <div
         class="custom-dropdown"
-        @mouseenter="showDropdown = true"
-        @mouseleave="showDropdown = false"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
       >
         <button
           :class="['category-tag', 'custom-tag', { active: isCustomCategoryActive }]"
@@ -24,9 +24,9 @@
         </button>
 
         <!-- 下拉選單 -->
-        <div v-if="showDropdown && categoryOptions.length > 0" class="dropdown-menu">
+        <div v-if="showDropdown && filteredCategoryOptions.length > 0" class="dropdown-menu">
           <button
-            v-for="(category, index) in categoryOptions"
+            v-for="(category, index) in filteredCategoryOptions"
             :key="index"
             class="dropdown-item"
             @click="selectCustomCategory(category)"
@@ -60,11 +60,41 @@ const props = defineProps({
 const emit = defineEmits(["category-change"]);
 
 const showDropdown = ref(false);
+let hideTimeout = null; // 用於延遲隱藏的計時器
 
 // 判斷是否選中了自選分類
 const isCustomCategoryActive = computed(() => {
   return props.activeCategory.startsWith("custom:");
 });
+
+// 過濾掉已經在預設按鈕中的分類選項
+const filteredCategoryOptions = computed(() => {
+  // 取得所有預設分類的中文名稱
+  const defaultCategoryLabels = props.categoryTags.map(tag => tag.label);
+
+  // 過濾掉已經存在於預設分類中的選項
+  return props.categoryOptions.filter(category => {
+    return !defaultCategoryLabels.includes(category);
+  });
+});
+
+// 鼠標移入時顯示選單
+const handleMouseEnter = () => {
+  // 清除可能存在的隱藏計時器
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+  showDropdown.value = true;
+};
+
+// 鼠標移出時延遲隱藏選單
+const handleMouseLeave = () => {
+  // 設定延遲 200ms 後隱藏
+  hideTimeout = setTimeout(() => {
+    showDropdown.value = false;
+  }, 200);
+};
 
 const selectCategory = (categoryId) => {
   emit("category-change", categoryId);
@@ -74,6 +104,12 @@ const selectCustomCategory = (categoryName) => {
   // 將分類名稱轉換為 ID（直接使用分類名稱）
   emit("category-change", `custom:${categoryName}`);
   showDropdown.value = false;
+
+  // 清除計時器
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
 };
 </script>
 

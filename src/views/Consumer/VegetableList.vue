@@ -74,10 +74,10 @@
               />
               <!-- 評分標籤 -->
               <div class="rating-badge">★★★</div>
-              <!-- 追蹤狀態 -->
-              <div class="track-status">
-                <span class="track-icon">📍</span>
-                <span>追蹤狀態</span>
+              <!-- 當季標籤 (只在 inSeason 為 true 時顯示) -->
+              <div v-if="dish.inSeason" class="season-badge">
+                <span class="season-icon">🌱</span>
+                <span>當季</span>
               </div>
             </div>
 
@@ -527,7 +527,16 @@ const loadData = async () => {
       console.log("📊 content 長度:", dataObj.content?.length);
 
       if (Array.isArray(dataObj.content) && dataObj.content.length > 0) {
-        console.log("📊 第一筆資料範例:", dataObj.content[0]);
+        console.log("📊 第一筆資料範例 (完整結構):", dataObj.content[0]);
+        console.log("📊 第一筆資料的所有欄位:", Object.keys(dataObj.content[0]));
+        console.log("📊 tag 欄位值:", {
+          tag: dataObj.content[0].tag,
+          類型: typeof dataObj.content[0].tag,
+          是否存在: 'tag' in dataObj.content[0],
+          是否為null: dataObj.content[0].tag === null,
+          是否為undefined: dataObj.content[0].tag === undefined,
+          是否為空字串: dataObj.content[0].tag === '',
+        });
       }
     }
     console.log("========================================");
@@ -714,6 +723,7 @@ const loadData = async () => {
             isRecommendation:
               item.isRecommendation ?? (item.inSeason || item.affordable),
             // keep season and pricing metadata
+            inSeason: item.inSeason || false, // 是否當季
             seasonStart: item.seasonStart || null,
             seasonEnd: item.seasonEnd || null,
             priceDate: priceDateStr,
@@ -759,12 +769,48 @@ const loadData = async () => {
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
+        // 🔍 檢查後端原始 tag 欄位內容
+        console.log("🏷️ 後端原始 tag 欄位分析 (前10筆):");
+        foodList.slice(0, 10).forEach((item, index) => {
+          console.log(`  ${index + 1}. ${item.name}:`, {
+            原始tag: item.tag,
+            tag類型: typeof item.tag,
+            tag為空: !item.tag,
+          });
+        });
+
+        // 收集所有原始 tag 的獨特值
+        const rawTags = new Set();
+        foodList.forEach((item) => {
+          if (item.tag) {
+            rawTags.add(item.tag);
+          }
+        });
+        console.log("🏷️ 後端回傳的所有獨特 tag 值 (" + rawTags.size + "個):", Array.from(rawTags));
+
+        // 🔍 檢查前端處理後的標籤內容
+        console.log("🏷️ 前端處理後的標籤 (前10筆):");
+        allDishes.value.slice(0, 10).forEach((dish, index) => {
+          console.log(`  ${index + 1}. ${dish.name}:`, dish.ingredients);
+        });
+
+        // 收集所有獨特的標籤
+        const allTags = new Set();
+        allDishes.value.forEach((dish) => {
+          dish.ingredients.forEach((tag) => allTags.add(tag));
+        });
+        console.log("🏷️ 前端處理後的所有獨特標籤 (" + allTags.size + "個):", Array.from(allTags).sort());
+
         // 統計分類分布
         const categoryStats = {};
+        const subCategoryStats = {};
         allDishes.value.forEach((dish) => {
           categoryStats[dish.type] = (categoryStats[dish.type] || 0) + 1;
+          subCategoryStats[dish.subCategory] = (subCategoryStats[dish.subCategory] || 0) + 1;
         });
-        console.log("📊 分類統計:", categoryStats);
+        console.log("📊 Category（大分類）統計:", categoryStats);
+        console.log("📊 SubCategory（子分類）統計:", subCategoryStats);
+        console.log("💡 說明: category 都是「農產品」，所以使用 subCategory 查詢是正確的");
 
         // 前 3 筆資料
         console.log("📋 前 3 筆資料預覽:");
@@ -1025,7 +1071,12 @@ const handleSortChange = async (newSort) => {
 };
 
 const updateFilters = (newFilters) => {
+  console.log("🔧 更新篩選器:");
+  console.log("  舊值:", JSON.stringify(filters));
+  console.log("  新值:", JSON.stringify(newFilters));
   Object.assign(filters, newFilters);
+  console.log("  更新後:", JSON.stringify(filters));
+  console.log("  當前顯示資料數:", filteredDishes.value.length);
   currentPage.value = 1;
 };
 
@@ -1277,18 +1328,24 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.track-status {
+.season-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(76, 175, 80, 0.9);
+  background: rgba(76, 175, 80, 0.95);
   color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.season-icon {
+  font-size: 14px;
 }
 
 .card-content {
