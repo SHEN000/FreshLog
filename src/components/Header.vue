@@ -527,7 +527,7 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
   z-index: 1000;
-  max-height: 260px;
+  max-height: 350px;
   overflow: auto;
   margin: 6px 0 0;
   padding: 6px 0;

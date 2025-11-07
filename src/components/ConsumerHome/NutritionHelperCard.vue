@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import Card from './Card.vue'
 import { produceNutrition } from '@/data/nutritionData.js'
 import magnifierIcon from '@/assets/magnifier-icon.png'
@@ -163,6 +163,32 @@ const display = computed(() => {
         vitC: `${Number(vitaminC)}mg`
     }
 })
+
+function move(delta) {
+  if (!suggestions.value.length) return
+  const len = suggestions.value.length
+  let idx = activeIndex.value
+  idx = (idx + delta + len) % len
+  activeIndex.value = idx
+
+  // 讓目前 active 的 li 自動捲到可視範圍
+  nextTick(() => {
+    const wrap = searchWrap.value?.querySelector('.dropdown')
+    const items = wrap?.querySelectorAll('.dropdown-item')
+    const el = items?.[activeIndex.value]
+    if (wrap && el) el.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+function onEnter() {
+  if (!showDropdown.value) return search()
+  const s = suggestions.value[activeIndex.value]
+  if (s) {
+    apply(s.prod, s.label)
+  } else {
+    search()
+  }
+}
 </script>
 
 <style scoped>
@@ -234,20 +260,23 @@ const display = computed(() => {
 
 /* 下拉建議 */
 .dropdown {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% + 6px);
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
-    z-index: 10;
-    max-height: 240px;
-    overflow: auto;
-    list-style: none;
-    margin: 6px 0 0;
-    padding: 6px 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
+  z-index: 10;
+  max-height: 250px;          /* 調整為 250px */
+  overflow-y: auto;           /* 僅垂直滾動 */
+  overflow-x: hidden;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 6px 0;
+  -webkit-overflow-scrolling: touch; 
+  overscroll-behavior: contain;      /* 避免外層一起滾動 */
 }
 
 .dropdown-item {
