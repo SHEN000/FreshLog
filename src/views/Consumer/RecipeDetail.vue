@@ -6,70 +6,59 @@
     <div class="breadcrumb">
       <RouterLink to="/" class="crumb">首頁</RouterLink>
       <span class="sep">›</span>
-      <RouterLink to="/ai-recommendation" class="crumb">食譜推薦</RouterLink>
+      <RouterLink to="/recipes" class="crumb">食譜推薦</RouterLink>
       <span class="sep">›</span>
       <span class="current">{{ recipe.name }}</span>
     </div>
 
     <div class="recipe-detail">
       <!-- Banner/Header -->
-      <div class="block header">
-        <RecipeDetailHeader
-          :title="recipe.name"
-          :desc="recipe.description"
-          :image="recipe.image"
-          :cook-time-minutes="recipe.cookTimeMinutes"
-          :servings="recipe.servings"
-          :difficulty="recipe.difficulty"
-          :gradientColors="recipe.gradientColors || []"
-        />
+      <div class="block header" v-if="showHeader">
+        <RecipeDetailHeader :title="recipe.name" :desc="recipe.description" :image="recipe.image"
+          :cook-time-minutes="recipe.cookTimeMinutes" :servings="recipe.servings" :difficulty="recipe.difficulty"
+          :gradientColors="recipe.gradientColors || []" />
       </div>
 
       <!-- 左側主欄 -->
       <div class="left-col">
-        <div class="block steps">
-          <RecipeSteps
-            :steps="recipe.instruction || []"
-            :times="recipe.times || []"
-            :tags="recipe.tag || []"
-          />
+        <div class="block steps" v-if="showSteps">
+          <RecipeSteps :steps="recipe.instruction || []" :times="recipe.times || []" :tags="recipe.tag || []" />
         </div>
-        <div class="block season">
-          <SeasonalRecommend
-            :items="recipe.seasonalItems"
-            :month="`${new Date().getMonth() + 1}月`"
-          />
+
+        <div class="block season" v-if="showSeasonal">
+          <SeasonalRecommend :items="recipe.seasonalItems" :month="`${new Date().getMonth() + 1}月`" />
         </div>
-        <div class="block subs">
+
+        <div class="block subs" v-if="showSubs">
           <SubstituteRecommendations :subs="recipe.substitutes" />
         </div>
       </div>
 
       <!-- 右側主欄 -->
       <div class="right-col">
-        <div class="block price">
-          <MainIngredientPrice
-            :items="recipe.mainIngredient"
-            :cost="recipe.mainPriceCost"
-          />
+        <div class="block price" v-if="showPrice">
+          <MainIngredientPrice :items="recipe.mainIngredient" :cost="recipe.mainPriceCost" />
         </div>
-        <div class="block ing">
+
+        <div class="block ing" v-if="showIngredients">
           <IngredientsList :ingredients="recipe.ingredients" />
         </div>
-        <div class="block nut">
+
+        <div class="block nut" v-if="showNutrition">
           <MainNutritionCard :data="recipe.nutrition" />
         </div>
-        <div class="block trend">
+
+        <div class="block trend" v-if="showTrends">
           <MarketTrends :trends="recipe.marketTrends" :tip="recipe.marketTip" />
         </div>
       </div>
 
       <!-- 最下方相關推薦 -->
-      <div class="block related">
+      <div class="block related" v-if="showRelated">
         <RecipeRecommendCard :recipes="recipe.recipeSuggestions" />
       </div>
     </div>
-    <!-- footer -->
+
     <Footer />
   </div>
 
@@ -79,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 //import RecipeData from '@/data/RecipeData.js' // 單一測試食譜
 import axios from "axios";
@@ -99,13 +88,49 @@ const route = useRoute();
 const isLoading = ref(false);
 const errorMsg = ref(null);
 
-// function loadRecipe(id) {
-//   if (RecipeData.id === id) {
-//     recipe.value = RecipeData
-//   } else {
-//     recipe.value = null
-//   }
-// }
+/* 通用檢查：有值且不是空集合/空字串 */
+function has(val) {
+  if (val == null) return false
+  if (Array.isArray(val)) return val.length > 0
+  if (typeof val === 'object') return Object.keys(val).length > 0
+  if (typeof val === 'string') return val.trim() !== ''
+  return !!val
+}
+
+/* 各區塊顯示條件（依 recipe 動態更新） */
+const showHeader = computed(() => {
+  const r = recipe.value
+  return !!r && (has(r.name) || has(r.description) || has(r.image))
+})
+
+const showSteps = computed(() => {
+  const r = recipe.value
+  return !!r && (has(r.instruction) || has(r.times) || has(r.tag))
+})
+
+const showSeasonal = computed(() => has(recipe.value?.seasonalItems))
+
+const showSubs = computed(() => has(recipe.value?.substitutes))
+
+const showPrice = computed(() => {
+  const r = recipe.value
+  return !!r && (has(r.mainIngredient) || has(r.mainPriceCost))
+})
+
+const showIngredients = computed(() => has(recipe.value?.ingredients))
+
+const showNutrition = computed(() => {
+  const n = recipe.value?.nutrition
+  // 若營養卡有多欄位，可挑重要欄位任一存在就顯示
+  return !!(n && (has(n.cal) || has(n.carb) || has(n.fat) || has(n.protein) || has(n.vitaminC)))
+})
+
+const showTrends = computed(() => {
+  const r = recipe.value
+  return !!r && (has(r.marketTrends) || has(r.marketTip))
+})
+
+const showRelated = computed(() => has(recipe.value?.recipeSuggestions))
 
 const loadRecipeData = async (id) => {
   if (!id) {

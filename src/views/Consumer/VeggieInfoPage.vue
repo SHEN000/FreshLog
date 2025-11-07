@@ -5,32 +5,33 @@
         <!-- PC版 -->
         <div class="desktop-layout">
           <div class="left-panel">
-            <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
-            <NutritionInfoCard :nutrition="veggieData.nutrition" />
-            <SimilarVeggieCompareCard :similarVeggies="veggieData.similarVeggies" />
+            <AiSuggestionCard v-if="showAI" :aiSuggestion="veggieData.aiSuggestion" />
+            <NutritionInfoCard v-if="showNutrition" :nutrition="veggieData.nutrition" />
+            <SimilarVeggieCompareCard v-if="showSimilar" :similarVeggies="veggieData.similarVeggies" />
             <!-- <FarmerInfoCard :farmer="veggieData.farmer" /> -->
           </div>
 
           <div class="right-panel">
-            <VeggieMainInfoCard :veggie="veggieData" />
+            <VeggieMainInfoCard v-if="showMainInfo" :veggie="veggieData" />
             <AveragePriceTrendChart v-if="foodId" :key="foodId" :food-id="foodId" />
-            <!-- 這裡從 marketCompare 傳資料 -->
-            <MultiMarketPriceCompareCard :marketCompare="veggieData.marketCompare" :veggieName="veggieData.name" />
-            <RecipeRecommendCard :recipes="veggieData.recipes" />
-            <StorageTipsCard :storageTips="veggieData.storageTips" />
+            <MultiMarketPriceCompareCard v-if="showMarketCmp" :marketCompare="veggieData.marketCompare"
+              :veggieName="veggieData.name" />
+            <RecipeRecommendCard v-if="showRecipes" :recipes="veggieData.recipes" />
+            <StorageTipsCard v-if="showStorageTips" :storageTips="veggieData.storageTips" />
           </div>
         </div>
 
         <!-- 手機版 -->
         <div class="mobile-layout">
-          <VeggieMainInfoCard :veggie="veggieData" />
-          <AiSuggestionCard :aiSuggestion="veggieData.aiSuggestion" />
+          <VeggieMainInfoCard v-if="showMainInfo" :veggie="veggieData" />
+          <AiSuggestionCard v-if="showAI" :aiSuggestion="veggieData.aiSuggestion" />
           <AveragePriceTrendChart v-if="foodId" :key="foodId" :food-id="foodId" />
-          <MultiMarketPriceCompareCard :marketCompare="veggieData.marketCompare" :veggieName="veggieData.name" />
-          <RecipeRecommendCard :recipes="veggieData.recipes" />
-          <NutritionInfoCard :nutrition="veggieData.nutrition" />
-          <SimilarVeggieCompareCard :similarVeggies="veggieData.similarVeggies" />
-          <StorageTipsCard :storageTips="veggieData.storageTips" />
+          <MultiMarketPriceCompareCard v-if="showMarketCmp" :marketCompare="veggieData.marketCompare"
+            :veggieName="veggieData.name" />
+          <RecipeRecommendCard v-if="showRecipes" :recipes="veggieData.recipes" />
+          <NutritionInfoCard v-if="showNutrition" :nutrition="veggieData.nutrition" />
+          <SimilarVeggieCompareCard v-if="showSimilar" :similarVeggies="veggieData.similarVeggies" />
+          <StorageTipsCard v-if="showStorageTips" :storageTips="veggieData.storageTips" />
           <!-- <FarmerInfoCard :farmer="veggieData.farmer" /> -->
         </div>
       </div>
@@ -62,6 +63,25 @@ const route = useRoute();
 
 // 讓子元件可用的 foodId
 const foodId = computed(() => (veggieData.value?.foodId || route.params.id || ''))
+
+/* 通用：判斷有沒有可用資料 */
+function has(val) {
+  if (val == null) return false
+  if (Array.isArray(val)) return val.length > 0
+  if (typeof val === 'object') return Object.keys(val).length > 0
+  if (typeof val === 'string') return val.trim() !== ''
+  if (typeof val === 'number') return true
+  return !!val
+}
+
+/* 各卡片是否要顯示（依當前 veggieData 動態計算） */
+const showAI = computed(() => has(veggieData.value?.aiSuggestion))
+const showNutrition = computed(() => has(veggieData.value?.nutrition))
+const showSimilar = computed(() => has(veggieData.value?.similarVeggies))
+const showMarketCmp = computed(() => has(veggieData.value?.marketCompare))
+const showRecipes = computed(() => has(veggieData.value?.recipes))
+const showStorageTips = computed(() => has(veggieData.value?.storageTips))
+const showMainInfo = computed(() => has(veggieData.value)) // 主卡
 
 // 使用 reactive 變數存放當前蔬菜資料
 const veggieData = ref(null)
