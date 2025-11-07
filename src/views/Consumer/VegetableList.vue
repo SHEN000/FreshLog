@@ -145,6 +145,7 @@
                   <span
                     class="price-change"
                     :class="getPriceChangeClass(dish.priceChangePct)"
+                    data-tooltip="相較上週價格變化"
                   >
                     {{ getPriceChangeText(dish.priceChangePct) }}
                   </span>
@@ -769,6 +770,109 @@ const loadData = async () => {
 
         console.log("✅ 食物列表載入成功:", allDishes.value.length, "個項目");
 
+        // 🌱 ========== 檢查 inSeason 欄位 ========== 🌱
+        console.log("========================================");
+        console.log("🌱 開始檢查 inSeason 欄位");
+        console.log("========================================");
+
+        // 統計 inSeason 的值分布
+        const inSeasonStats = {
+          true: 0,
+          false: 0,
+          null: 0,
+          undefined: 0,
+          其他: 0
+        };
+
+        const inSeasonTrueItems = [];
+        const inSeasonFalseItems = [];
+
+        foodList.forEach((item, index) => {
+          const inSeasonValue = item.inSeason;
+          const inSeasonType = typeof inSeasonValue;
+
+          // 統計
+          if (inSeasonValue === true) {
+            inSeasonStats.true++;
+            inSeasonTrueItems.push({
+              index: index + 1,
+              name: item.name,
+              foodId: item.foodId,
+              inSeason: inSeasonValue,
+              seasonStart: item.seasonStart,
+              seasonEnd: item.seasonEnd
+            });
+          } else if (inSeasonValue === false) {
+            inSeasonStats.false++;
+            if (inSeasonFalseItems.length < 5) {
+              inSeasonFalseItems.push({
+                index: index + 1,
+                name: item.name,
+                foodId: item.foodId,
+                inSeason: inSeasonValue
+              });
+            }
+          } else if (inSeasonValue === null) {
+            inSeasonStats.null++;
+          } else if (inSeasonValue === undefined) {
+            inSeasonStats.undefined++;
+          } else {
+            inSeasonStats.其他++;
+          }
+        });
+
+        // 輸出統計結果
+        console.log("📊 inSeason 欄位統計 (共 " + foodList.length + " 筆):");
+        console.log("  ✅ true:      " + inSeasonStats.true + " 筆");
+        console.log("  ❌ false:     " + inSeasonStats.false + " 筆");
+        console.log("  ⚪ null:      " + inSeasonStats.null + " 筆");
+        console.log("  ⚪ undefined: " + inSeasonStats.undefined + " 筆");
+        console.log("  ⚠️  其他:      " + inSeasonStats.其他 + " 筆");
+
+        // 顯示有 inSeason=true 的項目
+        if (inSeasonTrueItems.length > 0) {
+          console.log("========================================");
+          console.log("🎉 找到 " + inSeasonTrueItems.length + " 個當季項目:");
+          inSeasonTrueItems.forEach((item) => {
+            console.log(`  ${item.index}. ${item.name} (${item.foodId})`);
+            if (item.seasonStart || item.seasonEnd) {
+              console.log(`     產季: ${item.seasonStart || '?'} ~ ${item.seasonEnd || '?'}`);
+            }
+          });
+        } else {
+          console.log("========================================");
+          console.log("❌ 沒有找到任何 inSeason=true 的項目！");
+          console.log("💡 這就是為什麼看不到當季TAG的原因");
+        }
+
+        // 顯示部分 inSeason=false 的項目範例
+        if (inSeasonFalseItems.length > 0) {
+          console.log("========================================");
+          console.log("📋 inSeason=false 的項目範例 (前5筆):");
+          inSeasonFalseItems.forEach((item) => {
+            console.log(`  ${item.index}. ${item.name} (${item.foodId})`);
+          });
+        }
+
+        // 檢查前端處理後的數據
+        console.log("========================================");
+        console.log("🔍 檢查前端處理後的數據 (allDishes):");
+        const processedInSeasonTrue = allDishes.value.filter(d => d.inSeason === true);
+        const processedInSeasonFalse = allDishes.value.filter(d => d.inSeason === false);
+        console.log("  ✅ inSeason=true:  " + processedInSeasonTrue.length + " 筆");
+        console.log("  ❌ inSeason=false: " + processedInSeasonFalse.length + " 筆");
+
+        if (processedInSeasonTrue.length > 0) {
+          console.log("🎉 前端數據中有當季項目:");
+          processedInSeasonTrue.slice(0, 5).forEach((dish) => {
+            console.log(`  - ${dish.name} (${dish.id})`);
+          });
+        }
+
+        console.log("========================================");
+        console.log("🌱 inSeason 欄位檢查完成");
+        console.log("========================================");
+
         // 🔍 檢查後端原始 tag 欄位內容
         console.log("🏷️ 後端原始 tag 欄位分析 (前10筆):");
         foodList.slice(0, 10).forEach((item, index) => {
@@ -1038,13 +1142,23 @@ const getCardClass = (type) => {
 
 const getPriceChangeClass = (pct) => {
   if (typeof pct !== "number" || isNaN(pct)) return "price-flat";
-  return pct > 0 ? "price-up" : pct < 0 ? "price-down" : "price-flat";
+  const abs = Math.abs(pct);
+
+  // 漲跌幅 <= 10% 使用 stable 樣式
+  if (abs <= 10) return "price-stable";
+
+  return pct > 0 ? "price-up" : "price-down";
 };
 
 const getPriceChangeText = (pct) => {
   if (typeof pct !== "number" || isNaN(pct)) return "—";
-  const abs = Math.abs(pct).toFixed(1);
-  return pct > 0 ? `▲${abs}%` : pct < 0 ? `▼${abs}%` : "0.0%";
+  const abs = Math.abs(pct);
+
+  // 漲跌幅 <= 10% 顯示"穩定"
+  if (abs <= 10) return "穩定";
+
+  const absStr = abs.toFixed(1);
+  return pct > 0 ? `▲${absStr}%` : `▼${absStr}%`;
 };
 
 // ==================== 事件處理 ====================
@@ -1435,12 +1549,62 @@ onMounted(() => {
 .price {
   font-size: 16px;
   font-weight: bold;
-  color: #333;
+  color: white;
+  background-color: #ff7043;
+  padding: 4px 12px;
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .price-change {
   font-size: 12px;
   font-weight: 500;
+  position: relative;
+  cursor: help;
+}
+
+/* Tooltip 樣式 */
+.price-change::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Tooltip 箭頭 */
+.price-change::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Hover 時顯示 */
+.price-change:hover::after,
+.price-change:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.2s;
 }
 
 .price-change.price-up {
@@ -1449,6 +1613,10 @@ onMounted(() => {
 
 .price-change.price-down {
   color: #4caf50;
+}
+
+.price-change.price-stable {
+  color: #666;
 }
 
 .detail-btn {
