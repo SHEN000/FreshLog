@@ -90,9 +90,9 @@ export const filterOptions = {
 
   // 難易度
   difficulty: [
-    { id: "easy", label: "簡單", checked: false },
+    { id: "easy", label: "新手", checked: false },
     { id: "medium", label: "普通", checked: false },
-    { id: "hard", label: "困難", checked: false },
+    { id: "hard", label: "進階", checked: false },
   ],
 };
 
@@ -100,11 +100,11 @@ export const filterOptions = {
 export const categoryTags = [
   { id: "all", label: "全部", color: "#4CAF50" },
   { id: "soup", label: "湯品", color: "#FF9800" },
-  { id: "vegetable", label: "蔬菜", color: "#4CAF50" },
   { id: "dessert", label: "甜點", color: "#E91E63" },
-  { id: "salad", label: "沙拉", color: "#9C27B0" },
-  { id: "meat", label: "肉類", color: "#F44336" },
-  { id: "rice", label: "飯類", color: "#FF5722" },
+  { id: "cold_dish", label: "涼拌", color: "#4CAF50" },
+  { id: "baking", label: "烘焙", color: "#9C27B0" },
+  { id: "frying", label: "煎炸", color: "#F44336" },
+  { id: "stir_fry", label: "熱炒", color: "#FF5722" },
 ];
 
 // 排序選項

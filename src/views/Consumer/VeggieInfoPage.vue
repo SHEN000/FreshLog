@@ -96,6 +96,27 @@ watch(() => route.params.id, (newId) => {
 // 加上這行確認資料有沒有正確進來
 watch(veggieData, (val) => {
   console.log("🔥 載入的蔬菜資料：", val)
+
+  // 🌱 檢查 inSeason 欄位
+  if (val) {
+    console.log("========================================")
+    console.log("🌱 蔬菜詳情頁 - inSeason 欄位檢查")
+    console.log("========================================")
+    console.log("  蔬菜名稱:", val.name)
+    console.log("  蔬菜ID:", val.foodId || val.id)
+    console.log("  inSeason 值:", val.inSeason)
+    console.log("  inSeason 類型:", typeof val.inSeason)
+    console.log("  是否當季:", val.inSeason === true ? "✅ 是" : "❌ 否")
+
+    if (val.seasonStart || val.seasonEnd) {
+      console.log("  產季開始:", val.seasonStart || "未設定")
+      console.log("  產季結束:", val.seasonEnd || "未設定")
+    } else {
+      console.log("  ⚠️  未設定產季資訊 (seasonStart/seasonEnd)")
+    }
+
+    console.log("========================================")
+  }
 })
 </script>
 

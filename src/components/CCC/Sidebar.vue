@@ -202,13 +202,26 @@ const handleNutritionTabClick = (tabId) => {
   }
 
   console.log("設定新的選取狀態:", tabId);
+
+  // 🔧 清空特色篩選（與營養導航互斥）
+  const clearedFeatureFilters = {
+    antioxidant: false,
+    supplement: false,
+    eyecare: false,
+    energy: false,
+    superFood: false,
+  };
+  localFilters.value = clearedFeatureFilters;
+  emit("update-filters", clearedFeatureFilters);
+  console.log("✅ 已清空特色篩選");
+
   // 更新當前標籤
   emit("update-nutrition-tab", tabId);
 
   // 根據點擊的標籤自動啟用對應的篩選
   const newNutritionFilters = { ...localNutritionFilters.value };
 
-  // 重置所有篩選
+  // 重置所有營養篩選
   Object.keys(newNutritionFilters).forEach((key) => {
     newNutritionFilters[key] = false;
   });
@@ -244,6 +257,20 @@ const handleNutritionTabClick = (tabId) => {
 
 // 事件發射函數
 const emitFilters = () => {
+  // 🔧 清空營養導航（與特色篩選互斥）
+  // 清空營養標籤選中狀態
+  emit("update-nutrition-tab", "");
+
+  // 清空所有營養篩選
+  const clearedNutritionFilters = { ...localNutritionFilters.value };
+  Object.keys(clearedNutritionFilters).forEach((key) => {
+    clearedNutritionFilters[key] = false;
+  });
+  localNutritionFilters.value = clearedNutritionFilters;
+  emit("update-nutrition-filters", clearedNutritionFilters);
+  console.log("✅ 已清空營養導航");
+
+  // 發送特色篩選更新
   emit("update-filters", { ...localFilters.value });
 };
 
@@ -251,24 +278,20 @@ let priceEmitTimeout = null;
 const DEBOUNCE_MS = 400;
 
 const validateAndEmitPriceRange = () => {
-  if (localPriceRange.value[0] > localPriceRange.value[1]) {
-    localPriceRange.value[0] = localPriceRange.value[1];
+  try {
+    // 只驗證並更新本地狀態，不 emit 事件
+    if (localPriceRange.value[0] > localPriceRange.value[1]) {
+      localPriceRange.value[0] = localPriceRange.value[1];
+    }
+    // 不再自動觸發 API 請求，等待用戶點擊「套用篩選」按鈕
+    console.log("價格滑桿拉動:", localPriceRange.value);
+  } catch (error) {
+    console.error("價格滑桿錯誤:", error);
   }
-
-  // debounce emit so we don't spam API while dragging
-  if (priceEmitTimeout) clearTimeout(priceEmitTimeout);
-  priceEmitTimeout = setTimeout(() => {
-    emit("update-price-range", [...localPriceRange.value]);
-    priceEmitTimeout = null;
-  }, DEBOUNCE_MS);
 };
 
 const emitPriceRange = () => {
-  // immediate emit (Apply button)
-  if (priceEmitTimeout) {
-    clearTimeout(priceEmitTimeout);
-    priceEmitTimeout = null;
-  }
+  // 點擊「套用篩選」按鈕時，立即發送價格區間並觸發 API 請求
   emit("update-price-range", [...localPriceRange.value]);
 };
 

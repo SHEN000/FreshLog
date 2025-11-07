@@ -1,92 +1,58 @@
-# In-Depth Repository Analysis: Freshlog Application (v3)
+# Project Architecture Analysis Report
 
-## 1. Executive Summary
+## Overview
+This project is a Vue 3 application built with a component-based architecture. It leverages Pinia for centralized state management and Vue Router for declarative navigation. The application is structured to support different user roles (Consumer, Farmer, Member) and features modular API interactions, reusable UI components, and a clear separation of concerns.
 
-This repository contains a modern Vue.js 3 frontend application built with Vite. The application, "Freshlog", is a comprehensive platform for consumers and farmers, focusing on agricultural produce, recipes, and market data. It is architected with a clear separation of concerns, utilizing **Pinia** for state management, **Vue Router** for navigation, and a proxied **Axios** client for API communication.
+## Directory Structure Analysis
 
-The codebase demonstrates strong, modern frontend practices, including lazy-loading routes, a structured authentication flow, a highly componentized architecture, and the use of data visualization libraries. However, the analysis also identifies a lack of automated testing and a reliance on `localStorage` for authentication tokens as potential areas for improvement.
+### `src/`
+The `src/` directory serves as the main source code repository for the application. It encapsulates all the core logic, components, views, and assets, organized into distinct subdirectories to promote maintainability and scalability.
 
----
+### `src/main.js`
+This file is the entry point of the Vue 3 application. It is responsible for:
+-   Creating the Vue application instance using `createApp(App)`.
+-   Setting up and mounting Pinia for global state management.
+-   Configuring and installing Vue Router for client-side navigation.
+-   Globally registering the `Footer` component for application-wide use.
+-   Defining a global utility property `$img` that uses `resolveImg` for dynamic image path resolution.
+-   Importing global styles from `assets/style.css`.
 
-## 2. Core Architecture & Technologies
+### `src/App.vue`
+`App.vue` is the root Vue component of the application. Its primary responsibilities include:
+-   Housing the main layout structure.
+-   Utilizing `<router-view>` to render the component corresponding to the current route.
+-   Conditionally applying a `Layout` component wrapper to most pages, excluding the `/select-role` page, ensuring a consistent header, padding, and whitespace across the application.
 
-The project is built on a robust and modern technology stack, indicating a focus on performance and developer experience.
+### `src/router/`
+This directory manages the application's routing configuration.
+-   **`index.js`**: Defines all application routes using `createWebHistory`. It implements lazy loading for most view components to optimize initial load times. A crucial aspect is the implementation of a `router.beforeEach` navigation guard, which handles authentication by checking for user tokens and information in `localStorage` and redirects unauthenticated users from protected routes to the login page, while also storing the intended destination for post-login redirection.
 
-*   **Core Framework:** **Vue.js 3** (`^3.5.13`) with the Composition API (`<script setup>`).
-*   **Build Tool:** **Vite** (`^6.2.0`), configured in `vite.config.js` with a path alias (`@`) and a development proxy to the backend API (`https://freshlog-api.ttshow.tw`).
-*   **State Management:** **Pinia** (`^3.0.1`) is used for centralized state management, as configured in `src/main.js`.
-*   **Routing:** **Vue Router** (`^4.5.0`) manages client-side navigation with `createWebHistory` for clean URLs and lazy-loaded components for performance.
-*   **HTTP Client:** **Axios** (`^1.8.4`) is used for all backend communication, wrapped in a clean, modular API service layer.
-*   **Data Visualization:** **Chart.js** (`^4.4.9`) and **D3.js** (`^7.9.0`) are included, confirming the application's data-rich features.
+### `src/store/`
+This directory contains Pinia stores for managing global application state.
+-   **`user.js`**: This Pinia store is dedicated to managing user authentication and related state. It persists user data (token, ID, name, role) in `localStorage` and provides actions for login, logout, setting user information, and managing authentication status. It also includes a getter for constructing the `Authorization` header for API requests.
 
----
+### `src/api/`
+This directory is responsible for handling all interactions with the backend API.
+-   **`client.js`**: Configures an Axios-based HTTP client. It sets a base URL (configurable via environment variables), defines request interceptors to attach authentication tokens from the `userStore`, and includes response interceptors for global error handling (e.g., 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error). It also provides methods for common HTTP verbs (GET, POST, PUT, DELETE, PATCH).
+-   **`index.js`**: Acts as an aggregation point, re-exporting the core `request` client and specific API modules (`foodApi`, `recipeApi`, `favoriteApi`, `memberApi`) from their respective files. This promotes a modular approach to API endpoint definitions.
+-   **`food.js`, `recipe.js`, `favorite.js`, `member.js`**: These files (and potentially others) define specific API endpoints and methods related to different functional domains of the application, such as food data, recipes, user favorites, and member-related operations.
 
-## 3. API Layer & Data Models
+### `src/components/`
+This directory houses reusable UI components that can be used across different parts of the application.
+-   **Core Components**: `Footer.vue`, `Header.vue`, `Layout.vue`, `RoleToggle.vue` provide fundamental structural and interactive elements.
+-   **Categorized Subdirectories**: Subdirectories like `CCC`, `ConsumerHome`, `Recipe`, and `Veggie` organize components based on their functional area or the specific views they are primarily used within, enhancing discoverability and modularity.
 
-The application communicates with a backend via a well-defined API layer located in `src/api`. The `index.js` file exports modularized API services.
+### `src/views/`
+This directory contains the main page-level components of the application.
+-   **Core Views**: `Home.vue`, `RoleSelect.vue`, and `test.vue` represent primary application screens.
+-   **Categorized Subdirectories**: `Consumer`, `Farmer`, and `Member` subdirectories group views specific to different user roles or major sections of the application, aligning with the application's multi-role design.
 
-*   **API Client (`client.js`):** (Assumed) A centralized Axios instance is configured here, likely handling base URL, headers, and error handling.
-*   **Food API (`food.js`):** Manages endpoints related to food products.
-    *   `POST /api/food/findFoodsList`: A powerful query endpoint for searching and filtering foods with parameters for category, name, price range, and tags. It supports pagination.
-    *   `GET /api/food/findFoodData`: Fetches data for a single food item by its ID.
-*   **Recipe API (`recipe.js`):** Manages endpoints related to recipes.
-    *   `POST /api/recipe/findRecipesList`: Searches and filters recipes by category, name, cooking time, difficulty, etc., with pagination and sorting.
-    *   `GET /api/recipe/findRecipeData`: Fetches data for a single recipe by its ID.
+### `src/utils/`
+This directory contains utility functions that provide common functionalities used throughout the application.
+-   **`resolveImg.js`**: Likely handles the dynamic resolution of image paths, possibly for assets that are not directly imported or are determined at runtime.
+-   **`role.js`**: Contains utility functions related to user roles, such as checking permissions or role-based logic.
 
-This structure effectively decouples API logic from the UI components, making the code cleaner and easier to maintain.
-
----
-
-## 4. State Management (Pinia)
-
-The `src/store/user.js` file defines the `user` store, which is the central source of truth for authentication and user data.
-
-*   **State:**
-    *   `token`, `userId`, `userName`: Persisted in `localStorage` and hydrated into the store on application load.
-    *   `isAuthenticated`: A reactive boolean flag derived from the presence of all three user session items (`token`, `userId`, `userName`), providing a single, reliable source for authentication status.
-    *   `userRole`: The user's selected role (e.g., 'consumer').
-*   **Getters:**
-    *   `authHeader`: A computed property that constructs the `Authorization: Bearer <token>` header on demand, ensuring the token is correctly formatted for API requests.
-*   **Actions:**
-    *   `setToken`, `setUserId`, `setUserName`: Atomic actions to update state and `localStorage` simultaneously.
-    *   `logout`: A single action to clear all authentication state and remove items from `localStorage`, ensuring a clean logout process.
-
-The store is well-designed, centralizing all logic related to user session management.
-
----
-
-## 5. Component Architecture Example: `VeggieInfoPage.vue`
-
-The `VeggieInfoPage.vue` view is a prime example of the project's component-based architecture. It acts as a "smart" container component that orchestrates multiple "dumb" presentational components.
-
-*   **Data Fetching:** On mount, it uses the `foodApi.findFoodData` service to fetch data for the vegetable specified in the URL parameter (`route.params.id`). It also reactively watches for changes to the ID to reload data.
-*   **Component Composition:** The page is composed of many smaller, single-responsibility components, each receiving a slice of the `veggieData` as a prop.
-    *   `VeggieMainInfoCard`: Displays the primary information.
-    *   `AveragePriceTrendChart`: Visualizes price history (and fetches its own data based on `foodId`).
-    *   `NutritionInfoCard`: Displays nutritional facts.
-    *   `MultiMarketPriceCompareCard`: Shows price comparisons across different markets.
-    *   `RecipeRecommendCard`: Recommends recipes using this vegetable.
-    *   `AiSuggestionCard`: Displays AI-powered suggestions.
-*   **Responsive Design:** The view implements a responsive layout using CSS media queries. It switches from a two-column desktop layout (`.desktop-layout`) to a single-column mobile layout (`.mobile-layout`) at the `768px` breakpoint.
-
-This composition strategy is highly effective, promoting reusability and making the complex UI manageable.
-
----
-
-## 6. Identified Risks & Recommendations
-
-While the project is well-structured, a few areas could be enhanced to improve robustness and security.
-
-*   **Risk 1: Authentication Security:**
-    *   **Observation:** The application stores the JWT in `localStorage`, which is accessible via JavaScript and vulnerable to Cross-Site Scripting (XSS) attacks. An attacker who successfully injects a script could steal the token.
-    *   **Recommendation:** Transition to using `httpOnly` cookies for storing the authentication token. `httpOnly` cookies are not accessible to JavaScript, providing significant protection against XSS-based token theft. This would require coordination with the backend team.
-
-*   **Risk 2: Lack of Automated Testing:**
-    *   **Observation:** The repository does not contain any visible unit (`.spec.js`), integration, or end-to-end (`e2e`) test files. The quality of the application relies entirely on manual testing.
-    *   **Recommendation:**
-        *   **Unit/Component Tests:** Introduce **Vitest** into the project. It integrates seamlessly with Vite and is ideal for testing Vue components, utility functions, and Pinia stores. Start by writing tests for critical logic, such as the `user` store actions and complex utility functions.
-        *   **End-to-End (E2E) Tests:** Implement a framework like **Cypress** or **Playwright** to automate user flow testing. Create test suites for critical paths like login, recipe searching, and viewing vegetable details.
-
-*   **Risk 3: CSS Scalability:**
-    *   **Observation:** The project uses a global `style.css` file and `<style scoped>` within components. While scoped styles prevent conflicts, a large global stylesheet can become difficult to manage and lead to specificity issues over time.
-    *   **Recommendation:** For future development, consider adopting a more structured CSS methodology like BEM within the global stylesheet, or explore using a utility-first CSS framework like **Tailwind CSS** if a project refactor is feasible. This can improve consistency and reduce CSS bloat.
+### `src/data/`
+This directory stores various data files, which might include mock data for development, configuration settings, or static content.
+-   Files like `consumerDashboardData.js`, `mockVeggieData.js`, `nutrientStats.js`, `nutritionData.js`, `priceTrendData.js`, `RecipeData.js`, `searchIndex.js`, and `VeggieData.js` suggest the presence of local data sources for different features, potentially used for initial rendering, testing, or offline capabilities.
+-   The `6424` subdirectory might contain additional data or configurations specific to a particular module or version.
