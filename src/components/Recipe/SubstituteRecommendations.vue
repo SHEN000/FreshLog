@@ -61,7 +61,7 @@ const hasSubs = computed(() => visibleSubs.value.length > 0)
   background: linear-gradient(90deg, #fff3e0 0%, #ffe0e0 100%);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* 標題區塊 */
@@ -109,7 +109,7 @@ const hasSubs = computed(() => visibleSubs.value.length > 0)
 .card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -125,10 +125,10 @@ const hasSubs = computed(() => visibleSubs.value.length > 0)
 
 /* 替代食譜圖示 */
 .card-icon {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 15px;
 }
 
 /* 右側容器：垂直堆疊 標題在上、Badge 在下 */

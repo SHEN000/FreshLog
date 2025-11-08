@@ -119,11 +119,7 @@ const showPrice = computed(() => {
 
 const showIngredients = computed(() => has(recipe.value?.ingredients))
 
-const showNutrition = computed(() => {
-  const n = recipe.value?.nutrition
-  // 若營養卡有多欄位，可挑重要欄位任一存在就顯示
-  return !!(n && (has(n.cal) || has(n.carb) || has(n.fat) || has(n.protein) || has(n.vitaminC)))
-})
+const showNutrition = computed(() => has(recipe.value?.nutrition))
 
 const showTrends = computed(() => {
   const r = recipe.value

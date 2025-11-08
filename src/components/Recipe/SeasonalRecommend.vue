@@ -10,12 +10,7 @@
     </p>
 
     <div class="grid">
-      <div
-        v-for="item in items"
-        :key="item.name"
-        class="item-card"
-        :class="{ recommended: item.recommended }"
-      >
+      <div v-for="item in items" :key="item.name" class="item-card" :class="{ recommended: item.recommended }">
         <!-- 推薦標籤 -->
         <div v-if="item.recommended" class="badge">推薦</div>
 
@@ -88,8 +83,10 @@ defineProps({
 
 /* 單一食材卡片 */
 .item-card {
-  position: relative;     /* 讓內部 badge 可絕對定位 */
-  overflow: visible;      /* 允許 badge 溢出 */
+  position: relative;
+  /* 讓內部 badge 可絕對定位 */
+  overflow: visible;
+  /* 允許 badge 溢出 */
   background: #fafafa;
   border-radius: 12px;
   padding: 16px;
@@ -100,31 +97,35 @@ defineProps({
 
 /* 推薦的橘色邊框與背景 */
 .item-card.recommended {
-  border: 2px solid #ff9800;      
-  background: #fff3e0;       
-  border-radius: 16px; 
+  border: 2px solid #ff9800;
+  background: #fff3e0;
+  border-radius: 16px;
 }
 
 /* 右上推薦徽章 */
 .badge {
   position: absolute;
-  top: -8px;     /* 向上溢出 */
-  right: -8px;   /* 向右溢出 */
-  background: #ff9800;         
+  top: -8px;
+  /* 向上溢出 */
+  right: -8px;
+  /* 向右溢出 */
+  background: #ff9800;
   color: #fff;
   font-size: 12px;
   font-weight: bold;
   padding: 4px 12px;
-  border-radius: 12px;  /* 圓角 */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  /* 圓角 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 圖片 */
 .item-img {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   margin-bottom: 8px;
+  border-radius: 35px;
 }
 
 /* 名稱 */
