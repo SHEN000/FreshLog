@@ -269,7 +269,7 @@ function onEnter() {
   border-radius: 12px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
   z-index: 10;
-  max-height: 250px;          /* 調整為 250px */
+  max-height: 180px;          /* 調整為 180px */
   overflow-y: auto;           /* 僅垂直滾動 */
   overflow-x: hidden;
   list-style: none;

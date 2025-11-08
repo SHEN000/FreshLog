@@ -12,15 +12,16 @@
         </div>
       </div>
     </div>
-
-    <div class="sub-section">
+    <!-- 健康益處：只有有內容才顯示整段（含標題） -->
+    <div class="sub-section" v-if="hasBenefits">
       <div class="sub-title">健康益處</div>
       <ul class="benefits-list" v-if="parsedBenefits.length">
         <li v-for="(benefit, index) in parsedBenefits" :key="index">{{ benefit }}</li>
       </ul>
     </div>
 
-    <div class="sub-section">
+    <!-- 適合人群：只有有內容才顯示整段（含標題） -->
+    <div class="sub-section" v-if="hasAudience">
       <div class="sub-title">適合人群</div>
       <p class="audience">{{ nutrition.eatingSuggestions }}</p>
     </div>
@@ -67,7 +68,16 @@ export default {
         }
       }
       return []
-    }
+    },
+
+        /* 只有有內容才顯示標題與區塊 */
+    hasBenefits() {
+      return this.parsedBenefits.length > 0
+    },
+    hasAudience() {
+      const txt = this.nutrition?.eatingSuggestions
+      return typeof txt === 'string' ? txt.trim().length > 0 : Boolean(txt)
+    },
   },
 
   methods: {
