@@ -1,15 +1,50 @@
 <template>
   <div class="favorites-container">
-    <!-- 分類標籤 -->
-    <div class="collection-filters">
-      <button
-        v-for="filter in collectionFilters"
-        :key="filter.id"
-        :class="['filter-tag', { active: activeFilter === filter.id }]"
-        @click="setActiveFilter(filter.id)"
-      >
-        {{ filter.label }}
-      </button>
+    <!-- 分類標籤 - 仿照食譜列表樣式 -->
+    <div class="category-tags-container">
+      <div class="tags-wrapper">
+        <!-- 固定的分類按鈕 -->
+        <button
+          v-for="tag in categoryTags"
+          :key="tag.id"
+          :class="['category-tag', { active: activeFilter === tag.id }]"
+          @click="setActiveFilter(tag.id)"
+        >
+          {{ tag.label }}
+        </button>
+
+        <!-- 更多按鈕（帶下拉選單） -->
+        <div
+          class="custom-dropdown"
+          @mouseenter="handleMouseEnter"
+          @mouseleave="handleMouseLeave"
+        >
+          <button
+            :class="[
+              'category-tag',
+              'custom-tag',
+              { active: isCustomCategoryActive },
+            ]"
+          >
+            更多 ▼
+          </button>
+
+          <!-- 下拉選單 -->
+          <div
+            v-if="showDropdown && filteredCategoryOptions.length > 0"
+            class="dropdown-menu"
+          >
+            <button
+              v-for="(category, index) in filteredCategoryOptions"
+              :key="index"
+              class="dropdown-item"
+              @click="selectCustomCategory(category)"
+            >
+              {{ category }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 收藏食譜卡片 -->
@@ -82,31 +117,97 @@ const router = useRouter();
 // 響應式狀態
 const isLoading = ref(false);
 const activeFilter = ref("all");
+const showDropdown = ref(false);
+let hideTimeout = null;
 
-// 分類篩選選項
-const collectionFilters = [
+// 食譜分類標籤（對應食譜列表的主要分類）
+const categoryTags = [
   { id: "all", label: "全部" },
-  { id: "vegetarian", label: "素食" },
-  { id: "hot", label: "熱門" },
-  { id: "quick", label: "快炒" },
+  { id: "stir_fry", label: "熱炒" },
+  { id: "cold_dish", label: "涼拌" },
+  { id: "dessert", label: "甜點" },
+  { id: "soup", label: "湯品" },
+  { id: "stew", label: "燉煮" },
+  { id: "frying", label: "煎炸" },
 ];
+
+// 更多分類選項（下拉選單內容）
+const categoryOptions = ["烘焙", "蒸煮", "飲品"];
 
 // 收藏的食譜數據（從 API 載入）
 const collectionRecipes = ref([]);
 
 // 計算篩選後的收藏食譜
 const filteredCollectionRecipes = computed(() => {
+  console.log("🔍 當前篩選:", activeFilter.value);
+
   if (activeFilter.value === "all") {
     return collectionRecipes.value;
   }
-  return collectionRecipes.value.filter(
+
+  // 處理自選分類（custom:xxx）
+  if (activeFilter.value.startsWith("custom:")) {
+    const customCategory = activeFilter.value.replace("custom:", "");
+    const mappedCustomId = mapCategory(customCategory);
+    console.log(`🔍 自選分類: "${customCategory}", 映射 ID: "${mappedCustomId}"`);
+
+    return collectionRecipes.value.filter(
+      (recipe) => recipe.category === mappedCustomId
+    );
+  }
+
+  // 一般分類篩選
+  const filtered = collectionRecipes.value.filter(
     (recipe) => recipe.category === activeFilter.value
   );
+
+  console.log(`🔍 篩選結果: ${filtered.length} 筆`);
+  return filtered;
+});
+
+// 判斷是否選中了自選分類
+const isCustomCategoryActive = computed(() => {
+  return activeFilter.value.startsWith("custom:");
+});
+
+// 過濾掉已經在預設按鈕中的分類選項
+const filteredCategoryOptions = computed(() => {
+  const defaultCategoryLabels = categoryTags.map((tag) => tag.label);
+  return categoryOptions.filter((category) => {
+    return !defaultCategoryLabels.includes(category) && category !== "ALL";
+  });
 });
 
 // 設定活動篩選器
 const setActiveFilter = (filterId) => {
   activeFilter.value = filterId;
+  showDropdown.value = false;
+};
+
+// 鼠標移入時顯示選單
+const handleMouseEnter = () => {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+  showDropdown.value = true;
+};
+
+// 鼠標移出時延遲隱藏選單
+const handleMouseLeave = () => {
+  hideTimeout = setTimeout(() => {
+    showDropdown.value = false;
+  }, 200);
+};
+
+// 選擇自選分類
+const selectCustomCategory = (categoryName) => {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+  activeFilter.value = `custom:${categoryName}`;
+  showDropdown.value = false;
 };
 
 // 查看食譜
@@ -128,7 +229,10 @@ const removeFromCollection = async (recipeId) => {
     console.log("📥 刪除 API 回應:", response);
 
     // 檢查 API 回應是否成功
-    if (response.data && (response.data.code === "0000" || response.data.message === "SUCCESS")) {
+    if (
+      response.data &&
+      (response.data.code === "0000" || response.data.message === "SUCCESS")
+    ) {
       // 從本地數據中移除
       collectionRecipes.value = collectionRecipes.value.filter(
         (recipe) => recipe.id !== recipeId
@@ -164,17 +268,27 @@ const loadFavorites = async () => {
 
     if (response.data && response.data.data) {
       // 將 API 資料格式轉換成元件需要的格式
-      collectionRecipes.value = response.data.data.map((item) => ({
-        id: item.recipeId,
-        name: item.name,
-        cookTime: `${item.cookTimeMinutes}分鐘`,
-        difficulty: "簡單", // API 沒有提供難度，使用預設值
-        category: mapCategory(item.category), // 轉換分類
-        image: item.image,
-        tags: [item.category],
-      }));
+      collectionRecipes.value = response.data.data.map((item) => {
+        const mappedCategory = mapCategory(item.category);
+        console.log(`🔍 食譜: ${item.name}, 原始分類: "${item.category}", 轉換後: "${mappedCategory}"`);
 
-      console.log("✅ 收藏列表載入成功，共", collectionRecipes.value.length, "筆");
+        return {
+          id: item.recipeId,
+          name: item.name,
+          cookTime: `${item.cookTimeMinutes}分鐘`,
+          difficulty: "簡單", // API 沒有提供難度，使用預設值
+          category: mappedCategory, // 轉換分類
+          image: item.image,
+          tags: [item.category],
+        };
+      });
+
+      console.log(
+        "✅ 收藏列表載入成功，共",
+        collectionRecipes.value.length,
+        "筆"
+      );
+      console.log("📋 完整收藏列表:", collectionRecipes.value);
     } else {
       console.warn("⚠️ API 回應格式不符預期:", response.data);
       collectionRecipes.value = [];
@@ -189,10 +303,29 @@ const loadFavorites = async () => {
 
 // 將 API 的分類對應到本地分類
 const mapCategory = (apiCategory) => {
+  if (!apiCategory) return "all";
+
   const categoryMap = {
-    素食: "vegetarian",
-    熱門: "hot",
-    快炒: "quick",
+    // 中文對應
+    熱炒: "stir_fry",
+    涼拌: "cold_dish",
+    甜點: "dessert",
+    湯品: "soup",
+    燉煮: "stew",
+    煎炸: "frying",
+    烘焙: "baking",
+    蒸煮: "steaming",
+    飲品: "drink",
+    // 英文對應
+    "stir_fry": "stir_fry",
+    "cold_dish": "cold_dish",
+    "dessert": "dessert",
+    "soup": "soup",
+    "stew": "stew",
+    "frying": "frying",
+    "baking": "baking",
+    "steaming": "steaming",
+    "drink": "drink",
   };
   return categoryMap[apiCategory] || "all";
 };
@@ -213,39 +346,119 @@ defineExpose({
 .favorites-container {
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
-/* 分類篩選標籤 */
-.collection-filters {
-  padding: 0 30px 20px 30px;
+/* 分類標籤 - 仿照食譜列表樣式 */
+.category-tags-container {
+  margin: 0 30px 24px 30px;
+  overflow: visible;
+}
+
+.tags-wrapper {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
-.filter-tag {
-  padding: 8px 16px;
-  border: 1px solid #2e7d32;
-  border-radius: 20px;
+.category-tag {
+  padding: 10px 18px;
+  border: 2px solid #2e7d32;
+  border-radius: 25px;
   background: transparent;
   color: #2e7d32;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   transition: all 0.3s ease;
   white-space: nowrap;
+  user-select: none;
 }
 
-.filter-tag:hover {
-  background-color: #2196f3;
-  color: white;
-  border-color: #2196f3;
+.category-tag:hover {
+  background-color: #1976d2 !important;
+  border-color: #1976d2 !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.filter-tag.active {
-  background-color: #2196f3;
+.category-tag.active {
+  background-color: #1976d2;
+  border-color: #1976d2;
   color: white;
-  border-color: #2196f3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 自選按鈕下拉選單 */
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* 用偽元素創建按鈕和選單之間的不可見橋接區域 */
+.dropdown-menu::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background-color: #1976d2;
+  color: white;
+}
+
+.dropdown-item:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0 0 8px 8px;
 }
 
 /* 食譜卡片網格 */
@@ -273,7 +486,7 @@ defineExpose({
 
 /* 圖片區域 */
 .recipe-image-container {
-  height: 120px;
+  height: 200px;
   overflow: hidden;
   background-color: #f5f5f5;
 }
@@ -316,9 +529,9 @@ defineExpose({
 }
 
 .difficulty-tag {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -339,7 +552,7 @@ defineExpose({
 
 /* 操作按鈕 */
 .recipe-actions {
-  padding: 15px;
+  padding: 12px;
   display: flex;
   gap: 10px;
   border-top: 1px solid #f0f0f0;
@@ -347,7 +560,7 @@ defineExpose({
 
 .action-btn {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -432,8 +645,17 @@ defineExpose({
 }
 
 @media (max-width: 768px) {
-  .collection-filters {
-    padding: 0 20px 15px 20px;
+  .category-tags-container {
+    margin: 0 20px 20px 20px;
+  }
+
+  .tags-wrapper {
+    gap: 6px;
+  }
+
+  .category-tag {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 
   .recipe-cards-grid {
@@ -445,14 +667,18 @@ defineExpose({
   .empty-state {
     padding: 40px 20px;
   }
-
-  .filter-tag {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
 }
 
 @media (max-width: 480px) {
+  .tags-wrapper {
+    justify-content: center;
+  }
+
+  .category-tag {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
   .recipe-actions {
     flex-direction: column;
     gap: 8px;
