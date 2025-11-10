@@ -230,10 +230,8 @@ defineExpose({
 
 <style scoped>
 .veggie-favorites-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 /* 分類篩選標籤 */
@@ -275,7 +273,6 @@ defineExpose({
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  flex: 1;
   align-content: start;
 }
 

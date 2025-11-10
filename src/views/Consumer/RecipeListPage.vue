@@ -203,12 +203,16 @@ const getCategoryName = (categoryId) => {
   // 固定分類對應
   const categoryMap = {
     all: "",
-    soup: "湯品",
-    dessert: "甜點",
-    cold_dish: "涼拌",
-    baking: "烘焙",
-    frying: "煎炸",
     stir_fry: "熱炒",
+    cold_dish: "涼拌",
+    dessert: "甜點",
+    soup: "湯品",
+    stew: "燉煮",
+    frying: "煎炸",
+    other: "其他",
+    beverage: "飲品",
+    steam: "蒸煮",
+    baking: "烘焙",
   };
   return categoryMap[categoryId] || "";
 };
