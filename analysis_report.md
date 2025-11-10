@@ -47,6 +47,11 @@ This directory contains the main page-level components of the application.
 -   **Core Views**: `Home.vue`, `RoleSelect.vue`, and `test.vue` represent primary application screens.
 -   **Categorized Subdirectories**: `Consumer`, `Farmer`, and `Member` subdirectories group views specific to different user roles or major sections of the application, aligning with the application's multi-role design.
 
+#### Recent Enhancements
+Recent updates have introduced new features and UI improvements, particularly within the `Consumer` views:
+-   **In-Season Feature**: The `VegetableList.vue` and `VeggieInfoPage.vue` components now include logic to check and display whether a product is "in-season". This is aimed at providing users with more timely and relevant information about produce.
+-   **Price Display UI/UX**: The price change indicator in `VegetableList.vue` has been enhanced. It now includes a "stable" state for minor price fluctuations and a helpful tooltip to explain the meaning of the price change, improving user understanding.
+
 ### `src/utils/`
 This directory contains utility functions that provide common functionalities used throughout the application.
 -   **`resolveImg.js`**: Likely handles the dynamic resolution of image paths, possibly for assets that are not directly imported or are determined at runtime.

@@ -11,7 +11,7 @@
         {{ tag.label }}
       </button>
 
-      <!-- 自選按鈕（帶下拉選單） -->
+      <!-- 更多按鈕（帶下拉選單） -->
       <div
         class="custom-dropdown"
         @mouseenter="handleMouseEnter"
@@ -20,7 +20,7 @@
         <button
           :class="['category-tag', 'custom-tag', { active: isCustomCategoryActive }]"
         >
-          自選 ▼
+          更多 ▼
         </button>
 
         <!-- 下拉選單 -->
@@ -72,9 +72,9 @@ const filteredCategoryOptions = computed(() => {
   // 取得所有預設分類的中文名稱
   const defaultCategoryLabels = props.categoryTags.map(tag => tag.label);
 
-  // 過濾掉已經存在於預設分類中的選項
+  // 過濾掉已經存在於預設分類中的選項，以及 "ALL" 選項
   return props.categoryOptions.filter(category => {
-    return !defaultCategoryLabels.includes(category);
+    return !defaultCategoryLabels.includes(category) && category !== "ALL";
   });
 });
 

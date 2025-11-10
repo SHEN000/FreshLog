@@ -1399,9 +1399,9 @@ onMounted(() => {
 .recipe-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, auto);
   gap: 20px;
   margin-bottom: 40px;
+  align-items: stretch;
 }
 
 .recipe-card {
@@ -1411,6 +1411,8 @@ onMounted(() => {
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .recipe-card:hover {
@@ -1464,6 +1466,9 @@ onMounted(() => {
 
 .card-content {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .dish-name {
@@ -1480,6 +1485,8 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 500;
   margin-bottom: 8px;
+  width: fit-content;
+  max-width: max-content;
 }
 
 .category-tag.vegetable {
@@ -1534,16 +1541,21 @@ onMounted(() => {
 
 .price-section {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   padding-top: 12px;
   border-top: 1px solid #f0f0f0;
+  margin-top: auto;
+  gap: 12px;
 }
 
 .price-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .price {
@@ -1628,6 +1640,8 @@ onMounted(() => {
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .detail-btn:hover {
@@ -1770,8 +1784,13 @@ onMounted(() => {
   }
 }
 .price-date {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+  flex: 1 1 auto;
+  text-align: center;
 }
 
 .page-summary {
