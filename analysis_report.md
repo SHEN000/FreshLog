@@ -63,8 +63,8 @@ Recent updates have introduced significant new features and UI improvements, par
 
 ### `src/views/Member/6424/`
 This new subdirectory houses components related to the enhanced user profile features.
--   **`Favorites.vue`**: A new component responsible for displaying and managing the user's favorite food collections.
--   **`VeggieFav.vue`**: A new component for managing the user's favorite vegetable collections.
+-   **`Favorites.vue`**: This component is responsible for displaying and managing the user's favorite food collections. It has been updated with enhanced category filtering, including a dynamic "Custom" dropdown for additional categories, and significant UI/UX improvements for a more intuitive user experience.
+-   **`VeggieFav.vue`**: This component manages the user's favorite vegetable collections. It now features extensive category filtering options, including a dynamic "Other" dropdown for a wide range of vegetable and fruit categories, along with substantial UI/UX enhancements for improved navigation and display.
 
 ### `src/utils/`
 This directory contains utility functions that provide common functionalities used throughout the application.

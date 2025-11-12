@@ -1,18 +1,19 @@
 <template>
-  <div class="member-profile-page">
-    <!-- 尚未登入時的顯示區塊 -->
-    <div v-if="!isLoggedIn" class="not-logged-in-container">
-      <div class="not-logged-in-card">
-        <h2>請先登入</h2>
-        <p>您尚未登入，請先登入以查看您的會員資料。</p>
-        <RouterLink to="/member/login" class="btn-login">前往登入</RouterLink>
+  <div class="profile-page-wrapper">
+    <div class="member-profile-page">
+      <!-- 尚未登入時的顯示區塊 -->
+      <div v-if="!isLoggedIn" class="not-logged-in-container">
+        <div class="not-logged-in-card">
+          <h2>請先登入</h2>
+          <p>您尚未登入，請先登入以查看您的會員資料。</p>
+          <RouterLink to="/member/login" class="btn-login">前往登入</RouterLink>
+        </div>
       </div>
-    </div>
 
-    <!-- 登入後的會員中心主要內容 -->
-    <div v-else class="member-center-container">
-      <!-- 左側選單 -->
-      <div class="sidebar">
+      <!-- 登入後的會員中心主要內容 -->
+      <div v-else class="member-center-container">
+        <!-- 左側選單 -->
+        <div class="sidebar">
         <!-- 會員中心標題 -->
         <div class="member-center-title">
           <h1>會員中心</h1>
@@ -209,10 +210,11 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
 
-  <!-- Footer - 獨立在外層 -->
-  <Footer />
+    <!-- Footer - 固定在底部 -->
+    <Footer />
+  </div>
 </template>
 
 <script setup>
@@ -520,7 +522,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 外層容器 - 確保頁面至少佔據整個視窗高度 */
+.profile-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+
+/* 主要內容區域 - 自動擴展填滿剩餘空間 */
 .member-profile-page {
+  flex: 1;
   background-color: #f8f9fa;
 }
 
