@@ -99,12 +99,12 @@ export const filterOptions = {
 // 食譜分類標籤
 export const categoryTags = [
   { id: "all", label: "全部", color: "#4CAF50" },
-  { id: "soup", label: "湯品", color: "#FF9800" },
-  { id: "dessert", label: "甜點", color: "#E91E63" },
-  { id: "cold_dish", label: "涼拌", color: "#4CAF50" },
-  { id: "baking", label: "烘焙", color: "#9C27B0" },
-  { id: "frying", label: "煎炸", color: "#F44336" },
   { id: "stir_fry", label: "熱炒", color: "#FF5722" },
+  { id: "cold_dish", label: "涼拌", color: "#4CAF50" },
+  { id: "dessert", label: "甜點", color: "#E91E63" },
+  { id: "soup", label: "湯品", color: "#FF9800" },
+  { id: "stew", label: "燉煮", color: "#795548" },
+  { id: "frying", label: "煎炸", color: "#F44336" },
 ];
 
 // 排序選項

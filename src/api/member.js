@@ -34,4 +34,25 @@ export const memberApi = {
   updateMemberInfo(data) {
     return request.post("/api/memberUser/update-information", data);
   },
+
+  /**
+   * 修改密碼
+   * @param {Object} params - 密碼資料
+   * @param {string} params.oldPassword - 舊密碼
+   * @param {string} params.newPassword - 新密碼 (最少8字)
+   * @returns {Promise<{data: CommonRespString}>}
+   * CommonRespString: {
+   *   code: string,
+   *   message: string,
+   *   data: string
+   * }
+   */
+  changePassword(params) {
+    return request.put("/api/memberUser/passwordUpdate", null, {
+      params: {
+        oldPassword: params.oldPassword,
+        newPassword: params.newPassword,
+      },
+    });
+  },
 };

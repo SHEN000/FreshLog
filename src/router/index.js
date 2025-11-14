@@ -41,6 +41,10 @@ const routes = [
     component: () => import("@/views/Member/ForgotPassword.vue"),
   }, // 忘記密碼
   {
+    path: "/member/change-password",
+    component: () => import("@/views/Member/ChangePassword.vue"),
+  }, // 修改密碼
+  {
     path: "/member/profile",
     component: () => import("@/views/Member/Profile.vue"),
   }, // 個人資訊
@@ -92,6 +96,7 @@ const router = createRouter({
 // 需要登入保護的路徑（只有這些才強制登入）
 const protectedPaths = [
   "/member/profile",
+  "/member/change-password",
   "/member/follows",
   "/member/follow-setting",
   "/farmer/crop-dashboard",

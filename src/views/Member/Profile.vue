@@ -162,7 +162,7 @@
             <!-- 修改密碼連結 -->
             <div class="password-link">
               <RouterLink
-                to="/member/forgot-password"
+                to="/member/change-password"
                 class="change-password-link"
               >
                 修改密碼 >
@@ -209,10 +209,10 @@
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <Footer />
   </div>
+
+  <!-- Footer - 獨立在外層 -->
+  <Footer />
 </template>
 
 <script setup>
@@ -225,6 +225,9 @@ import { memberApi } from "@/api/member.js";
 import Favorites from "./6424/favorites.vue";
 import VeggieFav from "./6424/VeggieFav.vue";
 import Footer from "@/components/Footer.vue";
+
+// 引入 logo 圖片
+import logoImg from "@/assets/logo.png";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -296,8 +299,8 @@ const filteredCollectionRecipes = computed(() => {
   );
 });
 
-// 預設頭像
-const userAvatar = ref("/images/default-avatar.png");
+// 預設頭像（使用 FRESHLOG logo）
+const userAvatar = ref(logoImg);
 
 // 子元件 refs
 const favoritesRef = ref(null);
@@ -366,7 +369,8 @@ const updateProfile = async () => {
       phone: profileData.value.phone,
       address: profileData.value.address,
       favoriteRecipeCategory: profileData.value.favoriteRecipeCategory,
-      favoriteFruitVeggieCategory: profileData.value.favoriteFruitVeggieCategory,
+      favoriteFruitVeggieCategory:
+        profileData.value.favoriteFruitVeggieCategory,
     };
 
     // 呼叫 API 更新
@@ -374,7 +378,10 @@ const updateProfile = async () => {
     console.log("📥 API 完整回應:", response);
 
     // API 成功條件：code === '0000' 或 message === 'SUCCESS'
-    if (response.data && (response.data.code === '0000' || response.data.message === 'SUCCESS')) {
+    if (
+      response.data &&
+      (response.data.code === "0000" || response.data.message === "SUCCESS")
+    ) {
       console.log("✅ 會員資料更新成功（API + localStorage）");
       alert("個人資料更新成功！");
     } else {
@@ -422,7 +429,9 @@ const loadUserData = async () => {
     console.log("📥 開始載入會員資料...");
 
     // 先從 localStorage 讀取（快速顯示）
-    const cachedProfile = localStorage.getItem(`userProfile_${userStore.userId}`);
+    const cachedProfile = localStorage.getItem(
+      `userProfile_${userStore.userId}`
+    );
     if (cachedProfile) {
       profileData.value = JSON.parse(cachedProfile);
       console.log("✅ 從 localStorage 快速載入會員資料");
@@ -443,13 +452,22 @@ const loadUserData = async () => {
           phone: memberInfo.phone || "",
           email: memberInfo.email || "",
           // 如果後端回傳 null，使用 localStorage 的值（後端暫時無法儲存這兩個欄位）
-          favoriteRecipeCategory: memberInfo.favoriteRecipeCategory || savedPreferences.favoriteRecipeCategory || "",
-          favoriteFruitVeggieCategory: memberInfo.favoriteFruitVeggieCategory || savedPreferences.favoriteFruitVeggieCategory || "",
+          favoriteRecipeCategory:
+            memberInfo.favoriteRecipeCategory ||
+            savedPreferences.favoriteRecipeCategory ||
+            "",
+          favoriteFruitVeggieCategory:
+            memberInfo.favoriteFruitVeggieCategory ||
+            savedPreferences.favoriteFruitVeggieCategory ||
+            "",
           address: memberInfo.address || "",
         };
 
         // 儲存到 localStorage
-        localStorage.setItem(`userProfile_${userStore.userId}`, JSON.stringify(profileData.value));
+        localStorage.setItem(
+          `userProfile_${userStore.userId}`,
+          JSON.stringify(profileData.value)
+        );
         console.log("✅ 從 API 載入會員資料（偏好設定保留 localStorage 值）");
         console.log("📋 資料內容:", profileData.value);
         return;
@@ -475,7 +493,9 @@ const loadUserData = async () => {
   } catch (error) {
     console.error("❌ 載入使用者資料時發生錯誤:", error);
     // 最後的容錯處理
-    const cachedProfile = localStorage.getItem(`userProfile_${userStore.userId}`);
+    const cachedProfile = localStorage.getItem(
+      `userProfile_${userStore.userId}`
+    );
     if (cachedProfile) {
       profileData.value = JSON.parse(cachedProfile);
     } else {
@@ -501,7 +521,6 @@ onMounted(() => {
 
 <style scoped>
 .member-profile-page {
-  min-height: 100vh;
   background-color: #f8f9fa;
 }
 
@@ -584,18 +603,16 @@ onMounted(() => {
 }
 
 .avatar-section {
-  padding: 25px 20px;
+  padding: 20px;
   text-align: center;
   background: #f0f8f0;
 }
 
 .avatar-circle {
-  width: 70px;
-  height: 70px;
+  width: 100%;
+  height: auto;
   margin: 0 auto;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid #2e7d32;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -603,9 +620,9 @@ onMounted(() => {
 }
 
 .user-avatar {
-  width: 60%;
-  height: 60%;
-  object-fit: cover;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
   color: #2e7d32;
 }
 
@@ -674,7 +691,7 @@ onMounted(() => {
   padding: 0;
   border: 1px solid #e0e0e0;
   border-left: none;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -795,6 +812,14 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* 蔬菜收藏頁面樣式 */
+.veggie-collection-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 
 /* 響應式設計 */

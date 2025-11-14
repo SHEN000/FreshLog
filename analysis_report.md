@@ -47,6 +47,25 @@ This directory contains the main page-level components of the application.
 -   **Core Views**: `Home.vue`, `RoleSelect.vue`, and `test.vue` represent primary application screens.
 -   **Categorized Subdirectories**: `Consumer`, `Farmer`, and `Member` subdirectories group views specific to different user roles or major sections of the application, aligning with the application's multi-role design.
 
+#### Recent Enhancements
+Recent updates have introduced significant new features and UI improvements, particularly within the `Member` and `Consumer` views:
+
+-   **Comprehensive User Profile (`Profile.vue`)**: The member profile page has been completely redesigned into a full-featured user center. It now includes a sidebar for navigation and a tabbed interface for managing different aspects of the user's account, including:
+    -   A detailed profile form to update user information.
+    -   Sections for "Food Collection" and "Veggie Collection", which are powered by new, dedicated components.
+    -   Enhanced API integration with `memberApi` for fetching and updating user data, with `localStorage` used for caching.
+
+-   **Token-Based Registration (`Register.vue`)**: The user registration process has been made more secure by implementing a token-based verification step.
+
+-   **In-Season Feature**: The `VegetableList.vue` and `VeggieInfoPage.vue` components now include logic to check and display whether a product is "in-season". This is aimed at providing users with more timely and relevant information about produce.
+
+-   **Price Display UI/UX**: The price change indicator in `VegetableList.vue` has been enhanced. It now includes a "stable" state for minor price fluctuations and a helpful tooltip to explain the meaning of the price change, improving user understanding.
+
+### `src/views/Member/6424/`
+This new subdirectory houses components related to the enhanced user profile features.
+-   **`Favorites.vue`**: A new component responsible for displaying and managing the user's favorite food collections.
+-   **`VeggieFav.vue`**: A new component for managing the user's favorite vegetable collections.
+
 ### `src/utils/`
 This directory contains utility functions that provide common functionalities used throughout the application.
 -   **`resolveImg.js`**: Likely handles the dynamic resolution of image paths, possibly for assets that are not directly imported or are determined at runtime.
