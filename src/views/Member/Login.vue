@@ -63,14 +63,14 @@
           不是會員？<RouterLink to="/member/register">快來加入我們的蔬菜大家庭🍅</RouterLink>
         </p>
 
-        <div class="join-divider"></div>
+        <!-- <div class="join-divider"></div>
 
         <div class="divider">或者，如果您使用 Google 建立帳號</div>
 
         <button class="google-btn">
           <img src="@/assets/google-icon.png" alt="Google" />
           繼續使用Google
-        </button>
+        </button> -->
       </form>
     </div>
   </div>
