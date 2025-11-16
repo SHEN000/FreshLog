@@ -130,7 +130,7 @@
               </select>
             </div>
 
-            <!-- 蔬菜季節偏好 -->
+            <!-- 蔬果類別偏好 -->
             <div class="form-group full-width">
               <label for="favoriteFruitVeggieCategory">偏好蔬果類別</label>
               <select
@@ -139,12 +139,60 @@
                 class="form-select"
                 @change="handleVeggieCategoryChange"
               >
-                <option value="">請選擇季節偏好</option>
-                <option value="spring">春季</option>
-                <option value="summer">夏季</option>
-                <option value="autumn">秋季</option>
-                <option value="winter">冬季</option>
-                <option value="all">全年</option>
+                <option value="">請選擇蔬果類別</option>
+                <!-- 基本分類 -->
+                <option value="未分類">未分類</option>
+                <option value="葉菜類">葉菜類</option>
+                <option value="根莖類">根莖類</option>
+                <option value="雜糧類">雜糧類</option>
+                <!-- 蔬菜類別 -->
+                <option value="果菜類">果菜類</option>
+                <option value="花菜類">花菜類</option>
+                <option value="芽菜類">芽菜類</option>
+                <option value="莖菜類">莖菜類</option>
+                <option value="球根類">球根類</option>
+                <option value="筍菜類">筍菜類</option>
+                <option value="蔥蒜類">蔥蒜類</option>
+                <option value="豆菜類">豆菜類</option>
+                <option value="水生蔬菜">水生蔬菜</option>
+                <option value="海菜類">海菜類</option>
+                <option value="菇蕈類">菇蕈類</option>
+                <option value="特殊蔬菜">特殊蔬菜</option>
+                <option value="藥用蔬菜">藥用蔬菜</option>
+                <option value="野菜類">野菜類</option>
+                <option value="雜項蔬菜">雜項蔬菜</option>
+                <option value="香味蔬菜">香味蔬菜</option>
+                <option value="香草類">香草類</option>
+                <option value="香辛料">香辛料</option>
+                <option value="醃製品">醃製品</option>
+                <!-- 水果類別 -->
+                <option value="枇杷類">枇杷類</option>
+                <option value="柑橘類">柑橘類</option>
+                <option value="柚子類">柚子類</option>
+                <option value="柿子類">柿子類</option>
+                <option value="核果類">核果類</option>
+                <option value="桃子類">桃子類</option>
+                <option value="梨子類">梨子類</option>
+                <option value="楊桃類">楊桃類</option>
+                <option value="洋香瓜類">洋香瓜類</option>
+                <option value="甜瓜類">甜瓜類</option>
+                <option value="番石榴類">番石榴類</option>
+                <option value="芒果類">芒果類</option>
+                <option value="荔枝類">荔枝類</option>
+                <option value="葡萄類">葡萄類</option>
+                <option value="蓮霧類">蓮霧類</option>
+                <option value="蘋果類">蘋果類</option>
+                <option value="西瓜類">西瓜類</option>
+                <option value="漿果類">漿果類</option>
+                <option value="熱帶水果">熱帶水果</option>
+                <option value="特殊水果">特殊水果</option>
+                <option value="進口水果">進口水果</option>
+                <option value="綜合水果">綜合水果</option>
+                <option value="鳳梨類">鳳梨類</option>
+                <option value="龍眼類">龍眼類</option>
+                <option value="香蕉類">香蕉類</option>
+                <option value="果實類">果實類</option>
+                <option value="雜柑類">雜柑類</option>
               </select>
             </div>
 

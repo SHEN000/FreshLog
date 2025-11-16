@@ -620,6 +620,78 @@ const loadData = async () => {
         });
         console.log("========================================");
 
+        // 🔍 掃描所有欄位,尋找營養相關的關鍵字
+        console.log("\n========================================");
+        console.log("🔬 掃描所有欄位尋找營養關鍵字:");
+        console.log("========================================");
+
+        const nutritionKeywords = [
+          '維生素', '維他命', 'vitamin', 'Vitamin', 'VITAMIN',
+          '鈣', 'calcium', 'Calcium',
+          '鐵', 'iron', 'Iron',
+          '抗氧化', 'antioxidant', 'Antioxidant',
+          '纖維', 'fiber', 'fibre',
+          '蛋白', 'protein',
+          '葉酸', 'folic',
+          '礦物', 'mineral'
+        ];
+
+        const nutritionFindings = [];
+
+        foodList.forEach((item, itemIdx) => {
+          Object.keys(item).forEach(fieldName => {
+            const fieldValue = item[fieldName];
+
+            // 檢查欄位值是否包含營養關鍵字
+            if (fieldValue != null) {
+              const valueStr = String(fieldValue).toLowerCase();
+
+              nutritionKeywords.forEach(keyword => {
+                if (valueStr.includes(keyword.toLowerCase())) {
+                  nutritionFindings.push({
+                    項目: item.name,
+                    欄位名稱: fieldName,
+                    關鍵字: keyword,
+                    欄位值: fieldValue,
+                    值類型: typeof fieldValue,
+                    索引: itemIdx
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        if (nutritionFindings.length > 0) {
+          console.log(`✅ 找到 ${nutritionFindings.length} 個包含營養關鍵字的欄位:`);
+          console.log("\n📋 按欄位名稱分組:");
+
+          // 按欄位名稱分組
+          const byFieldName = {};
+          nutritionFindings.forEach(f => {
+            if (!byFieldName[f.欄位名稱]) byFieldName[f.欄位名稱] = [];
+            byFieldName[f.欄位名稱].push(f);
+          });
+
+          Object.keys(byFieldName).forEach(fieldName => {
+            console.log(`\n🔸 欄位「${fieldName}」(${byFieldName[fieldName].length} 次):`);
+            byFieldName[fieldName].slice(0, 5).forEach((f, idx) => {
+              console.log(`  ${idx + 1}. ${f.項目} - 關鍵字: ${f.關鍵字}`);
+              if (idx === 0) {
+                console.log(`     完整內容:`, f.欄位值);
+              }
+            });
+            if (byFieldName[fieldName].length > 5) {
+              console.log(`     ... 還有 ${byFieldName[fieldName].length - 5} 筆`);
+            }
+          });
+
+        } else {
+          console.log("❌ 在所有 " + foodList.length + " 筆資料的所有欄位中都找不到營養相關的關鍵字!");
+          console.log("💡 這表示後端資料沒有包含營養素資訊，營養需求導航功能無法使用");
+        }
+        console.log("========================================");
+
         // 🔧 過濾假資料 (F 開頭的 foodId)
         const originalCount = foodList.length;
         const fakeDataItems = foodList.filter((item) => {
