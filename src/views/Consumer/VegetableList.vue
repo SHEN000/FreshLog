@@ -33,25 +33,6 @@
         <!-- AI 市場洞察 -->
         <MarketInsight />
 
-        <!-- 名稱搜尋：顯示中文/英文同一輸入欄位（輸入後自動判斷並查詢） -->
-        <div class="name-search">
-          <div class="name-inputs">
-            <div class="input-group">
-              <label class="sr-label">名稱（中文或英文）</label>
-              <input
-                type="text"
-                v-model="inputRaw"
-                @input="onRawNameInput"
-                class="name-input"
-                placeholder="輸入中文或英文名稱，系統會自動判斷"
-              />
-            </div>
-            <div class="input-note">
-              系統會自動判斷輸入內容為中文或英文並送出對應欄位
-            </div>
-          </div>
-        </div>
-
         <!-- 載入狀態 -->
         <div v-if="isLoading" class="loading-container">
           <p>🔄 載入中...</p>
@@ -623,6 +604,94 @@ const loadData = async () => {
       });
 
       if (Array.isArray(foodList) && foodList.length > 0) {
+        // 🔍 檢查前3筆資料的價格相關欄位
+        console.log("========================================");
+        console.log("💰 檢查 API 回傳的價格欄位 (前3筆):");
+        foodList.slice(0, 3).forEach((item, idx) => {
+          console.log(`\n${idx + 1}. ${item.name}:`);
+          console.log("  所有欄位:", Object.keys(item));
+          console.log("  price:", item.price);
+          console.log("  avgPrice:", item.avgPrice);
+          console.log("  averagePrice:", item.averagePrice);
+          console.log("  currentPrice:", item.currentPrice);
+          console.log("  latestPrice:", item.latestPrice);
+          console.log("  marketPrice:", item.marketPrice);
+          console.log("  完整資料:", JSON.stringify(item, null, 2));
+        });
+        console.log("========================================");
+
+        // 🔍 掃描所有欄位,尋找營養相關的關鍵字
+        console.log("\n========================================");
+        console.log("🔬 掃描所有欄位尋找營養關鍵字:");
+        console.log("========================================");
+
+        const nutritionKeywords = [
+          '維生素', '維他命', 'vitamin', 'Vitamin', 'VITAMIN',
+          '鈣', 'calcium', 'Calcium',
+          '鐵', 'iron', 'Iron',
+          '抗氧化', 'antioxidant', 'Antioxidant',
+          '纖維', 'fiber', 'fibre',
+          '蛋白', 'protein',
+          '葉酸', 'folic',
+          '礦物', 'mineral'
+        ];
+
+        const nutritionFindings = [];
+
+        foodList.forEach((item, itemIdx) => {
+          Object.keys(item).forEach(fieldName => {
+            const fieldValue = item[fieldName];
+
+            // 檢查欄位值是否包含營養關鍵字
+            if (fieldValue != null) {
+              const valueStr = String(fieldValue).toLowerCase();
+
+              nutritionKeywords.forEach(keyword => {
+                if (valueStr.includes(keyword.toLowerCase())) {
+                  nutritionFindings.push({
+                    項目: item.name,
+                    欄位名稱: fieldName,
+                    關鍵字: keyword,
+                    欄位值: fieldValue,
+                    值類型: typeof fieldValue,
+                    索引: itemIdx
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        if (nutritionFindings.length > 0) {
+          console.log(`✅ 找到 ${nutritionFindings.length} 個包含營養關鍵字的欄位:`);
+          console.log("\n📋 按欄位名稱分組:");
+
+          // 按欄位名稱分組
+          const byFieldName = {};
+          nutritionFindings.forEach(f => {
+            if (!byFieldName[f.欄位名稱]) byFieldName[f.欄位名稱] = [];
+            byFieldName[f.欄位名稱].push(f);
+          });
+
+          Object.keys(byFieldName).forEach(fieldName => {
+            console.log(`\n🔸 欄位「${fieldName}」(${byFieldName[fieldName].length} 次):`);
+            byFieldName[fieldName].slice(0, 5).forEach((f, idx) => {
+              console.log(`  ${idx + 1}. ${f.項目} - 關鍵字: ${f.關鍵字}`);
+              if (idx === 0) {
+                console.log(`     完整內容:`, f.欄位值);
+              }
+            });
+            if (byFieldName[fieldName].length > 5) {
+              console.log(`     ... 還有 ${byFieldName[fieldName].length - 5} 筆`);
+            }
+          });
+
+        } else {
+          console.log("❌ 在所有 " + foodList.length + " 筆資料的所有欄位中都找不到營養相關的關鍵字!");
+          console.log("💡 這表示後端資料沒有包含營養素資訊，營養需求導航功能無法使用");
+        }
+        console.log("========================================");
+
         // 🔧 過濾假資料 (F 開頭的 foodId)
         const originalCount = foodList.length;
         const fakeDataItems = foodList.filter((item) => {
@@ -748,16 +817,27 @@ const loadData = async () => {
           byFood.get(key).push(d);
         });
 
-        byFood.forEach((arr) => {
+        byFood.forEach((arr, foodId) => {
           arr.sort((a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0));
+
+          // 🔍 Debug: 檢查每個 foodId 的資料數量
+          if (arr.length > 1) {
+            console.log(`📊 ${arr[0].name} (${foodId}): ${arr.length} 筆歷史資料`);
+          }
+
           for (let i = 0; i < arr.length; i++) {
             const cur = arr[i];
             const prev = arr[i + 1]; // 下一筆是較舊日期
+
             if (prev && typeof prev.price === "number" && prev.price > 0) {
               const diff = cur.price - prev.price;
               cur.priceChangePct = (diff / prev.price) * 100;
+              console.log(`  💹 ${cur.name}: 當前=${cur.price}, 前一次=${prev.price}, 變化=${cur.priceChangePct.toFixed(1)}%`);
             } else {
               cur.priceChangePct = null;
+              if (i === 0) {
+                console.log(`  ⚠️ ${cur.name}: 無法計算價格變化 (當前=${cur.price}, 有前一筆=${!!prev}, 前一筆價格=${prev?.price})`);
+              }
             }
           }
         });
@@ -1287,10 +1367,7 @@ const fetchPricesForDishes = async (dishes) => {
     }
 
     try {
-      const response = await request.get('/api/food/average-price-trends', {
-        days: 'DAY_30',
-        foodId: dish.id
-      });
+      const response = await request.get('/api/food/average-price-trends?days=DAY_30&foodId=' + dish.id);
 
       const payload = response.data?.data || {};
       const trend = payload.trend30 ?? payload.trendHalfYear ?? payload.trendYear ?? [];
@@ -1323,10 +1400,54 @@ const fetchPricesForDishes = async (dishes) => {
           dish.priceDate = priceDate;
           dish.priceDateDisplay = priceDateDisplay;
 
+          // 🔧 計算價格變化：找出「約一週前」的資料來比較
+          if (trend.length >= 2) {
+            const sortedTrend = trend
+              .filter(t => t && t.avgPrice != null && t.avgPrice > 0)
+              .sort((a, b) => new Date(b.intervalEnd) - new Date(a.intervalEnd));
+
+            const latestDate = new Date(priceDate);
+
+            // 嘗試找出約7天前的資料（允許 ±2 天的誤差）
+            let weekAgoData = null;
+            const targetDaysAgo = 7;
+            const tolerance = 2; // 允許 5-9 天前的資料
+
+            for (let data of sortedTrend.slice(1)) { // 跳過第一筆（最新的）
+              const dataDate = new Date(data.intervalEnd);
+              const daysDiff = Math.floor((latestDate - dataDate) / (1000 * 60 * 60 * 24));
+
+              if (daysDiff >= targetDaysAgo - tolerance && daysDiff <= targetDaysAgo + tolerance) {
+                weekAgoData = data;
+                break;
+              }
+            }
+
+            // 如果找不到約一週前的,就用第二新的
+            if (!weekAgoData && sortedTrend.length >= 2) {
+              weekAgoData = sortedTrend[1];
+            }
+
+            if (weekAgoData && weekAgoData.avgPrice > 0) {
+              const prevPrice = Number(weekAgoData.avgPrice);
+              const diff = price - prevPrice;
+              dish.priceChangePct = (diff / prevPrice) * 100;
+
+              const prevDate = new Date(weekAgoData.intervalEnd);
+              const daysDiff = Math.floor((latestDate - prevDate) / (1000 * 60 * 60 * 24));
+
+              console.log(`💰 ${dish.name}: NT$${price} (${priceDateDisplay}), 較 ${daysDiff} 天前 NT$${prevPrice} 變化 ${dish.priceChangePct > 0 ? '▲' : '▼'}${Math.abs(dish.priceChangePct).toFixed(1)}%`);
+            } else {
+              dish.priceChangePct = null;
+              console.log(`💰 ${dish.name}: NT$${price} (${priceDateDisplay}), 無法計算變化`);
+            }
+          } else {
+            dish.priceChangePct = null;
+            console.log(`💰 ${dish.name}: NT$${price} (${priceDateDisplay}), 趨勢資料不足`);
+          }
+
           // 存入快取
           priceCache.set(dish.id, { price, priceDate, priceDateDisplay });
-
-          console.log(`💰 ${dish.name}: NT$${price} (${priceDateDisplay})`);
         } else {
           console.warn(`⚠️ ${dish.name} 無有效價格資料`);
         }
@@ -1797,29 +1918,5 @@ onMounted(() => {
   margin-left: 12px;
   font-size: 12px;
   color: #666;
-}
-
-/* 名稱搜尋區塊 */
-.name-search {
-  margin: 12px 0 18px 0;
-}
-.name-inputs {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.input-group {
-  display: flex;
-  flex-direction: column;
-}
-.name-input {
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  min-width: 260px;
-}
-.input-note {
-  font-size: 12px;
-  color: #888;
 }
 </style>

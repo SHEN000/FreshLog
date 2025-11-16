@@ -45,7 +45,7 @@
         </span>
         <span class="info-item">
           <span class="info-label">份量</span>
-          <span class="info-value">{{ recipe.servings }}人</span>
+          <span class="info-value">{{ recipe.servings }}</span>
         </span>
       </div>
 

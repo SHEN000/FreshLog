@@ -50,12 +50,16 @@ This directory contains the main page-level components of the application.
 #### Recent Enhancements
 Recent updates have introduced significant new features and UI improvements, particularly within the `Member` and `Consumer` views:
 
--   **Comprehensive User Profile (`Profile.vue`)**: The member profile page has been completely redesigned into a full-featured user center. It now includes a sidebar for navigation and a tabbed interface for managing different aspects of the user's account, including:
+-   **Comprehensive User Profile (`Profile.vue`)**: The member profile page has been completely redesigned into a full-featured user center. It now includes a sidebar for navigation and a tabbed interface for managing different aspects of the user's account. The page's overall layout and responsiveness have been improved with the addition of a `profile-page-wrapper` to ensure better viewport height utilization. This section includes:
     -   A detailed profile form to update user information.
     -   Sections for "Food Collection" and "Veggie Collection", which are powered by new, dedicated components.
     -   Enhanced API integration with `memberApi` for fetching and updating user data, with `localStorage` used for caching.
 
 -   **Token-Based Registration (`Register.vue`)**: The user registration process has been made more secure by implementing a token-based verification step.
+
+-   **Enhanced Vegetable List (`VegetableList.vue`)**:
+    -   The direct name search input has been removed, potentially indicating a shift in search functionality or its relocation.
+    -   The price trend calculation logic has been significantly refined to provide more accurate "week ago" comparisons, including detailed debugging logs for development.
 
 -   **In-Season Feature**: The `VegetableList.vue` and `VeggieInfoPage.vue` components now include logic to check and display whether a product is "in-season". This is aimed at providing users with more timely and relevant information about produce.
 
@@ -63,8 +67,8 @@ Recent updates have introduced significant new features and UI improvements, par
 
 ### `src/views/Member/6424/`
 This new subdirectory houses components related to the enhanced user profile features.
--   **`Favorites.vue`**: A new component responsible for displaying and managing the user's favorite food collections.
--   **`VeggieFav.vue`**: A new component for managing the user's favorite vegetable collections.
+-   **`Favorites.vue`**: This component is responsible for displaying and managing the user's favorite food collections. It has been updated with enhanced category filtering, including a dynamic "Custom" dropdown for additional categories, and significant UI/UX improvements for a more intuitive user experience.
+-   **`VeggieFav.vue`**: This component manages the user's favorite vegetable collections. It now features extensive category filtering options, including a dynamic "Other" dropdown for a wide range of vegetable and fruit categories, along with substantial UI/UX enhancements for improved navigation and display.
 
 ### `src/utils/`
 This directory contains utility functions that provide common functionalities used throughout the application.
