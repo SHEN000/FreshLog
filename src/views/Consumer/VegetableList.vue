@@ -7,12 +7,8 @@
         <FilterSidebar
           :filters="filters"
           :priceRange="priceRange"
-          :nutritionFilters="nutritionFilters"
-          :activeNutritionTab="activeNutritionTab"
           @update-filters="updateFilters"
           @update-price-range="updatePriceRange"
-          @update-nutrition-filters="updateNutritionFilters"
-          @update-nutrition-tab="updateNutritionTab"
         />
       </div>
 
@@ -29,6 +25,16 @@
           @set-subcategory="setSubCategory"
           @sort-change="handleSortChange"
         />
+
+        <!-- 手機版篩選欄 (顯示在分類標籤下方) -->
+        <div class="mobile-sidebar">
+          <FilterSidebar
+            :filters="filters"
+            :priceRange="priceRange"
+            @update-filters="updateFilters"
+            @update-price-range="updatePriceRange"
+          />
+        </div>
 
         <!-- AI 市場洞察 -->
         <MarketInsight />
@@ -264,16 +270,6 @@ const onRawNameInput = () => {
 onUnmounted(() => {
   if (nameDebounce) clearTimeout(nameDebounce);
 });
-
-const nutritionFilters = reactive({
-  vitaminA: false,
-  vitaminC: false,
-  calcium: false,
-  iron: false,
-  antioxidant: false,
-});
-
-const activeNutritionTab = ref("");
 
 // ==================== 子分類選項 ====================
 const allSubCategories = ref([]);
@@ -1136,37 +1132,6 @@ const filteredDishes = computed(() => {
     );
   }
 
-  // 營養篩選
-  if (nutritionFilters.vitaminA) {
-    filtered = filtered.filter((dish) =>
-      dish.ingredients.some((ing) => ing.includes("維生素A"))
-    );
-  }
-
-  if (nutritionFilters.vitaminC) {
-    filtered = filtered.filter((dish) =>
-      dish.ingredients.some((ing) => ing.includes("維生素C"))
-    );
-  }
-
-  if (nutritionFilters.calcium) {
-    filtered = filtered.filter((dish) =>
-      dish.ingredients.some((ing) => ing.includes("鈣"))
-    );
-  }
-
-  if (nutritionFilters.iron) {
-    filtered = filtered.filter((dish) =>
-      dish.ingredients.some((ing) => ing.includes("鐵"))
-    );
-  }
-
-  if (nutritionFilters.antioxidant) {
-    filtered = filtered.filter((dish) =>
-      dish.ingredients.some((ing) => ing.includes("抗氧化"))
-    );
-  }
-
   return filtered;
 });
 
@@ -1278,15 +1243,6 @@ const updatePriceRange = async (newRange) => {
   priceRange.value = newRange;
   currentPage.value = 1;
   await loadData();
-};
-
-const updateNutritionFilters = (newFilters) => {
-  Object.assign(nutritionFilters, newFilters);
-  currentPage.value = 1;
-};
-
-const updateNutritionTab = (tab) => {
-  activeNutritionTab.value = tab;
 };
 
 const viewRecipeDetails = async (foodId) => {
@@ -1502,6 +1458,11 @@ onMounted(() => {
   height: fit-content;
   position: sticky;
   top: 20px;
+}
+
+/* 手機版篩選欄：預設隱藏 */
+.mobile-sidebar {
+  display: none;
 }
 
 .main-content {
@@ -1894,10 +1855,19 @@ onMounted(() => {
     padding: 10px;
   }
 
+  /* 隱藏桌面版的左側篩選欄 */
   .sidebar-container {
-    order: 2;
-    margin-top: 20px;
-    position: static;
+    display: none;
+  }
+
+  /* 顯示手機版的篩選欄（在分類標籤下方）*/
+  .mobile-sidebar {
+    display: block;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    margin-bottom: 15px;
   }
 
   .main-content {
