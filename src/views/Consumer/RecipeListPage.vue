@@ -104,17 +104,15 @@
               上一頁
             </button>
 
-            <div class="page-numbers">
-              <button
-                v-for="page in displayPages"
-                :key="page"
-                :class="['page-number', { active: currentPage === page }]"
-                :disabled="page > totalPages"
-                @click="goToPage(page)"
-              >
-                {{ page }}
-              </button>
-            </div>
+            <button
+              v-for="page in displayPages"
+              :key="page"
+              :class="['page-number', { active: currentPage === page }]"
+              :disabled="page > totalPages"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
 
             <button
               :disabled="currentPage >= totalPages"
@@ -123,6 +121,11 @@
             >
               下一頁
             </button>
+          </div>
+
+          <!-- 頁數摘要 -->
+          <div class="page-summary">
+            第 {{ currentPage }} / {{ totalPages }} 頁
           </div>
         </div>
 
@@ -211,16 +214,20 @@ const displayPages = computed(() => {
   const current = currentPage.value;
   const pages = [];
 
-  // 根據實際頁數顯示頁碼按鈕
-  if (total <= 7) {
-    // 如果總頁數 <= 7，顯示所有頁碼
+  if (total <= 3) {
+    // 總頁數 <= 3，顯示所有頁碼
     for (let i = 1; i <= total; i++) {
       pages.push(i);
     }
   } else {
-    // 如果總頁數 > 7，顯示部分頁碼
-    const start = Math.max(1, current - 3);
-    const end = Math.min(total, start + 6);
+    // 總頁數 > 3，顯示當前頁碼及其前後各 1 頁（最多 3 頁）
+    let start = Math.max(1, current - 1);
+    let end = Math.min(total, start + 2);
+
+    // 調整起始位置，確保總是顯示 3 頁
+    if (end - start < 2) {
+      start = Math.max(1, end - 2);
+    }
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
@@ -699,69 +706,91 @@ const handleResize = () => {
 }
 
 .pagination-container {
-  margin: 32px 0;
+  margin: 40px 0 20px;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 0;
+  margin: 0 auto 20px;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
 }
 
 .page-btn {
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  min-width: 80px;
+  height: 45px;
+  padding: 0 16px;
+  background-color: #fff;
+  border: none;
+  border-right: 2px solid #e0e0e0;
   color: #666;
   cursor: pointer;
-  font-size: 14px;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 500;
   transition: all 0.3s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-numbers {
-  display: flex;
-  gap: 4px;
-}
-
-.page-number {
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  color: #4caf50;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #f9f9f9;
+  color: #999;
+}
+
+.page-btn:last-child {
+  border-right: none;
+}
+
+.page-number {
+  min-width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-right: 2px solid #e0e0e0;
+  border-radius: 0;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  color: #666;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
   transition: all 0.3s ease;
+  color: #555;
 }
 
 .page-number:hover {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
+  background-color: #f5f5f5;
+  color: #4caf50;
 }
 
 .page-number.active {
   background-color: #4caf50;
   color: white;
-  border-color: #4caf50;
   font-weight: 600;
+}
+
+.page-summary {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin: 10px auto 20px;
+  font-weight: 500;
 }
 
 /* 響應式設計 */
@@ -886,19 +915,28 @@ const handleResize = () => {
     gap: 16px;
   }
 
+  /* 手機版分頁樣式調整 */
   .pagination {
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 0;
+    margin: 0 auto 15px;
   }
 
-  .page-numbers {
-    gap: 2px;
+  .page-btn {
+    min-width: 70px;
+    height: 40px;
+    font-size: 14px;
+    padding: 0 12px;
   }
 
   .page-number {
-    width: 36px;
-    height: 36px;
+    min-width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .page-summary {
     font-size: 13px;
+    margin: 8px auto 15px;
   }
 }
 

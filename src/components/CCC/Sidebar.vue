@@ -297,4 +297,39 @@ onUnmounted(() => {
   font-size: 16px;
   cursor: pointer;
 }
+
+.apply-btn:hover {
+  background-color: #1b5e20;
+}
+
+.apply-btn:active {
+  background-color: #145a1a;
+}
+
+/* 手機版樣式調整 */
+@media (max-width: 768px) {
+  .filter-sidebar {
+    padding: 0;
+    box-shadow: none;
+    background-color: transparent;
+  }
+
+  .filter-section {
+    margin-bottom: 20px;
+  }
+
+  .filter-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .checkbox-label {
+    font-size: 14px;
+  }
+
+  .apply-btn {
+    padding: 14px 0;
+    font-size: 16px;
+  }
+}
 </style>

@@ -26,14 +26,39 @@
           @sort-change="handleSortChange"
         />
 
-        <!-- 手機版篩選欄 (顯示在分類標籤下方) -->
-        <div class="mobile-sidebar">
-          <FilterSidebar
-            :filters="filters"
-            :priceRange="priceRange"
-            @update-filters="updateFilters"
-            @update-price-range="updatePriceRange"
-          />
+        <!-- 手機版條件篩選區域 -->
+        <div class="mobile-filter-area">
+          <!-- 條件篩選按鈕 -->
+          <button
+            class="mobile-filter-toggle"
+            @click="toggleMobileFilter"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>條件篩選</span>
+            <svg
+              class="toggle-icon"
+              :class="{ 'open': showMobileFilter }"
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- 篩選面板（可展開/收合）-->
+          <div class="mobile-filter-panel" :class="{ 'show': showMobileFilter }">
+            <FilterSidebar
+              :filters="filters"
+              :priceRange="priceRange"
+              @update-filters="updateFilters"
+              @update-price-range="updatePriceRange"
+            />
+          </div>
         </div>
 
         <!-- AI 市場洞察 -->
@@ -138,7 +163,8 @@
                   </span>
                 </div>
                 <div class="price-date" v-if="dish.priceDateDisplay">
-                  價格日期：{{ dish.priceDateDisplay }}
+                  <div class="price-date-label">價格日期：</div>
+                  <div class="price-date-value">{{ dish.priceDateDisplay }}</div>
                 </div>
                 <button class="detail-btn" @click="viewRecipeDetails(dish.id)">
                   詳細資訊
@@ -157,36 +183,34 @@
         <!-- 分頁控制 -->
         <div v-if="totalPages > 1" class="pagination">
           <button
-            class="page-btn"
+            class="page-btn prev-btn"
             :disabled="currentPage === 1"
             @click="prevPage"
           >
             上一頁
           </button>
 
-          <div class="page-numbers">
-            <button
-              v-for="page in displayPages"
-              :key="page"
-              class="page-number"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >
-              {{ page }}
-            </button>
-          </div>
+          <button
+            v-for="page in displayPages"
+            :key="page"
+            :class="['page-number', { active: currentPage === page }]"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
 
           <button
-            class="page-btn"
+            class="page-btn next-btn"
             :disabled="currentPage === totalPages"
             @click="nextPage"
           >
             下一頁
           </button>
+        </div>
 
-          <div class="page-summary">
-            第 {{ currentPage }} / {{ totalPages }} 頁
-          </div>
+        <!-- 頁數摘要 -->
+        <div v-if="totalPages > 1" class="page-summary">
+          第 {{ currentPage }} / {{ totalPages }} 頁
         </div>
       </div>
     </div>
@@ -232,6 +256,14 @@ const filters = reactive({
 });
 
 const priceRange = ref([0, 200]);
+
+// 手機版篩選面板顯示狀態
+const showMobileFilter = ref(false);
+
+// 切換手機版篩選面板
+const toggleMobileFilter = () => {
+  showMobileFilter.value = !showMobileFilter.value;
+};
 
 // 新增：名稱搜尋欄位狀態與處理
 const inputRaw = ref("");
@@ -1150,13 +1182,20 @@ const displayPages = computed(() => {
   const current = currentPage.value;
   const pages = [];
 
-  if (total <= 5) {
+  if (total <= 3) {
+    // 總頁數 <= 3，顯示所有頁碼
     for (let i = 1; i <= total; i++) {
       pages.push(i);
     }
   } else {
-    const start = Math.max(1, current - 2);
-    const end = Math.min(total, start + 4);
+    // 總頁數 > 3，顯示當前頁碼及其前後各 1 頁（最多 3 頁）
+    let start = Math.max(1, current - 1);
+    let end = Math.min(total, start + 2);
+
+    // 調整起始位置，確保總是顯示 3 頁
+    if (end - start < 2) {
+      start = Math.max(1, end - 2);
+    }
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
@@ -1460,8 +1499,8 @@ onMounted(() => {
   top: 20px;
 }
 
-/* 手機版篩選欄：預設隱藏 */
-.mobile-sidebar {
+/* 手機版篩選區域：預設隱藏 */
+.mobile-filter-area {
   display: none;
 }
 
@@ -1785,62 +1824,76 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin: 40px 0;
+  gap: 0;
+  margin: 40px auto 20px;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
 }
 
 .page-btn {
-  padding: 8px 16px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
+  min-width: 80px;
+  height: 45px;
+  padding: 0 16px;
+  background-color: #fff;
+  border: none;
+  border-right: 2px solid #e0e0e0;
   color: #666;
   cursor: pointer;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 500;
   transition: all 0.3s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-numbers {
-  display: flex;
-  gap: 4px;
-}
-
-.page-number {
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  color: #4caf50;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #f9f9f9;
+  color: #999;
+}
+
+.page-btn:last-child {
+  border-right: none;
+}
+
+.page-number {
+  min-width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-right: 2px solid #e0e0e0;
+  border-radius: 0;
   background: white;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
   transition: all 0.3s ease;
+  color: #555;
 }
 
 .page-number:hover {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
+  background-color: #f5f5f5;
+  color: #4caf50;
 }
 
 .page-number.active {
   background-color: #4caf50;
   color: white;
-  border-color: #4caf50;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 @media (max-width: 1200px) {
@@ -1860,33 +1913,122 @@ onMounted(() => {
     display: none;
   }
 
-  /* 顯示手機版的篩選欄（在分類標籤下方）*/
-  .mobile-sidebar {
+  /* 顯示手機版篩選區域 */
+  .mobile-filter-area {
     display: block;
-    background-color: #f8f9fa;
-    padding: 15px;
+    margin: 15px 0;
+  }
+
+  /* 條件篩選按鈕 */
+  .mobile-filter-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
     border-radius: 8px;
-    margin-top: 15px;
-    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-filter-toggle:hover {
+    background-color: #f5f5f5;
+    border-color: #4caf50;
+  }
+
+  .mobile-filter-toggle:active {
+    background-color: #e8f5e9;
+  }
+
+  /* 切換圖標動畫 */
+  .toggle-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .toggle-icon.open {
+    transform: rotate(180deg);
+  }
+
+  /* 篩選面板 */
+  .mobile-filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  .mobile-filter-panel.show {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+    padding: 15px;
   }
 
   .main-content {
     order: 1;
   }
+
+  /* 手機版分頁樣式調整 */
+  .pagination {
+    gap: 0;
+    margin: 30px auto 15px;
+  }
+
+  .page-btn {
+    min-width: 70px;
+    height: 40px;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+
+  .page-number {
+    min-width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .page-summary {
+    font-size: 13px;
+    margin: 8px auto 15px;
+  }
 }
 .price-date {
-  font-size: 11px;
-  color: #666;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0;
   padding: 0;
-  line-height: 1.2;
   flex: 1 1 auto;
   text-align: center;
 }
 
-.page-summary {
-  margin-left: 12px;
+.price-date-label {
+  font-size: 11px;
+  color: #888;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.price-date-value {
   font-size: 12px;
-  color: #666;
+  color: #555;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.page-summary {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin: 10px auto 20px;
+  font-weight: 500;
 }
 </style>

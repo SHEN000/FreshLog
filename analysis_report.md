@@ -50,12 +50,16 @@ This directory contains the main page-level components of the application.
 #### Recent Enhancements
 Recent updates have introduced significant new features and UI improvements, particularly within the `Member` and `Consumer` views:
 
--   **Comprehensive User Profile (`Profile.vue`)**: The member profile page has been completely redesigned into a full-featured user center. It now includes a sidebar for navigation and a tabbed interface for managing different aspects of the user's account. The page's overall layout and responsiveness have been improved with the addition of a `profile-page-wrapper` to ensure better viewport height utilization. This section includes:
+-   **Comprehensive User Profile (`Profile.vue`)**: The member profile page has been completely redesigned into a full-featured user center. It now includes a sidebar for navigation and a tabbed interface for managing different aspects of the user's account. The page's overall layout and responsiveness has been improved with the addition of a `profile-page-wrapper` to ensure better viewport height utilization. This section includes:
     -   A detailed profile form to update user information.
     -   Sections for "Food Collection" and "Veggie Collection", which are powered by new, dedicated components.
     -   Enhanced API integration with `memberApi` for fetching and updating user data, with `localStorage` used for caching.
 
 -   **Token-Based Registration (`Register.vue`)**: The user registration process has been made more secure by implementing a token-based verification step.
+
+-   **Enhanced Filtering and Mobile Experience**:
+    -   **Removal of Nutrition Filters**: The nutrition filtering functionality has been completely removed from `src/components/CCC/Sidebar.vue` (used for recipes) and `src/views/Consumer/VegetableList.vue`.
+    -   **Mobile Filter Implementation**: Both `src/views/Consumer/RecipeListPage.vue` and `src/views/Consumer/VegetableList.vue` now feature dedicated mobile filter/sidebar implementations, significantly improving the user experience on smaller screens.
 
 -   **Enhanced Vegetable List (`VegetableList.vue`)**:
     -   The direct name search input has been removed, potentially indicating a shift in search functionality or its relocation.
