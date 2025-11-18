@@ -27,7 +27,7 @@
     </div>
 
     <div class="footer-bottom">
-      <p>© 2025 蔬果數據可視化平台. 保留所有權利。</p>
+      <p>© 2025 食價登錄FreshLog 保留所有權利。</p>
     </div>
   </footer>
 </template>
