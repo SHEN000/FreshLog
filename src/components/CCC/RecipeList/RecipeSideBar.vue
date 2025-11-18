@@ -222,15 +222,27 @@ const applyFilters = () => {
 /* 響應式調整 */
 @media (max-width: 768px) {
   .recipe-filter-sidebar {
-    padding: 16px;
+    padding: 0;
+    box-shadow: none;
+    background-color: transparent;
+  }
+
+  .filter-section {
+    margin-bottom: 20px;
   }
 
   .filter-title {
-    font-size: 15px;
+    font-size: 16px;
+    margin-bottom: 12px;
   }
 
   .option-label {
-    font-size: 13px;
+    font-size: 14px;
+  }
+
+  .apply-filter-btn {
+    padding: 14px 16px;
+    font-size: 16px;
   }
 }
 </style>

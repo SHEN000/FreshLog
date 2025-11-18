@@ -40,6 +40,39 @@
           @category-change="handleCategoryChange"
         />
 
+        <!-- 手機版條件篩選區域 -->
+        <div class="mobile-filter-area">
+          <!-- 條件篩選按鈕 -->
+          <button
+            class="mobile-filter-toggle"
+            @click="toggleMobileFilter"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>條件篩選</span>
+            <svg
+              class="toggle-icon"
+              :class="{ 'open': showMobileFilter }"
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- 篩選面板（可展開/收合）-->
+          <div class="mobile-filter-panel" :class="{ 'show': showMobileFilter }">
+            <RecipeFilterSidebar
+              :filters="filters"
+              @update-filters="updateFilters"
+            />
+          </div>
+        </div>
+
         <!-- 載入狀態 -->
         <div v-if="isLoading" class="loading-state">
           <p>🔄 載入食譜資料中...</p>
@@ -124,6 +157,14 @@ const filters = ref({ ...filterOptions });
 const activeCategory = ref("all");
 const currentSort = ref("newest"); // 改用 API 的預設值
 const currentPage = ref(1);
+
+// 手機版篩選面板顯示狀態
+const showMobileFilter = ref(false);
+
+// 切換手機版篩選面板
+const toggleMobileFilter = () => {
+  showMobileFilter.value = !showMobileFilter.value;
+};
 
 // 響應式每頁顯示數量
 const itemsPerPage = ref(21); // 預設21筆（桌面：3列×7排）
@@ -403,8 +444,8 @@ const loadRecipes = async () => {
         createdAt: recipe.createdAt,
       }));
 
-      // Debug: 檢查第一筆食譜的圖片資訊
-      if (allRecipes.value.length > 0) {
+      // Debug: 檢查第一筆食譜的圖片資訊（僅開發環境）
+      if (import.meta.env.DEV && allRecipes.value.length > 0) {
         const firstRecipe = allRecipes.value[0];
         const assetBase = import.meta.env.VITE_ASSET_BASE;
         const fullImageUrl = assetBase
@@ -418,18 +459,6 @@ const loadRecipes = async () => {
           fullImageUrl: fullImageUrl,
           imageEmpty: !firstRecipe.image,
         });
-
-        // 測試圖片是否可以載入
-        console.log("🧪 開始測試圖片載入...");
-        const testImg = new Image();
-        testImg.onload = () => {
-          console.log("✅ 圖片載入成功:", fullImageUrl);
-        };
-        testImg.onerror = (error) => {
-          console.error("❌ 圖片載入失敗:", fullImageUrl, error);
-        };
-        testImg.src = fullImageUrl;
-        console.log("🧪 圖片測試已觸發，URL:", testImg.src);
       }
 
       // 更新分頁資訊（基於過濾後的實際資料）
@@ -574,6 +603,11 @@ const handleResize = () => {
   position: sticky;
   top: 20px;
   margin-right: 40px;
+}
+
+/* 手機版篩選區域：預設隱藏 */
+.mobile-filter-area {
+  display: none;
 }
 
 .main-content-area {
@@ -770,11 +804,67 @@ const handleResize = () => {
     gap: 16px;
   }
 
+  /* 隱藏桌面版的左側篩選欄 */
   .sidebar-area {
-    order: 2;
-    position: static;
-    flex: none;
+    display: none;
+  }
+
+  /* 顯示手機版篩選區域 */
+  .mobile-filter-area {
+    display: block;
+    margin: 15px 0;
+  }
+
+  /* 條件篩選按鈕 */
+  .mobile-filter-toggle {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-filter-toggle:hover {
+    background-color: #f5f5f5;
+    border-color: #4caf50;
+  }
+
+  .mobile-filter-toggle:active {
+    background-color: #e8f5e9;
+  }
+
+  /* 切換圖標動畫 */
+  .toggle-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .toggle-icon.open {
+    transform: rotate(180deg);
+  }
+
+  /* 篩選面板 */
+  .mobile-filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  .mobile-filter-panel.show {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+    padding: 15px;
   }
 
   .main-content-area {
