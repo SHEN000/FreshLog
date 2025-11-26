@@ -254,7 +254,7 @@ import defaultVeggieImage from "@/assets/default-veggie.png";
 const router = useRouter();
 
 // ==================== 基本狀態 ====================
-const activeCategory = ref("all");
+const activeCategory = ref("fruit-veg"); // 🔧 預設選擇果菜類
 const currentPage = ref(1);
 const itemsPerPage = 6;
 const isLoading = ref(true);
@@ -338,7 +338,7 @@ const allSubCategories = ref([]);
 
 // 注意：這些 subCategory 必須與後端 API 回傳的子分類名稱完全一致
 const mainCategories = [
-  { id: "all", name: "未分類", subCategory: "未分類" }, // 🔧 使用"未分類"（從"其他"下拉選單驗證可用）
+  { id: "fruit-veg", name: "果菜類", subCategory: "果菜類" }, // 🔧 專題發表：改為果菜類（南瓜在此分類）
   { id: "leafy", name: "葉菜類", subCategory: "葉菜類" },
   { id: "root", name: "根莖類", subCategory: "根莖類" },
   { id: "grain", name: "雜糧類", subCategory: "雜糧類" },
@@ -480,7 +480,7 @@ const loadData = async () => {
         ? 999999
         : Number(Math.max(priceRange.value[0], priceRange.value[1])),
       tag: null,
-      sort: currentSort.value || "SEASONAL", // 預設值
+      sort: null, // NULL
     };
 
     // Query Parameters（分頁參數）
@@ -695,11 +695,8 @@ const loadData = async () => {
           }
         });
 
-        // 全部資料依日期新到舊排序後顯示
-        const sortedList = [...mappedList].sort(
-          (a, b) => (b.priceDateTs || 0) - (a.priceDateTs || 0)
-        );
-        allDishes.value = sortedList;
+        // 🔧 專題發表需求：完全使用後端順序，不做任何排序和去重
+        allDishes.value = mappedList;
       } else {
         allDishes.value = [];
       }
@@ -945,9 +942,13 @@ const setSubCategory = async (subCategory) => {
 };
 
 const handleSortChange = async (newSort) => {
+  // 🔧 專題發表需求：後端已排序（南瓜放第一個），前端不再重新排序
+  // currentSort.value = String(newSort || "SEASONAL").trim();
+  // currentPage.value = 1;
+  // await loadData();
+
+  // 只更新 UI 狀態，不實際執行排序
   currentSort.value = String(newSort || "SEASONAL").trim();
-  currentPage.value = 1;
-  await loadData();
 };
 
 const updateFilters = (newFilters) => {
@@ -1025,7 +1026,9 @@ const extractPriceFromAI = (aiRecommendations) => {
     const pricePerKg = parseFloat(match[1]);
     if (!isNaN(pricePerKg) && pricePerKg > 0) {
       const pricePerTaiJin = Math.round(pricePerKg / 1.67);
-      console.log(`💰 從 AI 提取價格: ${pricePerKg}元/公斤 → ${pricePerTaiJin}元/台斤`);
+      console.log(
+        `💰 從 AI 提取價格: ${pricePerKg}元/公斤 → ${pricePerTaiJin}元/台斤`
+      );
       return pricePerTaiJin;
     }
   }
@@ -1036,7 +1039,9 @@ const extractPriceFromAI = (aiRecommendations) => {
     const pricePerKg = parseFloat(match[1]);
     if (!isNaN(pricePerKg) && pricePerKg > 0) {
       const pricePerTaiJin = Math.round(pricePerKg / 1.67);
-      console.log(`💰 從 AI 提取價格: ${pricePerKg}元/公斤 → ${pricePerTaiJin}元/台斤`);
+      console.log(
+        `💰 從 AI 提取價格: ${pricePerKg}元/公斤 → ${pricePerTaiJin}元/台斤`
+      );
       return pricePerTaiJin;
     }
   }
@@ -1161,13 +1166,15 @@ const fetchPricesForDishes = async (dishes) => {
       if (!priceFound && dish.aiRecommendations) {
         const extractedPrice = extractPriceFromAI(dish.aiRecommendations);
         if (extractedPrice && extractedPrice > 0) {
-          console.log(`💡 ${dish.name} API 無價格數據，從 AI 提取: ${extractedPrice}元/台斤`);
+          console.log(
+            `💡 ${dish.name} API 無價格數據，從 AI 提取: ${extractedPrice}元/台斤`
+          );
           dish.price = extractedPrice;
           // 存入快取
           priceCache.set(dish.id, {
             price: extractedPrice,
             priceDate: null,
-            priceDateDisplay: null
+            priceDateDisplay: null,
           });
         }
       }
@@ -1176,13 +1183,15 @@ const fetchPricesForDishes = async (dishes) => {
       if (dish.aiRecommendations) {
         const extractedPrice = extractPriceFromAI(dish.aiRecommendations);
         if (extractedPrice && extractedPrice > 0) {
-          console.log(`⚠️ ${dish.name} API 失敗，從 AI 提取: ${extractedPrice}元/台斤`);
+          console.log(
+            `⚠️ ${dish.name} API 失敗，從 AI 提取: ${extractedPrice}元/台斤`
+          );
           dish.price = extractedPrice;
           // 存入快取
           priceCache.set(dish.id, {
             price: extractedPrice,
             priceDate: null,
-            priceDateDisplay: null
+            priceDateDisplay: null,
           });
         }
       }
