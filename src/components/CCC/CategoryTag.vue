@@ -48,7 +48,7 @@
     <!-- 新增排序下拉選單 -->
     <div class="category-right">
       <div class="sort-section">
-        <span class="sort-label">產季：</span>
+        <span class="sort-label">排序：</span>
         <div class="sort-dropdown-wrapper" v-if="sortOptions && sortOptions.length > 0">
           <select
             :value="currentSort"

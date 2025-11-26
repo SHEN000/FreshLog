@@ -123,7 +123,7 @@
       </RouterLink>
       <RouterLink v-else-if="!(isMobile && mobileSearchMode)" to="/member/profile" class="profile-button">
         <img src="@/assets/user-icon-white.png" alt="user" class="auth-icon" />
-        <span>個人中心</span>
+        <span>會員中心</span>
       </RouterLink>
 
       <!-- 手機版三條線 -->
